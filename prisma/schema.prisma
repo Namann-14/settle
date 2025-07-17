@@ -11,12 +11,13 @@ datasource db {
 
 // User model to store user information
 model User {
-  id              String  @id @default(cuid())
+  id              String    @id @default(cuid())
   name            String
-  email           String  @unique
+  email           String    @unique
+  emailVerified   DateTime?
   password        String?
-  imageUrl        String?
-  tokenIdentifier String? @unique // This will be handled by NextAuth now
+  image           String?   // Changed from imageUrl to image
+  tokenIdentifier String?   @unique // This will be handled by NextAuth now
 
   // Add these two lines for NextAuth
   accounts Account[]
@@ -178,3 +179,5 @@ model Settlement {
   createdBy       User   @relation("CreatedBySettlement", fields: [createdByUserId], references: [id])
   createdByUserId String
 }
+
+

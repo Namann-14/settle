@@ -6,68 +6,116 @@ import { prisma } from "./db";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
-  // The adapter will automatically handle user creation and linking.
   adapter: PrismaAdapter(prisma),
 
-  // The session strategy should be "database" to use the adapter's full power.
-  session: {
-    strategy: "database",
-  },
-
   providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: {
+          label: "Email",
+          type: "text",
+        },
+        password: {
+          label: "Password",
+          type: "password",
+        },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials.password) {
+          throw new Error("Missing Credentials");
+        }
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email,
+            },
+          });
+          if (!user || !user.password) {
+            return null;
+          }
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+          if (!isPasswordValid) {
+            throw new Error("Wrong email or password");
+          }
+          return {
+            id: user.id.toString(),
+            name: user.name,
+            email: user.email,
+            image: user.image || null,
+          };
+        } catch (error) {
+          console.error("Auth error", error);
+          throw error;
+        }
+      },
+    }),
+
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials.password) {
-          // Returning null is sufficient to indicate failure.
-          return null;
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
-
-        if (!user || !user.password) {
-          return null;
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isPasswordValid) {
-          return null;
-        }
-
-        // The adapter handles the rest. Just return the user object.
-        return user;
-      },
-    }),
   ],
 
-  // Custom pages remain the same.
+  callbacks: {
+    // Remove the custom signIn callback - let PrismaAdapter handle OAuth user creation
+    
+    async jwt({ token, user, account }) {
+      // Initial sign-in
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.picture = user.image;
+      }
+      
+      // Fetch fresh user data from database on each token refresh
+      if (token.email) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: {
+              email: token.email,
+            },
+          });
+
+          if (dbUser) {
+            token.id = dbUser.id.toString();
+            token.name = dbUser.name;
+            token.email = dbUser.email;
+            token.picture = dbUser.image;
+          }
+        } catch (error) {
+          console.error("JWT callback error:", error);
+        }
+      }
+
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).id = token.id as string;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
+        session.user.image = token.picture as string;
+      }
+
+      return session;
+    },
+  },
+
   pages: {
     signIn: "/login",
     error: "/login",
   },
 
-  callbacks: {
-    // The session callback is used to include the user's ID in the session.
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-      }
-      return session;
-    },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.AUTH_SECRET,
+
+  secret: process.env.NEXTAUTH_SECRET,
 };
