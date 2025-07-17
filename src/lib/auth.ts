@@ -57,14 +57,19 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
 
   callbacks: {
-    // Remove the custom signIn callback - let PrismaAdapter handle OAuth user creation
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        return true;
+      }
+      return true;
+    },
     
     async jwt({ token, user, account }) {
-      // Initial sign-in
       if (user) {
         token.id = user.id;
         token.name = user.name;
@@ -72,7 +77,6 @@ export const authOptions: NextAuthOptions = {
         token.picture = user.image;
       }
       
-      // Fetch fresh user data from database on each token refresh
       if (token.email) {
         try {
           const dbUser = await prisma.user.findUnique({
@@ -114,7 +118,7 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
 
   secret: process.env.NEXTAUTH_SECRET,
