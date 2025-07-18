@@ -6,14 +6,17 @@ import { cn } from "@/lib/utils";
 import { IconBrandGoogle } from "@tabler/icons-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { signupSchema, type SignupFormData } from "@/lib/validations/auth";
+import { z } from "zod";
 
 export default function SignupForm() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SignupFormData>({
     name: "",
     email: "",
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Partial<SignupFormData>>({});
   const [error, setError] = useState("");
   const router = useRouter();
 
@@ -23,15 +26,46 @@ export default function SignupForm() {
       ...prev,
       [name]: value
     }));
+    
+    // Clear field error when user starts typing
+    if (errors[name as keyof SignupFormData]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    try {
+      signupSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const fieldErrors: Partial<SignupFormData> = {};
+        error.issues.forEach((err) => {
+          if (err.path[0]) {
+            fieldErrors[err.path[0] as keyof SignupFormData] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+      }
+      return false;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      // Create user account
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -104,7 +138,11 @@ export default function SignupForm() {
             onChange={handleInputChange}
             required
             disabled={isLoading}
+            className={errors.name ? "border-red-500" : ""}
           />
+          {errors.name && (
+            <p className="text-sm text-red-600 mt-1">{errors.name}</p>
+          )}
         </LabelInputContainer>
 
         <LabelInputContainer className="mb-4">
@@ -118,7 +156,11 @@ export default function SignupForm() {
             onChange={handleInputChange}
             required
             disabled={isLoading}
+            className={errors.email ? "border-red-500" : ""}
           />
+          {errors.email && (
+            <p className="text-sm text-red-600 mt-1">{errors.email}</p>
+          )}
         </LabelInputContainer>
 
         <LabelInputContainer className="mb-8">
@@ -131,9 +173,15 @@ export default function SignupForm() {
             value={formData.password}
             onChange={handleInputChange}
             required
-            minLength={6}
             disabled={isLoading}
+            className={errors.password ? "border-red-500" : ""}
           />
+          {errors.password && (
+            <p className="text-sm text-red-600 mt-1">{errors.password}</p>
+          )}
+          <p className="text-xs text-neutral-500 mt-1">
+            Must contain at least 6 characters with uppercase, lowercase, and a number
+          </p>
         </LabelInputContainer>
 
         <button
