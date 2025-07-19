@@ -16,7 +16,7 @@ model User {
   email           String    @unique
   emailVerified   DateTime?
   password        String?
-  image           String?   // Changed from imageUrl to image
+  image           String? // Changed from imageUrl to image
   tokenIdentifier String?   @unique // This will be handled by NextAuth now
 
   // Add these two lines for NextAuth
@@ -179,5 +179,3 @@ model Settlement {
   createdBy       User   @relation("CreatedBySettlement", fields: [createdByUserId], references: [id])
   createdByUserId String
 }
-
-
