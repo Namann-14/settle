@@ -5,6 +5,16 @@ import Link from "next/link";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { LoginForm } from "@/components/login-form";
+import SignupForm from "@/components/signup-form";
+import { GalleryVerticalEnd } from "lucide-react";
 
 // Register GSAP plugins
 if (typeof window !== "undefined") {
@@ -27,6 +37,8 @@ const colors = {
 export default function FloatingNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isSignupOpen, setIsSignupOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const linksRef = useRef<HTMLDivElement>(null);
@@ -195,19 +207,65 @@ export default function FloatingNavbar() {
 
           {/* Action Buttons - Show Sign In button on mobile, hide Get Started button */}
           <div ref={buttonsRef} className="hidden md:flex items-center space-x-4">
-            <ActionButton href="/login" variant="outline">
-              Sign In
-            </ActionButton>
-            <ActionButton href="/signup" variant="primary">
-              Get Started
-            </ActionButton>
+            <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+              <DialogTrigger asChild>
+                <ActionButton variant="outline">
+                  Sign In
+                </ActionButton>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <div className="flex items-center gap-2 justify-center mb-4">
+                    <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+                      <GalleryVerticalEnd className="size-4" />
+                    </div>
+                    <DialogTitle>Settle</DialogTitle>
+                  </div>
+                </DialogHeader>
+                <LoginForm />
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
+              <DialogTrigger asChild>
+                <ActionButton variant="primary">
+                  Get Started
+                </ActionButton>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <div className="flex items-center gap-2 justify-center mb-4">
+                    <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+                      <GalleryVerticalEnd className="size-4" />
+                    </div>
+                    <DialogTitle>Settle</DialogTitle>
+                  </div>
+                </DialogHeader>
+                <SignupForm />
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Mobile Sign In Button - Show only on mobile */}
           <div className="flex md:hidden items-center">
-            <ActionButton href="/login" variant="outline">
-              Sign In
-            </ActionButton>
+            <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+              <DialogTrigger asChild>
+                <ActionButton variant="outline">
+                  Sign In
+                </ActionButton>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <div className="flex items-center gap-2 justify-center mb-4">
+                    <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+                      <GalleryVerticalEnd className="size-4" />
+                    </div>
+                    <DialogTitle>Settle</DialogTitle>
+                  </div>
+                </DialogHeader>
+                <LoginForm />
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Hamburger Menu Button - Show only on mobile */}
@@ -235,9 +293,24 @@ export default function FloatingNavbar() {
               <MobileNavLink href="#how-it-works" onClick={toggleMenu}>How it works</MobileNavLink>
               <MobileNavLink href="#pricing" onClick={toggleMenu}>Pricing</MobileNavLink>
               <div className="pt-2 border-t border-border">
-                <ActionButton href="/signup" variant="primary">
-                  Get Started
-                </ActionButton>
+                <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
+                  <DialogTrigger asChild>
+                    <ActionButton variant="primary">
+                      Get Started
+                    </ActionButton>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <div className="flex items-center gap-2 justify-center mb-4">
+                        <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+                          <GalleryVerticalEnd className="size-4" />
+                        </div>
+                        <DialogTitle>Settle</DialogTitle>
+                      </div>
+                    </DialogHeader>
+                    <SignupForm />
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>
@@ -353,13 +426,14 @@ function LogoComponent() {
 }
 
 interface ActionButtonProps {
-  href: string;
+  href?: string;
   variant: "outline" | "primary";
   children: React.ReactNode;
+  onClick?: () => void;
 }
 
-function ActionButton({ href, variant, children }: ActionButtonProps) {
-  const buttonRef = useRef<HTMLAnchorElement>(null);
+function ActionButton({ href, variant, children, onClick, ...props }: ActionButtonProps) {
+  const buttonRef = useRef<HTMLElement>(null);
 
   const handleMouseEnter = () => {
     if (buttonRef.current) {
@@ -392,21 +466,38 @@ function ActionButton({ href, variant, children }: ActionButtonProps) {
     }
   };
 
-  const baseClasses = "px-4 py-2 text-sm font-medium rounded-sm";
+  const baseClasses = "px-4 py-2 text-sm font-medium rounded-sm cursor-pointer";
   const variantClasses = variant === "outline"
     ? "text-muted-foreground border border-border"
     : "bg-primary text-primary-foreground px-6";
 
+  const commonProps = {
+    className: `${baseClasses} ${variantClasses} ${variant === 'primary' && 'w-full text-center md:w-auto'}`,
+    onMouseEnter: handleMouseEnter,
+    onMouseLeave: handleMouseLeave,
+    onClick: onClick,
+    ...props
+  };
+
+  if (href) {
+    return (
+      <Link
+        ref={buttonRef as React.RefObject<HTMLAnchorElement>}
+        href={href}
+        {...commonProps}
+      >
+        {children}
+      </Link>
+    );
+  }
+
   return (
-    <Link
-      ref={buttonRef}
-      href={href}
-      className={`${baseClasses} ${variantClasses} ${variant === 'primary' && 'w-full text-center md:w-auto'}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+    <button
+      ref={buttonRef as React.RefObject<HTMLButtonElement>}
+      {...commonProps}
     >
       {children}
-    </Link>
+    </button>
   );
 }
 
