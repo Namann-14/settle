@@ -1,6 +1,5 @@
 'use client'
 import { useSession } from "next-auth/react"
-import ProtectedRoute from "@/components/protected-route"
 import Image from "next/image"
 function DashboardContent() {
   const { data: session } = useSession()
@@ -49,8 +48,6 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <ProtectedRoute>
       <DashboardContent />
-    </ProtectedRoute>
   )
 }
