@@ -11,9 +11,9 @@ import {
   Users, 
   Calendar,
   ArrowRight,
-  Loader2,
   UserPlus
 } from "lucide-react";
+import { LoaderFive } from "@/components/ui/loader";
 
 interface GroupMember {
   id: string;
@@ -109,14 +109,10 @@ const GroupsPage = () => {
   }
 
   if (status === 'loading' || isLoading) {
+    // Explicitly render the loading component
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="text-lg">Loading groups...</span>
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <LoaderFive text="Loading groups..." />
       </div>
     );
   }

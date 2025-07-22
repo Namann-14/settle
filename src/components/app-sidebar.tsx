@@ -91,26 +91,6 @@ const getNavigationData = (user: any) => ({
         },
       ],
     },
-    {
-      title: "Analytics",
-      url: "/dashboard/analytics",
-      icon: PieChart,
-    },
-    {
-      title: "Settings",
-      url: "/dashboard/settings",
-      icon: Settings,
-      items: [
-        {
-          title: "Profile",
-          url: "/dashboard/settings/profile",
-        },
-        {
-          title: "Preferences",
-          url: "/dashboard/settings/preferences",
-        },
-      ],
-    },
   ],
   projects: [
     {

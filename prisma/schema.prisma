@@ -119,9 +119,9 @@ model Expense {
   category    String?
   date        DateTime
 
-  // Each expense belongs to one group
-  group   Group  @relation(fields: [groupId], references: [id])
-  groupId String
+  // Each expense belongs to one group (optional for personal expenses)
+  group   Group?  @relation(fields: [groupId], references: [id])
+  groupId String?
 
   // The user who paid for the expense
   paidBy       User   @relation("PaidByExpense", fields: [paidByUserId], references: [id])

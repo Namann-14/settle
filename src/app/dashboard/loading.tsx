@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import { LoaderFive, LoaderFour, LoaderTwo } from "@/components/ui/loader";
 

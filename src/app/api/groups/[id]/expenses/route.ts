@@ -33,7 +33,7 @@ export async function POST(
 
     // Get request body
     const body = await request.json();
-    const { description, amount, category, date, splitType, paidByUserId } = body;
+    const { description, amount, category, date, splitType, paidByUserId, splits } = body;
 
     // Validate required fields
     if (!description || !amount || !date || !splitType || !paidByUserId) {
@@ -78,19 +78,33 @@ export async function POST(
       });
 
       // Calculate splits based on split type
-      let splits: { userId: string; amountOwed: number }[] = [];
+      let expenseSplits: { userId: string; amountOwed: number }[] = [];
 
-      if (splitType === 'EQUAL') {
-        const amountPerPerson = parsedAmount / groupMembers.length;
-        splits = groupMembers.map(member => ({
-          userId: member.userId,
-          amountOwed: amountPerPerson,
+      if (splits && Array.isArray(splits)) {
+        // Use custom splits provided from frontend
+        expenseSplits = splits.map((split: any) => ({
+          userId: split.userId,
+          amountOwed: parseFloat(split.amountOwed) || 0,
         }));
+
+        // Validate that all group members are included in splits
+        const splitUserIds = new Set(expenseSplits.map(s => s.userId));
+        const groupMemberIds = new Set(groupMembers.map(m => m.userId));
+        
+        if (splitUserIds.size !== groupMemberIds.size || 
+            !Array.from(groupMemberIds).every(id => splitUserIds.has(id))) {
+          return new NextResponse("Splits must include all group members", { status: 400 });
+        }
+
+        // Validate total split amount matches expense amount (with small tolerance for rounding)
+        const totalSplitAmount = expenseSplits.reduce((sum, split) => sum + split.amountOwed, 0);
+        if (Math.abs(totalSplitAmount - parsedAmount) > 0.01) {
+          return new NextResponse("Split amounts must equal total expense amount", { status: 400 });
+        }
       } else {
-        // For now, default to equal split for UNEQUAL and PERCENTAGE
-        // You can implement custom logic later
+        // Default to equal split if no custom splits provided
         const amountPerPerson = parsedAmount / groupMembers.length;
-        splits = groupMembers.map(member => ({
+        expenseSplits = groupMembers.map(member => ({
           userId: member.userId,
           amountOwed: amountPerPerson,
         }));
@@ -98,7 +112,7 @@ export async function POST(
 
       // Create expense splits
       await tx.expenseSplit.createMany({
-        data: splits.map(split => ({
+        data: expenseSplits.map(split => ({
           expenseId: expense.id,
           userId: split.userId,
           amountOwed: split.amountOwed,

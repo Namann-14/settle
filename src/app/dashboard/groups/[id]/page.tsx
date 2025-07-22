@@ -15,6 +15,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Plus, Users, Receipt, DollarSign, Calendar, Loader2 } from "lucide-react";
+import { LoaderFive } from "@/components/ui/loader";
 
 type SplitType = 'EQUAL' | 'UNEQUAL' | 'PERCENTAGE';
 
@@ -25,6 +26,12 @@ interface ExpenseFormData {
   date: string;
   splitType: SplitType;
   paidByUserId: string;
+}
+
+interface UserSplit {
+  userId: string;
+  amount: number;
+  percentage: number;
 }
 
 interface User {
@@ -99,6 +106,68 @@ const GroupDetailPage = () => {
     paidByUserId: ''
   });
 
+  const [userSplits, setUserSplits] = useState<UserSplit[]>([]);
+
+  // Initialize user splits based on split type
+  const initializeUserSplits = (members: GroupMember[], splitType: SplitType) => {
+    const splits = members.map(member => ({
+      userId: member.user.id,
+      amount: 0,
+      percentage: splitType === 'EQUAL' ? 100 / members.length : 0
+    }));
+    setUserSplits(splits);
+  };
+
+  // Calculate amounts based on split type and total amount
+  const calculateSplitAmounts = (totalAmount: number, splitType: SplitType) => {
+    if (!groupData) return;
+
+    setUserSplits(prev => prev.map(split => {
+      if (splitType === 'EQUAL') {
+        return {
+          ...split,
+          amount: totalAmount / groupData.members.length,
+          percentage: 100 / groupData.members.length
+        };
+      } else if (splitType === 'PERCENTAGE') {
+        return {
+          ...split,
+          amount: (totalAmount * split.percentage) / 100
+        };
+      } else {
+        // UNEQUAL - keep current amounts but recalculate percentages
+        return {
+          ...split,
+          percentage: totalAmount > 0 ? (split.amount / totalAmount) * 100 : 0
+        };
+      }
+    }));
+  };
+
+  // Update individual split
+  const updateUserSplit = (userId: string, field: 'amount' | 'percentage', value: number) => {
+    const totalAmount = parseFloat(expenseForm.amount) || 0;
+    
+    setUserSplits(prev => prev.map(split => {
+      if (split.userId === userId) {
+        if (field === 'percentage') {
+          return {
+            ...split,
+            percentage: value,
+            amount: (totalAmount * value) / 100
+          };
+        } else {
+          return {
+            ...split,
+            amount: value,
+            percentage: totalAmount > 0 ? (value / totalAmount) * 100 : 0
+          };
+        }
+      }
+      return split;
+    }));
+  };
+
   // Fetch group data from API
   useEffect(() => {
     const fetchGroupData = async () => {
@@ -128,6 +197,9 @@ const GroupDetailPage = () => {
             ...prev, 
             paidByUserId: data.members[0].user.id 
           }));
+          
+          // Initialize user splits
+          initializeUserSplits(data.members, 'EQUAL');
         }
       } catch (error) {
         console.error('Error fetching group data:', error);
@@ -145,11 +217,54 @@ const GroupDetailPage = () => {
       ...prev,
       [field]: value
     }));
+
+    // Recalculate splits when amount or split type changes
+    if (field === 'amount') {
+      const amount = parseFloat(value) || 0;
+      calculateSplitAmounts(amount, expenseForm.splitType);
+    } else if (field === 'splitType' && groupData) {
+      const splitType = value as SplitType;
+      const amount = parseFloat(expenseForm.amount) || 0;
+      
+      if (splitType === 'EQUAL') {
+        initializeUserSplits(groupData.members, 'EQUAL');
+        calculateSplitAmounts(amount, 'EQUAL');
+      } else if (splitType === 'PERCENTAGE') {
+        // Initialize with equal percentages
+        initializeUserSplits(groupData.members, 'EQUAL');
+        calculateSplitAmounts(amount, 'PERCENTAGE');
+      } else {
+        // UNEQUAL - initialize with equal amounts
+        setUserSplits(prev => prev.map(split => ({
+          ...split,
+          amount: amount / groupData.members.length
+        })));
+        calculateSplitAmounts(amount, 'UNEQUAL');
+      }
+    }
   };
 
   const handleSubmitExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!groupData) return;
+
+    // Validate splits
+    const totalAmount = parseFloat(expenseForm.amount);
+    const totalSplitAmount = userSplits.reduce((sum, split) => sum + split.amount, 0);
+    const tolerance = 0.01; // Allow small rounding differences
+
+    if (Math.abs(totalAmount - totalSplitAmount) > tolerance) {
+      alert('Split amounts must equal the total expense amount');
+      return;
+    }
+
+    if (expenseForm.splitType === 'PERCENTAGE') {
+      const totalPercentage = userSplits.reduce((sum, split) => sum + split.percentage, 0);
+      if (Math.abs(totalPercentage - 100) > tolerance) {
+        alert('Split percentages must equal 100%');
+        return;
+      }
+    }
 
     setIsSubmitting(true);
     
@@ -159,7 +274,11 @@ const GroupDetailPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...expenseForm,
-          amount: parseFloat(expenseForm.amount),
+          amount: totalAmount,
+          splits: userSplits.map(split => ({
+            userId: split.userId,
+            amountOwed: split.amount
+          }))
         })
       });
 
@@ -193,6 +312,9 @@ const GroupDetailPage = () => {
         paidByUserId: groupData.members[0]?.user.id || ''
       });
 
+      // Reset splits
+      initializeUserSplits(groupData.members, 'EQUAL');
+
       // Show success message (you can replace with a toast notification)
       alert('Expense added successfully!');
     } catch (error) {
@@ -205,13 +327,8 @@ const GroupDetailPage = () => {
 
   if (status === 'loading' || isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="text-lg">Loading group details...</span>
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <LoaderFive text="Loading groups details..." />
       </div>
     );
   }
@@ -400,6 +517,106 @@ const GroupDetailPage = () => {
                 </Select>
               </div>
             </div>
+
+            {/* Split Configuration */}
+            {expenseForm.amount && parseFloat(expenseForm.amount) > 0 && (
+              <div className="space-y-4 mt-6 p-4 border rounded-lg bg-muted/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="h-4 w-4" />
+                  <h3 className="font-medium">Configure Split</h3>
+                  <span className="text-sm text-muted-foreground">
+                    Total: ${parseFloat(expenseForm.amount).toFixed(2)}
+                  </span>
+                </div>
+                
+                <div className="space-y-3">
+                  {groupData.members.map((member) => {
+                    const userSplit = userSplits.find(split => split.userId === member.user.id);
+                    if (!userSplit) return null;
+                    
+                    return (
+                      <div key={member.user.id} className="flex items-center gap-4 p-3 border rounded-lg bg-background">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{member.user.name}</div>
+                        </div>
+                        
+                        {expenseForm.splitType === 'EQUAL' && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>${userSplit.amount.toFixed(2)}</span>
+                            <span>({userSplit.percentage.toFixed(1)}%)</span>
+                          </div>
+                        )}
+                        
+                        {expenseForm.splitType === 'UNEQUAL' && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={userSplit.amount.toFixed(2)}
+                              onChange={(e) => updateUserSplit(member.user.id, 'amount', parseFloat(e.target.value) || 0)}
+                              className="w-20 px-2 py-1 border rounded text-sm"
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              ({userSplit.percentage.toFixed(1)}%)
+                            </span>
+                          </div>
+                        )}
+                        
+                        {expenseForm.splitType === 'PERCENTAGE' && (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="0.1"
+                              value={userSplit.percentage}
+                              onChange={(e) => updateUserSplit(member.user.id, 'percentage', parseFloat(e.target.value))}
+                              className="flex-1 max-w-24"
+                            />
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="100"
+                              value={userSplit.percentage.toFixed(1)}
+                              onChange={(e) => updateUserSplit(member.user.id, 'percentage', parseFloat(e.target.value) || 0)}
+                              className="w-16 px-2 py-1 border rounded text-sm"
+                            />
+                            <span className="text-sm text-muted-foreground">%</span>
+                            <span className="text-sm text-muted-foreground">
+                              (${userSplit.amount.toFixed(2)})
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Split Summary */}
+                <div className="pt-3 border-t">
+                  <div className="flex justify-between text-sm">
+                    <span>Total Split:</span>
+                    <span>
+                      ${userSplits.reduce((sum, split) => sum + split.amount, 0).toFixed(2)} 
+                      ({userSplits.reduce((sum, split) => sum + split.percentage, 0).toFixed(1)}%)
+                    </span>
+                  </div>
+                  {Math.abs(userSplits.reduce((sum, split) => sum + split.amount, 0) - parseFloat(expenseForm.amount)) > 0.01 && (
+                    <div className="text-destructive text-sm mt-1">
+                      ⚠️ Split amounts don't match total expense
+                    </div>
+                  )}
+                  {expenseForm.splitType === 'PERCENTAGE' && Math.abs(userSplits.reduce((sum, split) => sum + split.percentage, 0) - 100) > 0.01 && (
+                    <div className="text-destructive text-sm mt-1">
+                      ⚠️ Percentages don't add up to 100%
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Submit Button */}
             <div className="flex justify-end pt-4">
