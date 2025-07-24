@@ -1,6 +1,30 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Create reusable transporter object using SMTP transport
+const createTransporter = () => {
+  // For development, you can use Gmail with an app password
+  // For production, use a proper SMTP service like SendGrid, Mailgun, etc.
+  if (process.env.EMAIL_PROVIDER === 'gmail') {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD, // Use App Password, not regular password
+      },
+    });
+  }
+
+  // Default SMTP configuration
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+};
 
 export interface EmailOptions {
   to: string;
@@ -10,30 +34,33 @@ export interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions) {
-  if (!resend) {
-    throw new Error("Email service not configured - missing RESEND_API_KEY");
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    throw new Error("Email service not configured - missing EMAIL_USER or EMAIL_PASSWORD");
   }
 
-  const { to, subject, html, from = "Settle <noreply@resend.dev>" } = options;
+  const { to, subject, html, from } = options;
+  const defaultFrom = process.env.EMAIL_FROM || `"Settle" <${process.env.EMAIL_USER}>`;
 
   try {
-    const result = await resend.emails.send({
-      from,
+    const transporter = createTransporter();
+
+    // Verify connection configuration
+    await transporter.verify();
+
+    const mailOptions = {
+      from: from || defaultFrom,
       to,
       subject,
       html,
-    });
+    };
 
-    if (result.error) {
-      console.error("Email sending failed:", result.error);
-      throw new Error(`Failed to send email: ${result.error.message || 'Unknown error'}`);
-    }
+    const result = await transporter.sendMail(mailOptions);
 
-    console.log("✅ Email sent successfully:", result.data?.id);
-    return result.data;
+    console.log("✅ Email sent successfully:", result.messageId);
+    return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error("Email service error:", error);
-    throw error;
+    console.error("❌ Email service error:", error);
+    throw new Error(`Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
