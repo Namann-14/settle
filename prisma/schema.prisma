@@ -32,6 +32,10 @@ model User {
   settlementsReceived Settlement[]    @relation("ReceivedBySettlement")
   settlementsCreated  Settlement[]    @relation("CreatedBySettlement")
   splitsOwed          ExpenseSplit[]
+
+  // Add these new invitation relations
+  sentInvitations     GroupInvitation[] @relation("SentInvitations")
+  receivedInvitations GroupInvitation[] @relation("ReceivedInvitations")
 }
 
 // Add these new models required by NextAuth.js
@@ -85,6 +89,9 @@ model Group {
   // A group has many settlements
   settlements Settlement[]
 
+  // Add invitation relation
+  invitations GroupInvitation[]
+
   // A group is created by one user
   createdBy       User   @relation("CreatedByGroup", fields: [createdByUserId], references: [id])
   createdByUserId String
@@ -104,11 +111,46 @@ model UsersOnGroups {
   @@id([userId, groupId])
 }
 
+// New model for managing group invitations
+model GroupInvitation {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  
+  // The group being invited to
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+
+  // The user who sent the invitation
+  invitedBy       User   @relation("SentInvitations", fields: [invitedByUserId], references: [id])
+  invitedByUserId String
+
+  // Optional: The user who was invited (if they already have an account)
+  invitedUser   User?   @relation("ReceivedInvitations", fields: [invitedUserId], references: [id])
+  invitedUserId String?
+
+  // Status tracking
+  status InvitationStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([email, groupId]) // Prevent duplicate invites to same email for same group
+}
+
 // Enums provide type safety for fields with a limited set of options
 enum SplitType {
   EQUAL
   UNEQUAL
   PERCENTAGE
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
 }
 
 // Expense model for individual transactions
