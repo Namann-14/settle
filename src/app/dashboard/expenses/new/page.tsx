@@ -161,7 +161,7 @@ const AddExpensePage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-9/12xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6">
       {/* Header */}
       <div>
         <div className="flex items-center gap-4 mb-4">

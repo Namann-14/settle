@@ -14,32 +14,14 @@ export async function POST(req: NextRequest) {
 
     // Getting data from the req object
     const body = await req.json();
-    const { name, description, memberIds = [] } = body;
+    const { name, description } = body; // Remove memberIds since we'll use invitations
     if (!name) {
       return new NextResponse("Group name is required", {
         status: 400,
       });
     }
 
-    // Validate memberIds if provided
-    if (memberIds.length > 0) {
-      const validUsers = await prisma.user.findMany({
-        where: {
-          id: {
-            in: memberIds,
-          },
-        },
-        select: { id: true },
-      });
-
-      if (validUsers.length !== memberIds.length) {
-        return new NextResponse("Some user IDs are invalid", {
-          status: 400,
-        });
-      }
-    }
-
-    // Create the group and add members in a transaction
+    // Create the group with only the creator as a member
     const newGroup = await prisma.group.create({
       data: {
         name,
@@ -47,14 +29,10 @@ export async function POST(req: NextRequest) {
         createdByUserId: currentUserId,
         members: {
           create: [
-            // Add creator as first member
+            // Add creator as the only initial member
             {
               userId: currentUserId,
             },
-            // Add selected members
-            ...memberIds.map((userId: string) => ({
-              userId,
-            })),
           ],
         },
       },

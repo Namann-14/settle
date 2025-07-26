@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { SimpleUserAvatar } from "@/components/user-avatar";
 import {
   Dialog,
   DialogContent,
@@ -142,6 +143,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     setError(null);
 
     try {
+      // First, create the group without any members (only creator will be added automatically)
       const response = await fetch('/api/groups/new', {
         method: 'POST',
         headers: {
@@ -150,7 +152,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
         body: JSON.stringify({
           name: createForm.name,
           description: createForm.description || null,
-          memberIds: selectedUsers.map(user => user.id) // Include selected user IDs
+          memberIds: [] // Don't add members directly
         }),
       });
 
@@ -160,6 +162,43 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
       }
 
       const newGroup = await response.json();
+
+      // Send invitations to selected users
+      if (selectedUsers.length > 0) {
+        const invitationPromises = selectedUsers.map(async (user) => {
+          try {
+            const inviteResponse = await fetch(`/api/groups/${newGroup.id}/invites`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: user.email
+              }),
+            });
+
+            if (!inviteResponse.ok) {
+              const errorText = await inviteResponse.text();
+              console.error(`Failed to send invitation to ${user.email}:`, errorText);
+              return { success: false, email: user.email, error: errorText };
+            }
+
+            return { success: true, email: user.email };
+          } catch (error) {
+            console.error(`Error sending invitation to ${user.email}:`, error);
+            return { success: false, email: user.email, error: 'Network error' };
+          }
+        });
+
+        const invitationResults = await Promise.all(invitationPromises);
+        const failedInvitations = invitationResults.filter(result => !result.success);
+        
+        if (failedInvitations.length > 0) {
+          console.warn('Some invitations failed:', failedInvitations);
+          // Still proceed with group creation, but show a warning
+          setError(`Group created successfully, but failed to send invitations to: ${failedInvitations.map(f => f.email).join(', ')}`);
+        }
+      }
       
       // Call the callback if provided
       if (onGroupCreated) {
@@ -228,7 +267,10 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
 
           {/* User Search Section */}
           <div className="space-y-2">
-            <Label htmlFor="userSearch">Add Members (Optional)</Label>
+            <Label htmlFor="userSearch">Invite Members (Optional)</Label>
+            <div className="text-sm text-muted-foreground mb-2">
+              Selected users will receive email invitations to join the group.
+            </div>
             <div className="relative" ref={dropdownRef}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -254,13 +296,10 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                       onClick={() => handleSelectUser(user)}
                       className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2"
                     >
-                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        {user.image ? (
-                          <img src={user.image} alt={user.name} className="w-8 h-8 rounded-full" />
-                        ) : (
-                          <User className="h-4 w-4" />
-                        )}
-                      </div>
+                      <SimpleUserAvatar 
+                        user={{ name: user.name, image: user.image }}
+                        size={32}
+                      />
                       <div>
                         <div className="font-medium">{user.name}</div>
                         <div className="text-sm text-muted-foreground">{user.email}</div>
@@ -281,20 +320,17 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             {/* Selected Users */}
             {selectedUsers.length > 0 && (
               <div className="space-y-2">
-                <div className="text-sm font-medium">Selected Members:</div>
+                <div className="text-sm font-medium">Users to Invite:</div>
                 <div className="flex flex-wrap gap-2">
                   {selectedUsers.map((user) => (
                     <div
                       key={user.id}
                       className="flex items-center gap-2 bg-primary/10 text-primary rounded-full px-3 py-1 text-sm"
                     >
-                      <div className="w-5 h-5 bg-primary/20 rounded-full flex items-center justify-center">
-                        {user.image ? (
-                          <img src={user.image} alt={user.name} className="w-5 h-5 rounded-full" />
-                        ) : (
-                          <User className="h-3 w-3" />
-                        )}
-                      </div>
+                      <SimpleUserAvatar 
+                        user={{ name: user.name, image: user.image }}
+                        size={20}
+                      />
                       <span>{user.name}</span>
                       <button
                         type="button"

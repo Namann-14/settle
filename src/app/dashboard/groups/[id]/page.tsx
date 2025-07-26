@@ -14,7 +14,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Users, Receipt, DollarSign, Calendar, Loader2 } from "lucide-react";
+import { Plus, Users, Receipt, DollarSign, Calendar, Loader2, Mail, UserPlus } from "lucide-react";
 import { LoaderFive } from "@/components/ui/loader";
 
 type SplitType = 'EQUAL' | 'UNEQUAL' | 'PERCENTAGE';
@@ -97,6 +97,12 @@ const GroupDetailPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Invitation states
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  
   const [expenseForm, setExpenseForm] = useState<ExpenseFormData>({
     description: '',
     amount: '',
@@ -166,6 +172,46 @@ const GroupDetailPage = () => {
       }
       return split;
     }));
+  };
+
+  // Handle sending invitations
+  const handleSendInvitation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim() || !groupData) return;
+
+    setIsInviting(true);
+    setInviteError(null);
+    setInviteSuccess(null);
+
+    try {
+      const response = await fetch(`/api/groups/${groupId}/invites`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: inviteEmail.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send invitation');
+      }
+
+      const result = await response.json();
+      setInviteSuccess(`Invitation sent successfully to ${inviteEmail}`);
+      setInviteEmail('');
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => setInviteSuccess(null), 5000);
+      
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      setInviteError(error instanceof Error ? error.message : 'Failed to send invitation');
+    } finally {
+      setIsInviting(false);
+    }
   };
 
   // Fetch group data from API
@@ -363,7 +409,7 @@ const GroupDetailPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container  max-w-6xl mx-auto p-6 space-y-6">
       {/* Group Header */}
       <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-6 border">
         <div className="flex items-start justify-between">
@@ -394,6 +440,64 @@ const GroupDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Invite Members Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Invite Members
+          </CardTitle>
+          <CardDescription>
+            Send email invitations to add new members to this group
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSendInvitation} className="space-y-4">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Label htmlFor="inviteEmail" className="sr-only">
+                  Email address
+                </Label>
+                <Input
+                  id="inviteEmail"
+                  type="email"
+                  placeholder="Enter email address to invite"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  disabled={isInviting}
+                  required
+                />
+              </div>
+              <Button type="submit" disabled={isInviting || !inviteEmail.trim()}>
+                {isInviting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send Invite
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            {inviteError && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                {inviteError}
+              </div>
+            )}
+            
+            {inviteSuccess && (
+              <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">
+                {inviteSuccess}
+              </div>
+            )}
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Add Expense Form */}
       <Card>

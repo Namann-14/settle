@@ -30,7 +30,7 @@ const getNavigationData = (user: any) => ({
   user: {
     name: user?.name || "User",
     email: user?.email || "user@example.com",
-    avatar: user?.image || "/avatars/default.jpg",
+    avatar: user?.image || "", // Use empty string so fallback will show
   },
   teams: [
     {

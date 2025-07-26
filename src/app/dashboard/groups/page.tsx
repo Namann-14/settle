@@ -123,7 +123,7 @@ const GroupsPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto max-w-7xl p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -184,9 +184,11 @@ const GroupsPage = () => {
                       {group.name}
                     </CardTitle>
                     {group.description && (
-                      <CardDescription className="mt-2">
-                        {group.description}
-                      </CardDescription>
+                        <CardDescription className="mt-2 text-ellipsis">
+                        {group.description.length > 80
+                          ? group.description.slice(0, 80) + '...'
+                          : group.description}
+                        </CardDescription>
                     )}
                   </div>
                   <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
