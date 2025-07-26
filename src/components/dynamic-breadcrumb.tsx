@@ -32,6 +32,16 @@ const routeMap: Record<string, BreadcrumbItem[]> = {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/dashboard/settlements', label: 'Settlements', isCurrentPage: true }
   ],
+  '/dashboard/settlements/pending': [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dashboard/settlements', label: 'Settlements' },
+    { href: '/dashboard/settlements/pending', label: 'Pending', isCurrentPage: true }
+  ],
+  '/dashboard/settlements/history': [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dashboard/settlements', label: 'Settlements' },
+    { href: '/dashboard/settlements/history', label: 'History', isCurrentPage: true }
+  ],
   '/dashboard/analytics': [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/dashboard/analytics', label: 'Analytics', isCurrentPage: true }
@@ -61,6 +71,12 @@ export function DynamicBreadcrumb() {
         { href: '/dashboard', label: 'Dashboard' },
         { href: '/dashboard/expenses', label: 'Expenses' },
         { label: 'Expense Details', isCurrentPage: true }
+      ];
+    } else if (pathname.startsWith('/dashboard/settlements/') && pathname !== '/dashboard/settlements') {
+      breadcrumbItems = [
+        { href: '/dashboard', label: 'Dashboard' },
+        { href: '/dashboard/settlements', label: 'Settlements' },
+        { label: 'Settlement Details', isCurrentPage: true }
       ];
     } else {
       // Default fallback
