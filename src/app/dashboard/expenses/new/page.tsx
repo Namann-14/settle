@@ -33,7 +33,6 @@ import {
 import { LoaderFive } from "@/components/ui/loader";
 import Link from "next/link";
 import { toast } from "sonner";
-import { useClientOCR } from '@/hooks/use-client-ocr';
 
 interface Group {
   id: string;
@@ -71,7 +70,6 @@ const AddExpensePage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { processImage: processImageClientSide, isProcessing: isClientOCRProcessing, progress: ocrProgress } = useClientOCR();
   
   const [formData, setFormData] = useState<ExpenseFormData>({
     description: '',
@@ -167,7 +165,7 @@ const AddExpensePage = () => {
       const formData = new FormData();
       formData.append('receipt', uploadedImage);
 
-      setProcessingStep('Extracting text with OCR...');
+      setProcessingStep('Processing with server-side OCR...');
       
       const response = await fetch('/api/receipts/process', {
         method: 'POST',
@@ -183,134 +181,46 @@ const AddExpensePage = () => {
       
       const data: ReceiptData = await response.json();
 
-      // Show any server messages
+      // Show server message
       if (data.message) {
-        toast.info(data.message);
+        toast.success(data.message);
       }
 
-      // If server requires client-side OCR, do it automatically
-      if (data.requiresClientOCR && uploadedImage) {
-        try {
-          setProcessingStep('Processing with client-side OCR...');
-          const ocrResult = await processImageClientSide(uploadedImage);
-          
-          if (ocrResult.text.trim().length > 10) {
-            setProcessingStep('Analyzing with AI...');
-            
-            // Send extracted text to Gemini for analysis
-            const geminiResponse = await fetch('/api/receipts/analyze-text', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ text: ocrResult.text }),
-            });
-            
-            if (geminiResponse.ok) {
-              const geminiData = await geminiResponse.json();
-              
-              const finalData: ReceiptData = {
-                extractedText: ocrResult.text,
-                detectedPrice: geminiData.totalAmount,
-                confidence: geminiData.confidence,
-                description: geminiData.description,
-                merchantName: geminiData.merchantName || '',
-                date: geminiData.date || '',
-                items: geminiData.items || [],
-                success: true
-              };
-              
-              setReceiptData(finalData);
-              setProcessingStep('Complete!');
-              
-              // Auto-fill form if high confidence
-              if (finalData.detectedPrice && finalData.confidence > 0.7) {
-                handleInputChange('amount', finalData.detectedPrice.toString());
-                toast.success(`Price detected: $${finalData.detectedPrice.toFixed(2)} (${Math.round(finalData.confidence * 100)}% confidence)`);
-                
-                if (finalData.description && finalData.description !== 'Purchase from receipt') {
-                  handleInputChange('description', finalData.description);
-                  toast.success(`Description auto-filled: "${finalData.description}"`);
-                }
-              } else if (finalData.detectedPrice && finalData.detectedPrice > 0) {
-                const confidencePercent = Math.round(finalData.confidence * 100);
-                toast.info(`Suggested: $${finalData.detectedPrice.toFixed(2)} (${confidencePercent}% confidence)`, {
-                  action: {
-                    label: "Use",
-                    onClick: () => {
-                      handleInputChange('amount', finalData.detectedPrice.toString());
-                      if (finalData.description && finalData.description !== 'Purchase from receipt') {
-                        handleInputChange('description', finalData.description);
-                      }
-                    }
-                  }
-                });
-              } else {
-                toast.info('Receipt processed, but no clear price was detected');
-              }
-              
-              return; // Exit here since we successfully processed with real OCR
-            } else {
-              throw new Error('Failed to analyze text with AI');
-            }
-          } else {
-            throw new Error('No text extracted from image');
-          }
-        } catch (clientOCRError) {
-          console.error('Client-side OCR failed:', clientOCRError);
-          toast.error('Failed to extract text from receipt. Please enter details manually.');
-          setProcessingStep('Failed');
-          return;
-        }
-      }
-
-      // If we get here, it means no client OCR was required (shouldn't happen with current setup)
       setReceiptData(data);
       setProcessingStep('Complete!');
+      
+      // Auto-fill form if we have results
+      if (data.detectedPrice && data.confidence > 0.7) {
+        handleInputChange('amount', data.detectedPrice.toString());
+        toast.success(`Price detected: $${data.detectedPrice.toFixed(2)} (${Math.round(data.confidence * 100)}% confidence)`);
+        
+        if (data.description && data.description !== 'Purchase from receipt') {
+          handleInputChange('description', data.description);
+          toast.success(`Description auto-filled: "${data.description}"`);
+        }
+      } else if (data.detectedPrice && data.detectedPrice > 0) {
+        const confidencePercent = Math.round(data.confidence * 100);
+        toast.info(`Suggested: $${data.detectedPrice.toFixed(2)} (${confidencePercent}% confidence)`, {
+          action: {
+            label: "Use",
+            onClick: () => {
+              handleInputChange('amount', data.detectedPrice.toString());
+              if (data.description && data.description !== 'Purchase from receipt') {
+                handleInputChange('description', data.description);
+              }
+            }
+          }
+        });
+      } else if (data.extractedText) {
+        toast.info('Receipt processed successfully, but no clear price was detected');
+      } else {
+        toast.warning('Receipt uploaded but OCR processing failed');
+      }
 
     } catch (err) {
       console.error('Error processing receipt:', err);
-      
-      // Try client-side OCR as fallback
-      if (uploadedImage && !isClientOCRProcessing) {
-        try {
-          setProcessingStep('Trying client-side OCR...');
-          const ocrResult = await processImageClientSide(uploadedImage);
-          
-          if (ocrResult.text.trim().length > 0) {
-            // Try to analyze with Gemini using the client-side OCR text
-            const geminiResponse = await fetch('/api/receipts/analyze-text', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ text: ocrResult.text }),
-            });
-            
-            if (geminiResponse.ok) {
-              const geminiData = await geminiResponse.json();
-              setReceiptData({
-                extractedText: ocrResult.text,
-                detectedPrice: geminiData.totalAmount,
-                confidence: geminiData.confidence,
-                description: geminiData.description,
-                merchantName: geminiData.merchantName || '',
-                date: geminiData.date || '',
-                items: geminiData.items || [],
-                success: true
-              });
-              
-              toast.success('Receipt processed using client-side OCR');
-              return;
-            }
-          }
-        } catch (clientOCRError) {
-          console.error('Client-side OCR also failed:', clientOCRError);
-        }
-      }
-      
-      setError(err instanceof Error ? err.message : 'Failed to process receipt');
-      toast.error('Failed to process receipt. Please try again or enter details manually.');
+      setError('Failed to process receipt. Please try again or enter details manually.');
+      toast.error('Failed to process receipt. Please try again.');
     } finally {
       setIsProcessingReceipt(false);
       setProcessingStep('');
@@ -600,9 +510,7 @@ const AddExpensePage = () => {
                         {isProcessingReceipt ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {isClientOCRProcessing && ocrProgress > 0 
-                              ? `Client OCR: ${ocrProgress}%` 
-                              : processingStep || 'Processing Receipt...'}
+                            {processingStep || 'Processing Receipt...'}
                           </>
                         ) : (
                           <>

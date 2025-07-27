@@ -16,9 +16,9 @@ export async function POST(
   {
     params,
   }: {
-    params: {
+    params: Promise<{
       id: string;
-    };
+    }>;
   }
 ) {
   try {
@@ -43,7 +43,8 @@ export async function POST(
     }
 
     const { email: inviteeEmail } = validationResult.data;
-    const groupId = params.id;
+    const resolvedParams = await params;
+    const groupId = resolvedParams.id;
     const inviterId = session.user.id;
 
 

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { writeFile, mkdir, unlink } from 'fs/promises';
 import { join } from 'path';
+import { recognize } from 'node-tesseract-ocr';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
@@ -75,29 +76,101 @@ export async function POST(request: NextRequest) {
     let extractedText = '';
     let geminiAnalysis: GeminiReceiptAnalysis | null = null;
 
-    // Save the file and return immediately - client-side OCR will handle text extraction
-    // This allows for real OCR processing without server-side dependencies
-    
-    // Clean up temp file immediately since we're not doing server-side OCR
+    try {
+      // Perform server-side OCR using Tesseract
+      console.log('Starting OCR processing for file:', filePath);
+      
+      const ocrConfig = {
+        lang: 'eng',
+        oem: 1,
+        psm: 3,
+      };
+
+      extractedText = await recognize(filePath, ocrConfig);
+      console.log('OCR completed. Extracted text length:', extractedText.length);
+
+      if (extractedText.trim()) {
+        // Analyze the extracted text with Gemini
+        console.log('Sending text to Gemini for analysis...');
+        
+        const geminiPayload = {
+          contents: [{
+            parts: [{
+              text: `Analyze this receipt text and extract structured information. Return a JSON object with the following structure:
+{
+  "totalAmount": <number>,
+  "description": "<string>",
+  "merchantName": "<string>",
+  "date": "<YYYY-MM-DD format>",
+  "items": [{"name": "<string>", "price": <number>}],
+  "confidence": <number between 0 and 1>
+}
+
+Receipt text to analyze:
+${extractedText}`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            topK: 1,
+            topP: 1,
+            maxOutputTokens: 2048,
+          }
+        };
+
+        const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(geminiPayload)
+        });
+
+        if (geminiResponse.ok) {
+          const geminiData = await geminiResponse.json();
+          const responseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+          
+          if (responseText) {
+            try {
+              // Extract JSON from the response
+              const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                geminiAnalysis = JSON.parse(jsonMatch[0]);
+                console.log('Gemini analysis completed successfully');
+              }
+            } catch (parseError) {
+              console.error('Failed to parse Gemini response:', parseError);
+            }
+          }
+        } else {
+          console.error('Gemini API request failed:', geminiResponse.status);
+        }
+      }
+    } catch (ocrError) {
+      console.error('OCR processing failed:', ocrError);
+      // Continue without OCR results - we'll return what we have
+    }
+
+    // Clean up temp file
     try {
       await unlink(filePath);
     } catch (cleanupError) {
       console.error('Failed to cleanup temp file:', cleanupError);
     }
 
-    // Return minimal response - client will handle OCR and call analyze-text endpoint
+    // Return processed results
     const response = {
-      extractedText: '',
-      detectedPrice: 0,
-      confidence: 0,
-      description: '',
-      merchantName: '',
-      date: '',
-      items: [],
+      extractedText: extractedText || '',
+      detectedPrice: geminiAnalysis?.totalAmount || 0,
+      confidence: geminiAnalysis?.confidence || 0,
+      description: geminiAnalysis?.description || '',
+      merchantName: geminiAnalysis?.merchantName || '',
+      date: geminiAnalysis?.date || '',
+      items: geminiAnalysis?.items || [],
       fileName: fileName,
       success: true,
-      requiresClientOCR: true,
-      message: "Image uploaded successfully. Processing with client-side OCR..."
+      requiresClientOCR: false,
+      message: extractedText ? "Receipt processed successfully" : "Image uploaded but OCR processing failed"
     };
 
     return NextResponse.json(response);

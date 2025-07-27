@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if user is logged in
@@ -15,7 +15,8 @@ export async function POST(
     }
 
     const currentUserId = session.user.id;
-    const groupId = params.id;
+    const resolvedParams = await params;
+    const groupId = resolvedParams.id;
 
     // Check if user is a member of this group
     const membership = await prisma.usersOnGroups.findUnique({

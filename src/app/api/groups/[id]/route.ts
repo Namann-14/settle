@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if user is logged in
@@ -15,7 +15,8 @@ export async function GET(
     }
 
     const currentUserId = session.user.id;
-    const groupId = params.id;
+    const resolvedParams = await params;
+    const groupId = resolvedParams.id;
 
     // Fetch the specific group where the current user is a member
     const group = await prisma.group.findFirst({
