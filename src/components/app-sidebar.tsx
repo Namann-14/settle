@@ -24,6 +24,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { useSession } from "next-auth/react"
+import Image from "next/image"
 
 // Navigation data for the expense splitting app
 const getNavigationData = (user: any) => ({

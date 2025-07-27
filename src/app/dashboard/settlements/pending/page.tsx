@@ -26,6 +26,7 @@ import {
   Receipt
 } from "lucide-react";
 import { toast } from "sonner";
+import { UserAvatar } from "@/components/user-avatar";
 
 interface User {
   id: string;
@@ -90,13 +91,25 @@ const SettlementsPage = () => {
     }
   }, [status]);
 
-  const fetchSettlementsData = async () => {
+  const fetchSettlementsData = async (retryCount = 0) => {
     try {
       setError(null);
       const response = await fetch('/api/settlements');
       
+      if (response.status === 429) {
+        // Rate limit hit
+        if (retryCount < 3) {
+          const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+          console.log(`Rate limit hit, retrying in ${delay}ms...`);
+          setTimeout(() => fetchSettlementsData(retryCount + 1), delay);
+          return;
+        } else {
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        }
+      }
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch settlements data');
+        throw new Error(`Failed to fetch settlements data (${response.status})`);
       }
       
       const data = await response.json();
@@ -147,8 +160,14 @@ const SettlementsPage = () => {
         }),
       });
 
+      if (response.status === 429) {
+        toast.error('Too many requests. Please wait a moment and try again.');
+        return;
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to create settlement');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to create settlement (${response.status})`);
       }
 
       toast.success('Settlement created successfully!');
@@ -201,7 +220,7 @@ const SettlementsPage = () => {
             <div className="text-red-600">
               <p>Error: {error}</p>
               <Button 
-                onClick={fetchSettlementsData} 
+                onClick={() => fetchSettlementsData()} 
                 className="mt-4"
                 variant="default"
               >
@@ -323,19 +342,13 @@ const SettlementsPage = () => {
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        {debt.userImage ? (
-                          <img
-                            src={debt.userImage}
-                            alt={debt.userName}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-sm font-medium">
-                            {debt.userName.charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
+                      <UserAvatar 
+                        user={{
+                          name: debt.userName,
+                          image: debt.userImage
+                        }}
+                        size="md"
+                      />
                       <div>
                         <p className="font-medium">{debt.userName}</p>
                         <p className="text-sm text-muted-foreground">{debt.groupName}</p>
