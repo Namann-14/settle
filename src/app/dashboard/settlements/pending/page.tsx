@@ -134,8 +134,6 @@ const SettlementsPage = () => {
       return;
     }
 
-    // Determine direction of payment based on net amount
-    const isPayment = selectedDebt.netAmount < 0; // I'm paying them
     const maxAmount = Math.abs(selectedDebt.netAmount);
     
     if (amount > maxAmount) {
@@ -146,6 +144,13 @@ const SettlementsPage = () => {
     setIsCreatingSettlement(true);
     
     try {
+      // Determine who paid and who received based on the debt direction
+      // If netAmount > 0: they owe me, so they're paying me
+      // If netAmount < 0: I owe them, so I'm paying them
+      const theyOweMe = selectedDebt.netAmount > 0;
+      const paidByUserId = theyOweMe ? selectedDebt.userId : session?.user?.id;
+      const receivedByUserId = theyOweMe ? session?.user?.id : selectedDebt.userId;
+
       const response = await fetch('/api/settlements', {
         method: 'POST',
         headers: {
@@ -155,8 +160,8 @@ const SettlementsPage = () => {
           amount,
           note: settlementNote || undefined,
           groupId: selectedDebt.groupId,
-          paidByUserId: isPayment ? session?.user?.id : selectedDebt.userId,
-          receivedByUserId: isPayment ? selectedDebt.userId : session?.user?.id,
+          paidByUserId,
+          receivedByUserId,
         }),
       });
 
@@ -170,7 +175,7 @@ const SettlementsPage = () => {
         throw new Error(errorData.message || `Failed to create settlement (${response.status})`);
       }
 
-      toast.success('Settlement created successfully!');
+      toast.success('Settlement recorded successfully! Debt has been updated.');
       setIsCreateModalOpen(false);
       setSelectedDebt(null);
       setSettlementAmount('');
@@ -248,7 +253,7 @@ const SettlementsPage = () => {
   const { settlements, debtSummaries, totalOwedToMe, totalIOwePeople, netBalance } = settlementsData;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto max-w-7xl p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -380,7 +385,7 @@ const SettlementsPage = () => {
                       size="sm"
                       variant={debt.netAmount > 0 ? "outline" : "default"}
                     >
-                      {debt.netAmount > 0 ? "Record Payment" : "Settle Up"}
+                      {debt.netAmount > 0 ? "Record Payment" : "Record Payment"}
                     </Button>
                   </div>
                 </div>
@@ -423,7 +428,7 @@ const SettlementsPage = () => {
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        isReceived ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                        isReceived ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'
                       }`}>
                         {isReceived ? (
                           <ArrowDownRight className="h-5 w-5" />
@@ -450,7 +455,7 @@ const SettlementsPage = () => {
                     </div>
                     
                     <div className={`text-lg font-medium ${
-                      isReceived ? 'text-green-600' : 'text-blue-600'
+                      isReceived ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {isReceived ? '+' : '-'}${settlement.amount.toFixed(2)}
                     </div>
@@ -469,20 +474,20 @@ const SettlementsPage = () => {
             <DialogTitle>
               {selectedDebt?.netAmount && selectedDebt.netAmount > 0 
                 ? 'Record Payment Received' 
-                : 'Settle Debt'
+                : 'Record Payment Made'
               }
             </DialogTitle>
             <DialogDescription>
               {selectedDebt?.netAmount && selectedDebt.netAmount > 0
-                ? `Record that ${selectedDebt.userName} has paid you`
-                : `Pay ${selectedDebt?.userName} to settle your debt`
+                ? `Record that ${selectedDebt.userName} has paid you to settle the debt`
+                : `Record that you have paid ${selectedDebt?.userName} to settle the debt`
               }
             </DialogDescription>
           </DialogHeader>
           
           {selectedDebt && (
             <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="p-4 rounded-lg">
                 <div className="flex justify-between items-center">
                   <span className="font-medium">{selectedDebt.userName}</span>
                   <span className="font-medium">{selectedDebt.groupName}</span>
@@ -524,7 +529,7 @@ const SettlementsPage = () => {
                   {isCreatingSettlement ? (
                     <LoaderFive text="Processing..." />
                   ) : (
-                    selectedDebt.netAmount > 0 ? 'Record Payment' : 'Pay Now'
+                    selectedDebt.netAmount > 0 ? 'Record Payment Received' : 'Record Payment Made'
                   )}
                 </Button>
                 <Button

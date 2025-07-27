@@ -363,21 +363,21 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <Link href="/dashboard/groups">
-              <Button className="w-full justify-start hover:text-green-400" variant="outline">
+              <Button className="w-full justify-start hover:text-white dark:hover:text-green-400  " variant="outline">
                 <Users className="mr-2 h-4 w-4" />
                 Create New Group
                 <ArrowUpRight className="ml-auto h-4 w-4" />
               </Button>
             </Link>
             <Link href="/dashboard/expenses">
-              <Button className="w-full justify-start hover:text-green-400" variant="outline">
+              <Button className="w-full justify-start hover:text-white dark:hover:text-green-400  " variant="outline">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Expense
                 <ArrowUpRight className="ml-auto h-4 w-4" />
               </Button>
             </Link>
             <Link href="/dashboard/settlements">
-              <Button className="w-full justify-start hover:text-green-400" variant="outline">
+              <Button className="w-full justify-start hover:text-white dark:hover:text-green-400  " variant="outline">
                 <CreditCard className="mr-2 h-4 w-4" />
                 Settle Balances
                 <ArrowUpRight className="ml-auto h-4 w-4" />

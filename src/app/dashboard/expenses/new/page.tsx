@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,10 +24,16 @@ import {
   User,
   Users,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Upload,
+  Camera,
+  X,
+  CheckCircle
 } from "lucide-react";
 import { LoaderFive } from "@/components/ui/loader";
 import Link from "next/link";
+import { toast } from "sonner";
+import { useClientOCR } from '@/hooks/use-client-ocr';
 
 interface Group {
   id: string;
@@ -44,9 +50,28 @@ interface ExpenseFormData {
   groupId: string;
 }
 
+interface ReceiptData {
+  extractedText: string;
+  detectedPrice: number;
+  confidence: number;
+  description: string;
+  merchantName: string;
+  date: string;
+  items: Array<{
+    name: string;
+    price: number;
+  }>;
+  fileName?: string;
+  message?: string;
+  success?: boolean;
+  requiresClientOCR?: boolean;
+}
+
 const AddExpensePage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { processImage: processImageClientSide, isProcessing: isClientOCRProcessing, progress: ocrProgress } = useClientOCR();
   
   const [formData, setFormData] = useState<ExpenseFormData>({
     description: '',
@@ -61,6 +86,13 @@ const AddExpensePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Receipt upload states
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isProcessingReceipt, setIsProcessingReceipt] = useState(false);
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  const [processingStep, setProcessingStep] = useState<string>('');
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -94,6 +126,204 @@ const AddExpensePage = () => {
         ...prev,
         groupId: ''
       }));
+    }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadedImage(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const processReceipt = async () => {
+    if (!uploadedImage) return;
+
+    setIsProcessingReceipt(true);
+    setProcessingStep('Uploading image...');
+    setError(null);
+
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('receipt', uploadedImage);
+
+      setProcessingStep('Extracting text with OCR...');
+      
+      const response = await fetch('/api/receipts/process', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process receipt');
+      }
+
+      setProcessingStep('Analyzing with AI...');
+      
+      const data: ReceiptData = await response.json();
+
+      // Show any server messages
+      if (data.message) {
+        toast.info(data.message);
+      }
+
+      // If server requires client-side OCR, do it automatically
+      if (data.requiresClientOCR && uploadedImage) {
+        try {
+          setProcessingStep('Processing with client-side OCR...');
+          const ocrResult = await processImageClientSide(uploadedImage);
+          
+          if (ocrResult.text.trim().length > 10) {
+            setProcessingStep('Analyzing with AI...');
+            
+            // Send extracted text to Gemini for analysis
+            const geminiResponse = await fetch('/api/receipts/analyze-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ text: ocrResult.text }),
+            });
+            
+            if (geminiResponse.ok) {
+              const geminiData = await geminiResponse.json();
+              
+              const finalData: ReceiptData = {
+                extractedText: ocrResult.text,
+                detectedPrice: geminiData.totalAmount,
+                confidence: geminiData.confidence,
+                description: geminiData.description,
+                merchantName: geminiData.merchantName || '',
+                date: geminiData.date || '',
+                items: geminiData.items || [],
+                success: true
+              };
+              
+              setReceiptData(finalData);
+              setProcessingStep('Complete!');
+              
+              // Auto-fill form if high confidence
+              if (finalData.detectedPrice && finalData.confidence > 0.7) {
+                handleInputChange('amount', finalData.detectedPrice.toString());
+                toast.success(`Price detected: $${finalData.detectedPrice.toFixed(2)} (${Math.round(finalData.confidence * 100)}% confidence)`);
+                
+                if (finalData.description && finalData.description !== 'Purchase from receipt') {
+                  handleInputChange('description', finalData.description);
+                  toast.success(`Description auto-filled: "${finalData.description}"`);
+                }
+              } else if (finalData.detectedPrice && finalData.detectedPrice > 0) {
+                const confidencePercent = Math.round(finalData.confidence * 100);
+                toast.info(`Suggested: $${finalData.detectedPrice.toFixed(2)} (${confidencePercent}% confidence)`, {
+                  action: {
+                    label: "Use",
+                    onClick: () => {
+                      handleInputChange('amount', finalData.detectedPrice.toString());
+                      if (finalData.description && finalData.description !== 'Purchase from receipt') {
+                        handleInputChange('description', finalData.description);
+                      }
+                    }
+                  }
+                });
+              } else {
+                toast.info('Receipt processed, but no clear price was detected');
+              }
+              
+              return; // Exit here since we successfully processed with real OCR
+            } else {
+              throw new Error('Failed to analyze text with AI');
+            }
+          } else {
+            throw new Error('No text extracted from image');
+          }
+        } catch (clientOCRError) {
+          console.error('Client-side OCR failed:', clientOCRError);
+          toast.error('Failed to extract text from receipt. Please enter details manually.');
+          setProcessingStep('Failed');
+          return;
+        }
+      }
+
+      // If we get here, it means no client OCR was required (shouldn't happen with current setup)
+      setReceiptData(data);
+      setProcessingStep('Complete!');
+
+    } catch (err) {
+      console.error('Error processing receipt:', err);
+      
+      // Try client-side OCR as fallback
+      if (uploadedImage && !isClientOCRProcessing) {
+        try {
+          setProcessingStep('Trying client-side OCR...');
+          const ocrResult = await processImageClientSide(uploadedImage);
+          
+          if (ocrResult.text.trim().length > 0) {
+            // Try to analyze with Gemini using the client-side OCR text
+            const geminiResponse = await fetch('/api/receipts/analyze-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ text: ocrResult.text }),
+            });
+            
+            if (geminiResponse.ok) {
+              const geminiData = await geminiResponse.json();
+              setReceiptData({
+                extractedText: ocrResult.text,
+                detectedPrice: geminiData.totalAmount,
+                confidence: geminiData.confidence,
+                description: geminiData.description,
+                merchantName: geminiData.merchantName || '',
+                date: geminiData.date || '',
+                items: geminiData.items || [],
+                success: true
+              });
+              
+              toast.success('Receipt processed using client-side OCR');
+              return;
+            }
+          }
+        } catch (clientOCRError) {
+          console.error('Client-side OCR also failed:', clientOCRError);
+        }
+      }
+      
+      setError(err instanceof Error ? err.message : 'Failed to process receipt');
+      toast.error('Failed to process receipt. Please try again or enter details manually.');
+    } finally {
+      setIsProcessingReceipt(false);
+      setProcessingStep('');
+    }
+  };
+
+  const removeImage = () => {
+    setUploadedImage(null);
+    setImagePreview(null);
+    setReceiptData(null);
+    setProcessingStep('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -293,6 +523,192 @@ const AddExpensePage = () => {
                   onChange={(e) => handleInputChange('amount', e.target.value)}
                   required
                 />
+              </div>
+
+              {/* Receipt Upload */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Camera className="h-4 w-4" />
+                  Receipt (Optional)
+                </Label>
+                
+                {!uploadedImage ? (
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4">
+                    <div className="text-center">
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Upload receipt to auto-detect price
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Choose Image
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Image Preview */}
+                    <div className="relative border rounded-lg p-2">
+                      <div className="flex items-center gap-3">
+                        {imagePreview && (
+                          <img
+                            src={imagePreview}
+                            alt="Receipt preview"
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm font-medium truncate">
+                            {uploadedImage.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {(uploadedImage.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeImage}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Process Button */}
+                    {!receiptData && (
+                      <Button
+                        type="button"
+                        onClick={processReceipt}
+                        disabled={isProcessingReceipt}
+                        size="sm"
+                        className="w-full"
+                      >
+                        {isProcessingReceipt ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {isClientOCRProcessing && ocrProgress > 0 
+                              ? `Client OCR: ${ocrProgress}%` 
+                              : processingStep || 'Processing Receipt...'}
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="mr-2 h-4 w-4" />
+                            Extract Price from Receipt
+                          </>
+                        )}
+                      </Button>
+                    )}
+
+                    {/* Receipt Data Display */}
+                    {receiptData && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-800">
+                            Receipt Analysis Complete
+                          </span>
+                        </div>
+                        
+                        {receiptData.detectedPrice > 0 && (
+                          <div className="text-sm text-green-700">
+                            <div className="flex justify-between items-center">
+                              <span>Detected Price:</span>
+                              <span className="font-medium">${receiptData.detectedPrice.toFixed(2)}</span>
+                            </div>
+                            {receiptData.confidence && (
+                              <div className="text-xs text-green-600 mt-1">
+                                Confidence: {Math.round(receiptData.confidence * 100)}%
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {receiptData.description && receiptData.description !== 'Purchase from receipt' && (
+                          <div className="text-sm text-green-700">
+                            <div className="flex justify-between items-start">
+                              <span>Description:</span>
+                              <span className="font-medium text-right max-w-[200px] text-wrap">
+                                {receiptData.description}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {receiptData.merchantName && (
+                          <div className="text-sm text-green-700">
+                            <div className="flex justify-between items-center">
+                              <span>Merchant:</span>
+                              <span className="font-medium">{receiptData.merchantName}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {receiptData.date && (
+                          <div className="text-sm text-green-700">
+                            <div className="flex justify-between items-center">
+                              <span>Receipt Date:</span>
+                              <span className="font-medium">{receiptData.date}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {receiptData.items && receiptData.items.length > 0 && (
+                          <div className="text-sm text-green-700">
+                            <div className="mb-1 font-medium">Items:</div>
+                            <div className="max-h-20 overflow-y-auto space-y-1">
+                              {receiptData.items.slice(0, 3).map((item, index) => (
+                                <div key={index} className="flex justify-between text-xs">
+                                  <span className="truncate max-w-[120px]">{item.name}</span>
+                                  <span>${item.price.toFixed(2)}</span>
+                                </div>
+                              ))}
+                              {receiptData.items.length > 3 && (
+                                <div className="text-xs text-green-600">
+                                  +{receiptData.items.length - 3} more items...
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (receiptData.detectedPrice > 0) {
+                              handleInputChange('amount', receiptData.detectedPrice.toString());
+                            }
+                            if (receiptData.description && receiptData.description !== 'Purchase from receipt') {
+                              handleInputChange('description', receiptData.description);
+                            }
+                            if (receiptData.date) {
+                              handleInputChange('date', receiptData.date);
+                            }
+                            toast.success('Receipt data applied to form');
+                          }}
+                          className="w-full mt-2"
+                        >
+                          Apply All Data to Form
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Date */}

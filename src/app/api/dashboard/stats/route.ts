@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
         description: expense.description,
         amount: expense.amount,
         date: expense.date,
-        groupName: expense.group.name,
+        groupName: expense.group?.name || 'Personal',
         category: expense.category
       }));
 

@@ -131,12 +131,14 @@ export async function GET(request: NextRequest) {
 
       // Process settlements to adjust balances
       for (const settlement of groupSettlements) {
-        // Settlement reduces what paidBy owes to receivedBy
-        const currentOwed = userBalances.get(settlement.paidByUserId) || 0;
-        const currentReceived = userBalances.get(settlement.receivedByUserId) || 0;
+        // Settlement: paidBy pays receivedBy, so we adjust balances accordingly
+        // Subtract from payer (they paid out money, reduces their positive balance)
+        // Add to receiver (they received money, increases their positive balance)
+        const currentPayer = userBalances.get(settlement.paidByUserId) || 0;
+        const currentReceiver = userBalances.get(settlement.receivedByUserId) || 0;
         
-        userBalances.set(settlement.paidByUserId, currentOwed + settlement.amount);
-        userBalances.set(settlement.receivedByUserId, currentReceived - settlement.amount);
+        userBalances.set(settlement.paidByUserId, currentPayer - settlement.amount);
+        userBalances.set(settlement.receivedByUserId, currentReceiver + settlement.amount);
       }
 
       // Create debt summaries for users in this group (excluding current user)
@@ -156,7 +158,12 @@ export async function GET(request: NextRequest) {
         if (!otherUser) continue;
 
         const myBalance = userBalances.get(userId) || 0;
-        const netAmount = myBalance - balance;
+        const otherBalance = balance;
+        
+        // The net amount is simply the negative of the other person's balance
+        // If they have -250, they owe you 250
+        // If they have +250, you owe them 250
+        const netAmount = -otherBalance;
 
         if (Math.abs(netAmount) >= 0.01) {
           debtSummaries.push({

@@ -150,7 +150,7 @@ const SettlementsHistoryPage = () => {
       <div className="container mx-auto p-6">
         <Card>
           <CardContent className="p-6">
-            <div className="text-red-600">
+            <div className="text-red-500">
               <p>Error: {error}</p>
               <Button 
                 onClick={fetchSettlements} 
@@ -170,7 +170,7 @@ const SettlementsHistoryPage = () => {
   const totalReceived = getTotalAmount('received');
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto max-w-7xl p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -188,10 +188,10 @@ const SettlementsHistoryPage = () => {
             <CardTitle className="text-sm font-medium">
               Total Paid
             </CardTitle>
-            <ArrowUpRight className="h-4 w-4 text-blue-600" />
+            <ArrowUpRight className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-red-500">
               ${totalPaid.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -319,11 +319,11 @@ const SettlementsHistoryPage = () => {
                 return (
                   <div
                     key={settlement.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        isReceived ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                        isReceived ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'
                       }`}>
                         {isReceived ? (
                           <ArrowDownRight className="h-6 w-6" />
@@ -372,7 +372,7 @@ const SettlementsHistoryPage = () => {
                     
                     <div className="text-right">
                       <div className={`text-xl font-bold ${
-                        isReceived ? 'text-green-600' : 'text-blue-600'
+                        isReceived ? 'text-green-600' : 'text-red-500'
                       }`}>
                         {isReceived ? '+' : '-'}${settlement.amount.toFixed(2)}
                       </div>
