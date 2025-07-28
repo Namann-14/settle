@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,16 +8,15 @@ import { LoaderFive } from "@/components/ui/loader";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
-  CreditCard, 
   Calendar,
   Users,
   Search,
-  Filter,
   ArrowUpRight,
   ArrowDownRight,
   Receipt,
   FileText
 } from "lucide-react";
+import Image from 'next/image';
 
 interface User {
   id: string;
@@ -60,10 +59,6 @@ const SettlementsHistoryPage = () => {
     }
   }, [status]);
 
-  useEffect(() => {
-    filterSettlements();
-  }, [settlements, searchTerm, typeFilter]);
-
   const fetchSettlements = async () => {
     try {
       setError(null);
@@ -83,7 +78,7 @@ const SettlementsHistoryPage = () => {
     }
   };
 
-  const filterSettlements = () => {
+  const filterSettlements = useCallback(() => {
     let filtered = settlements;
 
     // Filter by search term
@@ -109,7 +104,11 @@ const SettlementsHistoryPage = () => {
     }
 
     setFilteredSettlements(filtered);
-  };
+  }, [settlements, searchTerm, typeFilter, session?.user?.id]);
+
+  useEffect(() => {
+    filterSettlements();
+  }, [filterSettlements]);
 
   const getTotalAmount = (type: 'paid' | 'received') => {
     if (!session?.user?.id) return 0;
@@ -195,7 +194,7 @@ const SettlementsHistoryPage = () => {
               ${totalPaid.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Money you've paid to others
+              Money you&apos;ve paid to others
             </p>
           </CardContent>
         </Card>
@@ -212,7 +211,7 @@ const SettlementsHistoryPage = () => {
               ${totalReceived.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Money you've received from others
+              Money you&apos;ve received from others
             </p>
           </CardContent>
         </Card>
@@ -335,10 +334,12 @@ const SettlementsHistoryPage = () => {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                           {otherUser.image ? (
-                            <img
+                            <Image
                               src={otherUser.image}
                               alt={otherUser.name}
                               className="w-full h-full rounded-full object-cover"
+                              width={100}
+                              height={100}
                             />
                           ) : (
                             <span className="text-sm font-medium">
@@ -363,7 +364,7 @@ const SettlementsHistoryPage = () => {
                           </div>
                           {settlement.note && (
                             <p className="text-sm text-muted-foreground italic mt-1">
-                              "{settlement.note}"
+                              &ldquo;{settlement.note}&rdquo;
                             </p>
                           )}
                         </div>

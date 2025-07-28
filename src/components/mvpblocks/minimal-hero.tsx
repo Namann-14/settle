@@ -48,7 +48,7 @@ export default function MinimalHero() {
     const mainTl = gsap.timeline({ delay: 1 });
 
     // Animate words with stagger effect
-    words.forEach((word, index) => {
+    words.forEach((word) => {
       const delay = parseInt(word.getAttribute("data-delay") || "0", 10) / 1000;
       mainTl.to(word, {
         duration: 0.8,

@@ -20,20 +20,6 @@ import { GalleryVerticalEnd } from "lucide-react";
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
-
-const colors = {
-  50: "#f0fdf4",
-  100: "#dcfce7",
-  200: "#3ecf8e",
-  300: "#10b981",
-  400: "#059669",
-  500: "#047857",
-  600: "#065f46",
-  700: "#064e3b",
-  800: "#1e293b",
-  900: "#0f172a",
-};
-
 export default function FloatingNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);

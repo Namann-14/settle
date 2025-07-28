@@ -6,9 +6,7 @@ import {
   Users,
   Receipt,
   Calculator,
-  Settings,
   CreditCard,
-  PieChart,
   History,
 } from "lucide-react"
 
@@ -24,10 +22,9 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { useSession } from "next-auth/react"
-import Image from "next/image"
 
 // Navigation data for the expense splitting app
-const getNavigationData = (user: any) => ({
+const getNavigationData = (user: { name?: string | null; email?: string | null; image?: string | null } | undefined) => ({
   user: {
     name: user?.name || "User",
     email: user?.email || "user@example.com",

@@ -3,6 +3,7 @@
 import React, { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User } from "lucide-react"
+import Image from "next/image"
 
 interface UserAvatarProps {
   user: {
@@ -98,12 +99,14 @@ export function SimpleUserAvatar({
 
   if (hasValidImage) {
     return (
-      <img 
+      <Image 
         src={user.image!} 
         alt={user.name}
         className={`rounded-full ${className}`}
         style={{ width: size, height: size }}
         onError={() => setImageError(true)}
+        width={100}
+        height={100}
       />
     )
   }

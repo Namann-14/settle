@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const tempDir = join(process.cwd(), 'public', 'temp');
     try {
       await mkdir(tempDir, { recursive: true });
-    } catch (err) {
+    } catch {
       // Directory might already exist
     }
 
@@ -184,6 +184,7 @@ ${extractedText}`
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function analyzeReceiptWithGemini(extractedText: string): Promise<GeminiReceiptAnalysis> {
   try {
     // Check if Gemini API key is available

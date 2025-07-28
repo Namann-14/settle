@@ -87,6 +87,7 @@ export function LoginForm({
         router.push("/dashboard");
       }
     } catch (error) {
+      console.error(error);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -100,6 +101,7 @@ export function LoginForm({
         callbackUrl: "/dashboard",
       });
     } catch (error) {
+      console.error(error);
       setError("An error occurred. Please try again.");
       setIsLoading(false);
     }

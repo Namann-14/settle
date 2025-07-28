@@ -1,28 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoaderFive } from "@/components/ui/loader";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   CreditCard, 
   TrendingUp,
   TrendingDown,
   DollarSign,
-  Calendar,
   Users,
   CheckCircle,
-  XCircle,
-  Plus,
   ArrowUpRight,
   ArrowDownRight,
-  UserCheck,
-  UserX,
   Receipt
 } from "lucide-react";
 import { toast } from "sonner";
@@ -85,13 +79,7 @@ const SettlementsPage = () => {
   const [settlementAmount, setSettlementAmount] = useState('');
   const [settlementNote, setSettlementNote] = useState('');
 
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetchSettlementsData();
-    }
-  }, [status]);
-
-  const fetchSettlementsData = async (retryCount = 0) => {
+  const fetchSettlementsData = useCallback(async (retryCount = 0) => {
     try {
       setError(null);
       const response = await fetch('/api/settlements');
@@ -120,7 +108,13 @@ const SettlementsPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchSettlementsData();
+    }
+  }, [status, fetchSettlementsData]);
 
   const handleCreateSettlement = async () => {
     if (!selectedDebt || !settlementAmount) {
@@ -448,7 +442,7 @@ const SettlementsPage = () => {
                         </p>
                         {settlement.note && (
                           <p className="text-sm text-muted-foreground italic">
-                            "{settlement.note}"
+                            &ldquo;{settlement.note}&rdquo;
                           </p>
                         )}
                       </div>

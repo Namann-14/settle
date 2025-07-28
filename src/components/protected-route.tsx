@@ -1,6 +1,6 @@
 'use client'
 import { useSession } from "next-auth/react"
-import { LoaderFive, LoaderOne, LoaderThree } from "@/components/ui/loader"
+import { LoaderFive } from "@/components/ui/loader"
 
 interface ProtectedRouteProps {
   children: React.ReactNode

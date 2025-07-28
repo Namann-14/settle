@@ -31,7 +31,25 @@ interface User {
 
 interface CreateGroupModalProps {
   trigger?: React.ReactNode;
-  onGroupCreated?: (group: any) => void;
+  onGroupCreated?: (group: {
+    id: string;
+    name: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    createdByUserId: string;
+    members: {
+      id: string;
+      userId: string;
+      groupId: string;
+      assignedAt: string;
+      user?: {
+        id: string;
+        name: string;
+        email: string;
+      };
+    }[];
+  }) => void;
 }
 
 const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ 

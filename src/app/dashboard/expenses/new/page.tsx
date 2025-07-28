@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Select, 
   SelectContent, 
@@ -15,7 +14,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { 
   Plus, 
   Receipt, 
@@ -33,6 +31,7 @@ import {
 import { LoaderFive } from "@/components/ui/loader";
 import Link from "next/link";
 import { toast } from "sonner";
+import Image from 'next/image';
 
 interface Group {
   id: string;
@@ -67,7 +66,7 @@ interface ReceiptData {
 }
 
 const AddExpensePage = () => {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -472,10 +471,12 @@ const AddExpensePage = () => {
                     <div className="relative border rounded-lg p-2">
                       <div className="flex items-center gap-3">
                         {imagePreview && (
-                          <img
+                          <Image
                             src={imagePreview}
                             alt="Receipt preview"
                             className="w-16 h-16 object-cover rounded"
+                            width={100}
+                            height={100}
                           />
                         )}
                         <div className="flex-1">
@@ -695,7 +696,7 @@ const AddExpensePage = () => {
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-3">
-            <h3 className="font-medium">What's the difference?</h3>
+            <h3 className="font-medium">What&apos;s the difference?</h3>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="flex gap-3">
                 <User className="h-5 w-5 text-blue-600 mt-0.5" />

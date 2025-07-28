@@ -6,6 +6,7 @@ import {
   MarqueeFade,
   MarqueeItem,
 } from '@/components/ui/kibo-ui/marquee';
+import Image from 'next/image';
 
 const logos = [
   {
@@ -51,10 +52,12 @@ const Example = () => (
         {logos.map((logo, index) => (
           <MarqueeItem className="h-24 w-32 flex items-center justify-center overflow-y-hidden gap-100" key={index}>
             <div className="flex overflow-hidden flex-col items-center justify-center rounded-lg transition-colors group">
-              <img
+              <Image
                 alt={`${logo.name} logo`}
                 className="w-100 h-100 object-contain transition-transform filter dark:invert-0"
                 src={logo.src}
+                width={100}
+                height={100}
               />
             </div>
           </MarqueeItem>

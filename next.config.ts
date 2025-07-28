@@ -35,20 +35,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config) => {
-    config.watchOptions = {
-      ...config.watchOptions,
-      ignored: [
-        '**/node_modules',
-        '**/.git',
-        '**/C:/Users/*/Application Data/**',
-        '**/C:/Users/*/AppData/**',
-        '**/C:/ProgramData/**',
-        '**/C:/Windows/**',
-      ]
-    };
-    return config;
-  },
 };
 
 export default nextConfig;

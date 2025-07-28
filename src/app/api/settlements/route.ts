@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
@@ -157,7 +157,6 @@ export async function GET(request: NextRequest) {
 
         if (!otherUser) continue;
 
-        const myBalance = userBalances.get(userId) || 0;
         const otherBalance = balance;
         
         // The net amount is simply the negative of the other person's balance

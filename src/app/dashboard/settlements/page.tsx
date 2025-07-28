@@ -11,9 +11,7 @@ import {
   TrendingDown,
   DollarSign,
   Users,
-  Receipt,
   ArrowRight,
-  Plus,
   History,
   AlertCircle
 } from "lucide-react";
@@ -29,7 +27,7 @@ interface SettlementsOverview {
 }
 
 const SettlementsOverviewPage = () => {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   
   const [overview, setOverview] = useState<SettlementsOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);

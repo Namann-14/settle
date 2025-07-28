@@ -71,7 +71,7 @@ export async function POST(
           amount: parsedAmount,
           category: category || null,
           date: new Date(date),
-          splitType: splitType as any,
+          splitType: splitType as 'EQUAL' | 'UNEQUAL' | 'PERCENTAGE',
           groupId,
           paidByUserId,
           createdByUserId: currentUserId,
@@ -83,9 +83,9 @@ export async function POST(
 
       if (splits && Array.isArray(splits)) {
         // Use custom splits provided from frontend
-        expenseSplits = splits.map((split: any) => ({
+        expenseSplits = splits.map((split: { userId: string; amountOwed: string | number }) => ({
           userId: split.userId,
-          amountOwed: parseFloat(split.amountOwed) || 0,
+          amountOwed: parseFloat(split.amountOwed.toString()) || 0,
         }));
 
         // Validate that all group members are included in splits

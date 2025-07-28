@@ -89,7 +89,7 @@ interface GroupData {
 
 const GroupDetailPage = () => {
   const params = useParams();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const groupId = params.id as string;
 
   const [groupData, setGroupData] = useState<GroupData | null>(null);
@@ -199,7 +199,7 @@ const GroupDetailPage = () => {
         throw new Error(errorData.error || 'Failed to send invitation');
       }
 
-      const result = await response.json();
+      await response.json();
       setInviteSuccess(`Invitation sent successfully to ${inviteEmail}`);
       setInviteEmail('');
       
@@ -710,12 +710,12 @@ const GroupDetailPage = () => {
                   </div>
                   {Math.abs(userSplits.reduce((sum, split) => sum + split.amount, 0) - parseFloat(expenseForm.amount)) > 0.01 && (
                     <div className="text-destructive text-sm mt-1">
-                      ⚠️ Split amounts don't match total expense
+                      ⚠️ Split amounts don&apos;t match total expense
                     </div>
                   )}
                   {expenseForm.splitType === 'PERCENTAGE' && Math.abs(userSplits.reduce((sum, split) => sum + split.percentage, 0) - 100) > 0.01 && (
                     <div className="text-destructive text-sm mt-1">
-                      ⚠️ Percentages don't add up to 100%
+                      ⚠️ Percentages don&apos;t add up to 100%
                     </div>
                   )}
                 </div>

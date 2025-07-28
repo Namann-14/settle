@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type'); // 'personal', 'group', or null for all
 
     // Build the where clause based on type
-    let whereClause: any = {
+    const whereClause: Record<string, unknown> = {
       OR: [
         { paidByUserId: userId },
         { splits: { some: { userId: userId } } }

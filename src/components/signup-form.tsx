@@ -92,8 +92,8 @@ export default function SignupForm() {
       } else {
         router.push('/dashboard');
       }
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -106,6 +106,7 @@ export default function SignupForm() {
         callbackUrl: '/dashboard',
       });
     } catch (error) {
+      console.error(error);
       setError('Google sign-in failed');
       setIsLoading(false);
     }

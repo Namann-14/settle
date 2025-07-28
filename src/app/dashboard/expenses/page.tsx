@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,9 +21,7 @@ import {
   Filter,
   Users,
   User,
-  Calendar,
-  DollarSign,
-  MoreHorizontal
+  Calendar
 } from "lucide-react";
 import { LoaderFive } from "@/components/ui/loader";
 import Link from "next/link";
@@ -86,10 +84,6 @@ const ExpensesPage = () => {
     }
   }, [status]);
 
-  useEffect(() => {
-    filterExpenses();
-  }, [expenses, searchTerm, typeFilter, categoryFilter]);
-
   const fetchExpenses = async () => {
     try {
       setError(null);
@@ -109,7 +103,7 @@ const ExpensesPage = () => {
     }
   };
 
-  const filterExpenses = () => {
+  const filterExpenses = useCallback(() => {
     let filtered = expenses;
 
     // Filter by search term
@@ -134,7 +128,11 @@ const ExpensesPage = () => {
     }
 
     setFilteredExpenses(filtered);
-  };
+  }, [expenses, searchTerm, typeFilter, categoryFilter]);
+
+  useEffect(() => {
+    filterExpenses();
+  }, [filterExpenses]);
 
   const getUniqueCategories = () => {
     const categories = expenses
