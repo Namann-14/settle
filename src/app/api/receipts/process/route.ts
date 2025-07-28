@@ -1,12 +1,15 @@
+// Receipt processing API using Gemini Vision API
+// This endpoint processes receipt images directly using Google's Gemini Vision API
+// No local OCR installation required - works on Vercel and other cloud platforms
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { writeFile, mkdir, unlink } from 'fs/promises';
 import { join } from 'path';
-import { recognize } from 'node-tesseract-ocr';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_VISION_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 interface GeminiReceiptAnalysis {
   totalAmount: number;
@@ -73,52 +76,52 @@ export async function POST(request: NextRequest) {
     
     await writeFile(filePath, buffer);
 
-    let extractedText = '';
     let geminiAnalysis: GeminiReceiptAnalysis | null = null;
+    let extractedText = '';
 
     try {
-      // Perform server-side OCR using Tesseract
-      console.log('Starting OCR processing for file:', filePath);
-      
-      const ocrConfig = {
-        lang: 'eng',
-        oem: 1,
-        psm: 3,
-      };
-
-      extractedText = await recognize(filePath, ocrConfig);
-      console.log('OCR completed. Extracted text length:', extractedText.length);
-
-      if (extractedText.trim()) {
-        // Analyze the extracted text with Gemini
-        console.log('Sending text to Gemini for analysis...');
+      // Use Gemini Vision API for direct image analysis (no OCR needed)
+      if (GEMINI_API_KEY) {
+        console.log('Processing receipt image with Gemini Vision API...');
         
+        // Convert image to base64 for Gemini API
+        const base64Image = buffer.toString('base64');
+        const mimeType = file.type;
+
         const geminiPayload = {
           contents: [{
-            parts: [{
-              text: `Analyze this receipt text and extract structured information. Return a JSON object with the following structure:
+            parts: [
+              {
+                text: `Analyze this receipt image and extract structured information. Return a JSON object with the following exact structure:
 {
   "totalAmount": <number>,
-  "description": "<string>",
-  "merchantName": "<string>",
-  "date": "<YYYY-MM-DD format>",
-  "items": [{"name": "<string>", "price": <number>}],
-  "confidence": <number between 0 and 1>
+  "description": "<string describing the purchase>",
+  "merchantName": "<store/restaurant name>",
+  "date": "<YYYY-MM-DD format if visible>",
+  "items": [{"name": "<item name>", "price": <number>}],
+  "confidence": <number between 0 and 1>,
+  "extractedText": "<all visible text from the receipt>"
 }
 
-Receipt text to analyze:
-${extractedText}`
-            }]
+Please be accurate with the total amount and include all visible text in the extractedText field.`
+              },
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: base64Image
+                }
+              }
+            ]
           }],
           generationConfig: {
             temperature: 0.1,
             topK: 1,
             topP: 1,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 4096,
           }
         };
 
-        const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        const geminiResponse = await fetch(`${GEMINI_VISION_API_URL}?key=${GEMINI_API_KEY}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -135,20 +138,51 @@ ${extractedText}`
               // Extract JSON from the response
               const jsonMatch = responseText.match(/\{[\s\S]*\}/);
               if (jsonMatch) {
-                geminiAnalysis = JSON.parse(jsonMatch[0]);
-                console.log('Gemini analysis completed successfully');
+                const parsed = JSON.parse(jsonMatch[0]);
+                geminiAnalysis = parsed;
+                extractedText = parsed.extractedText || '';
+                console.log('Gemini Vision analysis completed successfully');
               }
             } catch (parseError) {
               console.error('Failed to parse Gemini response:', parseError);
+              // Simple fallback
+              geminiAnalysis = {
+                totalAmount: 0,
+                description: 'Receipt processed - please verify details',
+                merchantName: '',
+                date: '',
+                items: [],
+                confidence: 0.3
+              };
             }
           }
         } else {
-          console.error('Gemini API request failed:', geminiResponse.status);
+          console.error('Gemini Vision API request failed:', geminiResponse.status);
+          const errorText = await geminiResponse.text();
+          console.error('Error details:', errorText);
         }
+      } else {
+        console.log('Gemini API key not available, using fallback analysis');
+        geminiAnalysis = {
+          totalAmount: 0,
+          description: 'Receipt uploaded - manual entry required',
+          merchantName: '',
+          date: '',
+          items: [],
+          confidence: 0
+        };
       }
-    } catch (ocrError) {
-      console.error('OCR processing failed:', ocrError);
-      // Continue without OCR results - we'll return what we have
+    } catch (error) {
+      console.error('Image processing failed:', error);
+      // Fallback analysis
+      geminiAnalysis = {
+        totalAmount: 0,
+        description: 'Receipt uploaded - manual entry required',
+        merchantName: '',
+        date: '',
+        items: [],
+        confidence: 0
+      };
     }
 
     // Clean up temp file
@@ -221,7 +255,7 @@ Rules:
 - Return ONLY the JSON object, no additional text or explanation`;
 
     // Call Gemini API using REST endpoint
-    const geminiRes = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    const geminiRes = await fetch(`${GEMINI_VISION_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
