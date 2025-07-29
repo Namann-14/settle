@@ -117,7 +117,7 @@ model GroupInvitation {
   email     String
   token     String   @unique
   expiresAt DateTime
-  
+
   // The group being invited to
   group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId String
@@ -135,7 +135,7 @@ model GroupInvitation {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([email, groupId]) // Prevent duplicate invites to same email for same group
 }
 
