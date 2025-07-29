@@ -138,20 +138,6 @@ export default function PricingSection() {
         <circle cx="80%" cy="80%" r="1" fill={colors[200]} opacity="0.3" />
       </svg>
 
-      {/* Corner elements */}
-      <div className="absolute top-8 left-8">
-        <div className="w-2 h-2 opacity-30" style={{ background: colors[200] }}></div>
-      </div>
-      <div className="absolute top-8 right-8">
-        <div className="w-2 h-2 opacity-30" style={{ background: colors[200] }}></div>
-      </div>
-      <div className="absolute bottom-8 left-8">
-        <div className="w-2 h-2 opacity-30" style={{ background: colors[200] }}></div>
-      </div>
-      <div className="absolute bottom-8 right-8">
-        <div className="w-2 h-2 opacity-30" style={{ background: colors[200] }}></div>
-      </div>
-
       <div className="relative z-10 px-8 md:px-16 max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16 md:mb-20">

@@ -60,108 +60,108 @@ export default function FloatingNavbar() {
     }
   };
 
-  useEffect(() => {
-    // Animate hamburger icon
-    if (hamburgerRef.current) {
-      const topBar = hamburgerRef.current.querySelector('.hamburger-top');
-      const middleBar = hamburgerRef.current.querySelector('.hamburger-middle');
-      const bottomBar = hamburgerRef.current.querySelector('.hamburger-bottom');
+  // useEffect(() => {
+  //   // Animate hamburger icon
+  //   if (hamburgerRef.current) {
+  //     const topBar = hamburgerRef.current.querySelector('.hamburger-top');
+  //     const middleBar = hamburgerRef.current.querySelector('.hamburger-middle');
+  //     const bottomBar = hamburgerRef.current.querySelector('.hamburger-bottom');
 
-      if (topBar && middleBar && bottomBar) {
-        if (isMenuOpen) {
-          gsap.to(topBar, { duration: 0.3, y: 9, rotation: 45, transformOrigin: "center" });
-          gsap.to(middleBar, { duration: 0.3, opacity: 0 });
-          gsap.to(bottomBar, { duration: 0.3, y: -9, rotation: -45, transformOrigin: "center" });
-        } else {
-          gsap.to(topBar, { duration: 0.3, y: 0, rotation: 0 });
-          gsap.to(middleBar, { duration: 0.3, opacity: 1 });
-          gsap.to(bottomBar, { duration: 0.3, y: 0, rotation: 0 });
-        }
-      }
-    }
-  }, [isMenuOpen]);
+  //     if (topBar && middleBar && bottomBar) {
+  //       if (isMenuOpen) {
+  //         gsap.to(topBar, { duration: 0.3, y: 9, rotation: 45, transformOrigin: "center" });
+  //         gsap.to(middleBar, { duration: 0.3, opacity: 0 });
+  //         gsap.to(bottomBar, { duration: 0.3, y: -9, rotation: -45, transformOrigin: "center" });
+  //       } else {
+  //         gsap.to(topBar, { duration: 0.3, y: 0, rotation: 0 });
+  //         gsap.to(middleBar, { duration: 0.3, opacity: 1 });
+  //         gsap.to(bottomBar, { duration: 0.3, y: 0, rotation: 0 });
+  //       }
+  //     }
+  //   }
+  // }, [isMenuOpen]);
 
-  useEffect(() => {
-    const nav = navRef.current;
-    const logo = logoRef.current;
-    const links = linksRef.current;
-    const buttons = buttonsRef.current;
+  // useEffect(() => {
+  //   const nav = navRef.current;
+  //   const logo = logoRef.current;
+  //   const links = linksRef.current;
+  //   const buttons = buttonsRef.current;
 
-    if (!nav || !logo || !links || !buttons) return;
+  //   if (!nav || !logo || !links || !buttons) return;
 
-    // Initial animation - navbar entrance
-    gsap.set(nav, { y: -100, opacity: 0 });
-    gsap.set([logo, links, buttons], { y: 20, opacity: 0 });
-    gsap.set(dotsRef.current, { scale: 0, opacity: 0 });
+  //   // Initial animation - navbar entrance
+  //   gsap.set(nav, { y: -100, opacity: 0 });
+  //   gsap.set([logo, links, buttons], { y: 20, opacity: 0 });
+  //   gsap.set(dotsRef.current, { scale: 0, opacity: 0 });
 
-    // Animate navbar entrance
-    const tl = gsap.timeline({ delay: 0.5 });
-    tl.to(nav, { duration: 0.8, y: 0, opacity: 1, ease: "back.out(1.7)" })
-      .to(logo, { duration: 0.6, y: 0, opacity: 1, ease: "power2.out" }, "-=0.4")
-      .to(links, { duration: 0.6, y: 0, opacity: 1, ease: "power2.out" }, "-=0.5")
-      .to(buttons, { duration: 0.6, y: 0, opacity: 1, ease: "power2.out" }, "-=0.5")
-      .to(dotsRef.current, {
-        duration: 0.4,
-        scale: 1,
-        opacity: 1,
-        ease: "back.out(1.7)",
-        stagger: 0.1
-      }, "-=0.3");
+  //   // Animate navbar entrance
+  //   const tl = gsap.timeline({ delay: 0.5 });
+  //   tl.to(nav, { duration: 0.8, y: 0, opacity: 1, ease: "back.out(1.7)" })
+  //     .to(logo, { duration: 0.6, y: 0, opacity: 1, ease: "power2.out" }, "-=0.4")
+  //     .to(links, { duration: 0.6, y: 0, opacity: 1, ease: "power2.out" }, "-=0.5")
+  //     .to(buttons, { duration: 0.6, y: 0, opacity: 1, ease: "power2.out" }, "-=0.5")
+  //     .to(dotsRef.current, {
+  //       duration: 0.4,
+  //       scale: 1,
+  //       opacity: 1,
+  //       ease: "back.out(1.7)",
+  //       stagger: 0.1
+  //     }, "-=0.3");
 
-    // Scroll-based animations
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const newIsScrolled = scrollY > 50;
+  //   // Scroll-based animations
+  //   const handleScroll = () => {
+  //     const scrollY = window.scrollY;
+  //     const newIsScrolled = scrollY > 50;
 
-      if (newIsScrolled !== isScrolled) {
-        setIsScrolled(newIsScrolled);
+  //     if (newIsScrolled !== isScrolled) {
+  //       setIsScrolled(newIsScrolled);
 
-        if (newIsScrolled) {
-          gsap.to(nav, {
-            duration: 0.3,
-            scale: 0.95,
-            y: -5,
-            boxShadow: "0 12px 40px rgba(0, 0, 0, 0.4)",
-            ease: "power2.out"
-          });
-        } else {
-          gsap.to(nav, {
-            duration: 0.3,
-            scale: 1,
-            y: 0,
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-            ease: "power2.out"
-          });
-        }
-      }
-    };
+  //       if (newIsScrolled) {
+  //         gsap.to(nav, {
+  //           duration: 0.3,
+  //           scale: 0.95,
+  //           y: -5,
+  //           boxShadow: "0 12px 40px rgba(0, 0, 0, 0.4)",
+  //           ease: "power2.out"
+  //         });
+  //       } else {
+  //         gsap.to(nav, {
+  //           duration: 0.3,
+  //           scale: 1,
+  //           y: 0,
+  //           boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+  //           ease: "power2.out"
+  //         });
+  //       }
+  //     }
+  //   };
 
-    // Floating animation for dots
-    dotsRef.current.forEach((dot, index) => {
-      if (dot) {
-        gsap.to(dot, {
-          duration: 2 + index * 0.5,
-          y: "random(-3, 3)",
-          rotation: "random(-5, 5)",
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-          delay: index * 0.2
-        });
-      }
-    });
+  //   // Floating animation for dots
+  //   dotsRef.current.forEach((dot, index) => {
+  //     if (dot) {
+  //       gsap.to(dot, {
+  //         duration: 2 + index * 0.5,
+  //         y: "random(-3, 3)",
+  //         rotation: "random(-5, 5)",
+  //         repeat: -1,
+  //         yoyo: true,
+  //         ease: "sine.inOut",
+  //         delay: index * 0.2
+  //       });
+  //     }
+  //   });
 
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-    };
-  }, [isScrolled]);
+  //   window.addEventListener("scroll", handleScroll);
+  //   return () => {
+  //     window.removeEventListener("scroll", handleScroll);
+  //     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+  //   };
+  // }, [isScrolled]);
 
   return (
     <nav
       ref={navRef}
-      className="fixed top-12 left-1/2 transform -translate-x-1/2 z-50 w-full px-4"
+      className="fixed top-12 left-1/2 transform -translate-x-1/2 z-50 w-full px-4 max-w-7xl mx-auto"
     >
       <div
         className="w-full max-w-7xl mx-auto rounded-sm relative px-4 sm:px-8 py-4 border border-border shadow-lg"

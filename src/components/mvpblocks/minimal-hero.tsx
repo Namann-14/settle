@@ -101,17 +101,6 @@ export default function MinimalHero() {
         opacity: 1,
         ease: "back.out(2.5)"
       }, index * 0.1 + 3);
-
-      // Add floating animation to dots
-      gsap.to(dot, {
-        duration: 3 + index * 0.5,
-        y: "random(-2, 2)",
-        rotation: "random(-15, 15)",
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        delay: 4 + index * 0.2
-      });
     });
 
     // Animate corner elements
@@ -256,27 +245,11 @@ export default function MinimalHero() {
         <line x1="0" y1="80%" x2="100%" y2="80%" className="grid-line" style={{ animationDelay: "1s" }} />
         <line x1="20%" y1="0" x2="20%" y2="100%" className="grid-line" style={{ animationDelay: "1.5s" }} />
         <line x1="80%" y1="0" x2="80%" y2="100%" className="grid-line" style={{ animationDelay: "2s" }} />
-        <line
-          x1="50%"
-          y1="0"
-          x2="50%"
-          y2="100%"
-          className="grid-line"
-          style={{ animationDelay: "2.5s", opacity: 0.05 }}
-        />
-        <line
-          x1="0"
-          y1="50%"
-          x2="100%"
-          y2="50%"
-          className="grid-line"
-          style={{ animationDelay: "3s", opacity: 0.05 }}
-        />
-        <circle cx="20%" cy="20%" r="2" className="detail-dot" style={{ animationDelay: "3s" }} />
-        <circle cx="80%" cy="20%" r="2" className="detail-dot" style={{ animationDelay: "3.2s" }} />
-        <circle cx="20%" cy="80%" r="2" className="detail-dot" style={{ animationDelay: "3.4s" }} />
-        <circle cx="80%" cy="80%" r="2" className="detail-dot" style={{ animationDelay: "3.6s" }} />
-        <circle cx="50%" cy="50%" r="1.5" className="detail-dot" style={{ animationDelay: "4s" }} />
+        {/* Dots at line intersections */}
+        <circle cx="20%" cy="20%" r="2" className="detail-dot" style={{ animationDelay: "3s" }} fill={colors[200]} />
+        <circle cx="80%" cy="20%" r="2" className="detail-dot" style={{ animationDelay: "3.2s" }} fill={colors[200]} />
+        <circle cx="20%" cy="80%" r="2" className="detail-dot" style={{ animationDelay: "3.4s" }} fill={colors[200]} />
+        <circle cx="80%" cy="80%" r="2" className="detail-dot" style={{ animationDelay: "3.6s" }} fill={colors[200]} />
       </svg>
 
       {/* Corner elements */}
@@ -293,10 +266,10 @@ export default function MinimalHero() {
         ></div>
       </div>
       <div className="corner-element bottom-8 left-8" style={{ animationDelay: "4.4s" }}>
-      <div
-        className="absolute bottom-0 left-0 w-2 h-2 opacity-30"
-        style={{ background: colors[200] }}
-      ></div>
+        <div
+          className="absolute bottom-0 left-0 w-2 h-2 opacity-30"
+          style={{ background: colors[200] }}
+        ></div>
       </div>
       <div className="corner-element bottom-8 right-8" style={{ animationDelay: "4.6s" }}>
         <div
@@ -313,7 +286,7 @@ export default function MinimalHero() {
 
       <div className="relative z-10 flex flex-col justify-between items-center px-8 py-12 md:px-16 md:py-28">
         {/* Top tagline */}
-        <div className="text-center mt-20">
+        <div className="text-center mt-22">
           <h2
             className="text-xs md:text-sm font-mono font-light uppercase tracking-[0.2em] opacity-80 text-primary"
           >
@@ -427,10 +400,10 @@ export default function MinimalHero() {
         </div>
 
         {/* Bottom tagline */}
-        <div className="text-center">
-          <div
+        <div className="text-center mt-2">
+          {/* <div
             className="mb-4 w-16 h-px opacity-30 bg-primary mx-auto"
-          ></div>
+          ></div> */}
           <h2
             className="text-xs md:text-sm font-mono font-light uppercase tracking-[0.2em] opacity-80 text-primary"
           >
@@ -477,14 +450,6 @@ export default function MinimalHero() {
         </div>
       </div>
       <Example />
-      <div
-        id="mouse-gradient"
-        ref={gradientRef}
-        className="fixed pointer-events-none w-96 h-96 rounded-full blur-3xl transition-all duration-500 ease-out opacity-0"
-        style={{
-          background: `radial-gradient(circle, ${colors[500]}0D 0%, transparent 100%)`,
-        }}
-      ></div>
     </div>
   );
 }
