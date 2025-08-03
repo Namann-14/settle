@@ -16,45 +16,6 @@ const colors = {
   900: "#0f172a",
 };
 
-const features = [
-  {
-    icon: Users,
-    title: "Group Management",
-    description: "Create and manage expense groups for friends, roommates, travel companions, or any shared activities.",
-    delay: 0
-  },
-  {
-    icon: Receipt,
-    title: "Smart Receipt Scanning",
-    description: "Upload receipts and let AI extract expense details automatically. No more manual data entry.",
-    delay: 200
-  },
-  {
-    icon: Calculator,
-    title: "Flexible Splitting",
-    description: "Split expenses equally, by percentage, or custom amounts. Handle complex scenarios effortlessly.",
-    delay: 400
-  },
-  {
-    icon: Shield,
-    title: "Secure & Private",
-    description: "Your financial data is encrypted and secure. We prioritize your privacy above everything else.",
-    delay: 600
-  },
-  {
-    icon: Smartphone,
-    title: "Mobile Optimized",
-    description: "Access your expenses anywhere, anytime. Fully responsive design that works on all devices.",
-    delay: 800
-  },
-  {
-    icon: Zap,
-    title: "Instant Settlements",
-    description: "Clear dashboard shows who owes what. Settle debts quickly and transparently.",
-    delay: 1000
-  }
-];
-
 export default function FeaturesSection() {
   return (
     <div

@@ -193,7 +193,7 @@ export default function ValuePropositionSection() {
                       className="text-2xl font-bold mb-2"
                       style={{ color: colors[300] }}
                     >
-                      "
+                      &ldquo;
                     </div>
                     <p className="text-foreground leading-relaxed italic">
                       {testimonial.quote}
