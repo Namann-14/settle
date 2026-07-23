@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.5.22",
     "@settle/env": "*",
     "@settle/ui": "*",
     "@swc/helpers": "^0.5.23",
