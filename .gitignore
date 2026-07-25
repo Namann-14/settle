@@ -72,3 +72,5 @@ env/
 tmp
 temp
 
+# Editors
+.freebuff
