@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from app.controllers import ConflictError, UserNotFoundError
+from app.controllers.exceptions import ConflictError, UserNotFoundError
 from app.models.user import User
 
 from app.repositories import user as user_repo

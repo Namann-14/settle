@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import users
+from app.routes import users, expenses, groups, settlements, categories
 
 app = FastAPI()
 
@@ -24,3 +24,7 @@ def health():
 
 
 app.include_router(users.router)
+app.include_router(expenses.router)
+app.include_router(groups.router)
+app.include_router(settlements.router)
+app.include_router(categories.router)

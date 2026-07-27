@@ -18,8 +18,8 @@ class ExpenseCreate(BaseModel):
     split_type: SplitType
     group_id: UUID | None = None
     category_id: UUID | None = None
-    paid_by_id: UUID
-    created_by_id: UUID
+    paid_by_id: UUID | None = None
+    created_by_id: UUID | None = None
     splits: list[ExpenseSplitCreate] = Field(default_factory=list)
 
 

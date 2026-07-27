@@ -28,7 +28,7 @@ def get_user_groups(db: Session, user_id: UUID, include_deleted: bool = False) -
     if not include_deleted:
         stmt = stmt.where(Group.deleted_at.is_(None))
     stmt = stmt.order_by(Group.created_at.desc())
-    return list(db.execute(stmt).scalars().all())
+    return list(db.execute(stmt).scalars().unique().all())
 
 
 def create_group(db: Session, schema: GroupCreate) -> Group:

@@ -13,7 +13,7 @@ class SettlementCreate(BaseModel):
     group_id: UUID | None = None
     paid_by_id: UUID
     received_by_id: UUID
-    created_by_id: UUID
+    created_by_id: UUID | None = None
 
 
 class SettlementUpdate(BaseModel):

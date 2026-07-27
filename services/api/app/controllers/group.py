@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.controllers import (
+from app.controllers.exceptions import (
     ConflictError,
     GroupNotFoundError,
     PermissionDeniedError,

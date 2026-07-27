@@ -10,7 +10,7 @@ class GroupCreate(BaseModel):
     name: str = Field(..., max_length=255)
     description: str | None = None
     default_currency: str = Field(default="INR", min_length=3, max_length=3)
-    created_by_id: UUID
+    created_by_id: UUID | None = None
 
 
 class GroupUpdate(BaseModel):

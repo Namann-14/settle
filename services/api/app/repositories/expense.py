@@ -33,7 +33,7 @@ def get_user_expenses(
     if not include_deleted:
         stmt = stmt.where(Expense.deleted_at.is_(None))
     stmt = stmt.order_by(Expense.date.desc(), Expense.created_at.desc()).offset(skip).limit(limit)
-    return list(db.execute(stmt).scalars().all())
+    return list(db.execute(stmt).scalars().unique().all())
 
 
 def get_group_expenses(
@@ -47,7 +47,7 @@ def get_group_expenses(
     if not include_deleted:
         stmt = stmt.where(Expense.deleted_at.is_(None))
     stmt = stmt.order_by(Expense.date.desc(), Expense.created_at.desc()).offset(skip).limit(limit)
-    return list(db.execute(stmt).scalars().all())
+    return list(db.execute(stmt).scalars().unique().all())
 
 
 def create_expense(db: Session, schema: ExpenseCreate) -> Expense:
