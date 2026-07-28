@@ -1,1 +1,32 @@
 @import "@settle/ui/globals.css";
+
+@theme inline {
+  --font-display: var(--font-instrument-serif), 'Instrument Serif', serif;
+  --font-body: var(--font-inter), 'Inter', sans-serif;
+  --shadow-dashboard: 0 25px 80px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(var(--y, 10px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp var(--duration, 0.5s) ease-out var(--delay, 0s) forwards;
+  opacity: 0;
+}
+
+.font-display {
+  font-family: var(--font-instrument-serif), 'Instrument Serif', Georgia, serif;
+}
+
+.font-body {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+}
+

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexora - The Future of Smarter Automation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Instrument Serif"', 'serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            primary: {
+              DEFAULT: 'hsl(var(--primary))',
+              foreground: 'hsl(var(--primary-foreground))',
+            },
+            secondary: {
+              DEFAULT: 'hsl(var(--secondary))',
+              foreground: 'hsl(var(--secondary-foreground))',
+            },
+            muted: {
+              DEFAULT: 'hsl(var(--muted))',
+              foreground: 'hsl(var(--muted-foreground))',
+            },
+            accent: {
+              DEFAULT: 'hsl(var(--accent))',
+              foreground: 'hsl(var(--accent-foreground))',
+            },
+            border: 'hsl(var(--border))',
+            ring: 'hsl(var(--ring))',
+          },
+          borderRadius: {
+            DEFAULT: 'var(--radius)',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 210 14% 17%;
+      --primary: 210 14% 17%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 0 0% 96%;
+      --secondary-foreground: 0 0% 9%;
+      --muted: 0 0% 96%;
+      --muted-foreground: 184 5% 55%;
+      --accent: 239 84% 67%;
+      --accent-foreground: 0 0% 100%;
+      --border: 0 0% 90%;
+      --ring: 239 84% 67%;
+      --radius: 0.5rem;
+      --font-display: 'Instrument Serif', serif;
+      --font-body: 'Inter', sans-serif;
+      --shadow-dashboard: 0 25px 80px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(var(--y, 10px));
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-up {
+      animation: fadeUp var(--duration, 0.5s) ease-out var(--delay, 0s) forwards;
+      opacity: 0;
+    }
+
+    .font-display {
+      font-family: 'Instrument Serif', serif;
+    }
+
+    .font-body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="h-screen flex flex-col bg-background overflow-hidden font-body">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Icons
+    const PlayIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <polygon points="5 3 19 12 5 21 5 3" />
+      </svg>
+    );
+
+    const SearchIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+      </svg>
+    );
+
+    const BellIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+      </svg>
+    );
+
+    const ChevronDownIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    );
+
+    const CheckIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    );
+
+    const PlusIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M5 12h14" /><path d="M12 5v14" />
+      </svg>
+    );
+
+    const MoreVerticalIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
+      </svg>
+    );
+
+    const HomeIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    );
+
+    const ClipboardIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      </svg>
+    );
+
+    const ArrowLeftRightIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M8 3 4 7l4 4" /><path d="M4 7h16" /><path d="m16 21 4-4-4-4" /><path d="M20 17H4" />
+      </svg>
+    );
+
+    const CreditCardIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
+      </svg>
+    );
+
+    const LandmarkIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M8 21h8" /><path d="M12 3v18" /><path d="M4 9l8-6 8 6" /><path d="M4 21h16" />
+      </svg>
+    );
+
+    const SettingsIcon = ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" />
+      </svg>
+    );
+
+    const Navbar = () => (
+      <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body">
+        <div className="flex items-center gap-1">
+          <span className="text-xl font-semibold tracking-tight text-foreground">✦ Nexora</span>
+        </div>
+        <div className="hidden md:flex items-center gap-8">
+          <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Home</a>
+          <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+          <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About</a>
+          <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</a>
+        </div>
+        <button className="rounded-full px-5 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+          Get Started
+        </button>
+      </nav>
+    );
+
+    const Chart = () => (
+      <svg viewBox="0 0 400 80" className="h-20 w-full" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(239 84% 67%)" stopOpacity="0.15"/>
+            <stop offset="100%" stopColor="hsl(239 84% 67%)" stopOpacity="0"/>
+          </linearGradient>
+        </defs>
+        <path 
+          d="M0,60 C30,55 50,30 80,35 C110,40 130,20 160,25 C190,30 210,15 240,20 C270,25 290,10 320,15 C350,20 380,5 400,10 L400,80 L0,80 Z" 
+          fill="url(#chartGradient)"
+        />
+        <path 
+          d="M0,60 C30,55 50,30 80,35 C110,40 130,20 160,25 C190,30 210,15 240,20 C270,25 290,10 320,15 C350,20 380,5 400,10" 
+          fill="none" 
+          stroke="hsl(239 84% 67%)" 
+          strokeWidth="1.5"
+        />
+      </svg>
+    );
+
+    const Dashboard = () => (
+      <div className="mt-8 w-full max-w-5xl select-none pointer-events-none">
+        <div 
+          className="rounded-2xl overflow-hidden p-3 md:p-4"
+          style={{
+            background: 'rgba(255, 255, 255, 0.4)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            boxShadow: 'var(--shadow-dashboard)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+          }}
+        >
+          <div className="bg-background rounded-xl overflow-hidden">
+            {/* Top Bar */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
+                    <span className="text-[10px] font-semibold text-primary-foreground">N</span>
+                  </div>
+                  <span className="text-[11px] font-medium text-foreground">Nexora</span>
+                  <ChevronDownIcon className="w-3 h-3 text-muted-foreground" />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary text-[11px] text-muted-foreground">
+                  <SearchIcon className="w-3 h-3" />
+                  <span>Search</span>
+                  <span className="text-[10px] px-1 py-0.5 rounded bg-background border border-border">⌘K</span>
+                </div>
+                <button className="text-[11px] font-medium text-foreground px-3 py-1.5 rounded-md hover:bg-secondary transition-colors">
+                  Move Money
+                </button>
+                <button className="p-1.5 rounded-md hover:bg-secondary transition-colors">
+                  <BellIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                  <span className="text-[9px] font-medium text-primary-foreground">JB</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex">
+              {/* Sidebar */}
+              <div className="w-40 border-r border-border py-3 px-2">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-secondary/50 text-[11px] font-medium text-foreground">
+                    <HomeIcon className="w-3.5 h-3.5" />
+                    <span>Home</span>
+                  </div>
+                  <div className="flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <ClipboardIcon className="w-3.5 h-3.5" />
+                      <span>Tasks</span>
+                    </div>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-secondary text-foreground font-medium">10</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                    <ArrowLeftRightIcon className="w-3.5 h-3.5" />
+                    <span>Transactions</span>
+                  </div>
+                  <div className="flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <CreditCardIcon className="w-3.5 h-3.5" />
+                      <span>Payments</span>
+                    </div>
+                    <ChevronDownIcon className="w-3 h-3" />
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                    <CreditCardIcon className="w-3.5 h-3.5" />
+                    <span>Cards</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                    <LandmarkIcon className="w-3.5 h-3.5" />
+                    <span>Capital</span>
+                  </div>
+                  <div className="flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <LandmarkIcon className="w-3.5 h-3.5" />
+                      <span>Accounts</span>
+                    </div>
+                    <ChevronDownIcon className="w-3 h-3" />
+                  </div>
+                </div>
+                <div className="mt-4 px-2">
+                  <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Workflows</p>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                      <span>Trake rutes</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                      <span>Payments</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                      <span>Notifications</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary/30 text-[11px] text-muted-foreground">
+                      <SettingsIcon className="w-3.5 h-3.5" />
+                      <span>Settings</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Content */}
+              <div className="flex-1 bg-secondary/30 p-4">
+                <p className="text-sm font-semibold text-foreground mb-3">Welcome, Jane</p>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
+                  <button className="rounded-full px-3 py-1.5 text-[10px] font-medium bg-accent text-accent-foreground">
+                    Send
+                  </button>
+                  <button className="rounded-full px-3 py-1.5 text-[10px] font-medium bg-background border border-border text-foreground hover:bg-secondary/50">
+                    Request
+                  </button>
+                  <button className="rounded-full px-3 py-1.5 text-[10px] font-medium bg-background border border-border text-foreground hover:bg-secondary/50">
+                    Transfer
+                  </button>
+                  <button className="rounded-full px-3 py-1.5 text-[10px] font-medium bg-background border border-border text-foreground hover:bg-secondary/50">
+                    Deposit
+                  </button>
+                  <button className="rounded-full px-3 py-1.5 text-[10px] font-medium bg-background border border-border text-foreground hover:bg-secondary/50">
+                    Pay Bill
+                  </button>
+                  <button className="rounded-full px-3 py-1.5 text-[10px] font-medium bg-background border border-border text-foreground hover:bg-secondary/50">
+                    Create Invoice
+                  </button>
+                  <span className="text-[10px] text-muted-foreground ml-1">Customize</span>
+                </div>
+
+                {/* Cards Row */}
+                <div className="flex gap-3 mb-4">
+                  {/* Balance Card */}
+                  <div className="flex-1 basis-0 bg-background rounded-xl p-3 border border-border">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="text-[11px] font-medium text-foreground">Mercury Balance</span>
+                      <CheckIcon className="w-3 h-3 text-green-500" />
+                    </div>
+                    <div className="flex items-baseline gap-0.5 mb-2">
+                      <span className="text-lg font-semibold text-foreground">$8,450,190</span>
+                      <span className="text-xs text-muted-foreground">.32</span>
+                    </div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div>
+                        <p className="text-[9px] text-muted-foreground">Last 30 Days</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-medium text-green-600">+$1.8M</span>
+                        <span className="text-[10px] font-medium text-red-500">-$900K</span>
+                      </div>
+                    </div>
+                    <Chart />
+                  </div>
+
+                  {/* Accounts Card */}
+                  <div className="flex-1 basis-0 bg-background rounded-xl p-3 border border-border">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[11px] font-medium text-foreground">Accounts</span>
+                      <div className="flex items-center gap-1">
+                        <PlusIcon className="w-3 h-3 text-muted-foreground" />
+                        <MoreVerticalIcon className="w-3 h-3 text-muted-foreground" />
+                      </div>
+                    </div>
+                    <div className="space-y-0">
+                      <div className="flex items-center justify-between py-3 text-xs">
+                        <span className="text-muted-foreground">Credit</span>
+                        <span className="font-medium text-foreground">$98,125.50</span>
+                      </div>
+                      <div className="flex items-center justify-between py-3 text-xs">
+                        <span className="text-muted-foreground">Treasury</span>
+                        <span className="font-medium text-foreground">$6,750,200.00</span>
+                      </div>
+                      <div className="flex items-center justify-between py-3 text-xs">
+                        <span className="text-muted-foreground">Operations</span>
+                        <span className="font-medium text-foreground">$1,592,864.82</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transactions Table */}
+                <div className="bg-background rounded-xl p-3 border border-border">
+                  <p className="text-[11px] font-medium text-foreground mb-2">Recent Transactions</p>
+                  <table className="w-full text-[11px]">
+                    <thead>
+                      <tr className="text-muted-foreground border-b border-border">
+                        <th className="text-left py-1.5 font-normal">Date</th>
+                        <th className="text-left py-1.5 font-normal">Description</th>
+                        <th className="text-right py-1.5 font-normal">Amount</th>
+                        <th className="text-right py-1.5 font-normal">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-border/50">
+                        <td className="py-2 text-muted-foreground">Mar 15</td>
+                        <td className="py-2 text-foreground">AWS</td>
+                        <td className="py-2 text-right text-foreground">-$5,200</td>
+                        <td className="py-2 text-right">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100">Pending</span>
+                        </td>
+                      </tr>
+                      <tr className="border-b border-border/50">
+                        <td className="py-2 text-muted-foreground">Mar 14</td>
+                        <td className="py-2 text-foreground">Client Payment</td>
+                        <td className="py-2 text-right text-foreground">+$125,000</td>
+                        <td className="py-2 text-right">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-100">Completed</span>
+                        </td>
+                      </tr>
+                      <tr className="border-b border-border/50">
+                        <td className="py-2 text-muted-foreground">Mar 12</td>
+                        <td className="py-2 text-foreground">Payroll</td>
+                        <td className="py-2 text-right text-foreground">-$85,450</td>
+                        <td className="py-2 text-right">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border">Completed</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-muted-foreground">Mar 10</td>
+                        <td className="py-2 text-foreground">Office Supplies</td>
+                        <td className="py-2 text-right text-foreground">-$1,200</td>
+                        <td className="py-2 text-right">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border">Completed</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    const App = () => {
+      return (
+        <>
+          {/* Background Video */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover z-0"
+          >
+            <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4" type="video/mp4" />
+          </video>
+
+          <Navbar />
+
+          {/* Hero Section */}
+          <section className="relative z-10 flex flex-col items-center w-full flex-1 overflow-hidden px-4">
+            {/* Badge */}
+            <div 
+              className="animate-fade-up inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-sm text-muted-foreground font-body mb-6"
+              style={{ '--y': '10px', '--duration': '0.5s', '--delay': '0s' }}
+            >
+              <span>Now with GPT-5 support</span>
+              <span>✨</span>
+            </div>
+
+            {/* Headline */}
+            <h1 
+              className="animate-fade-up text-center font-display text-5xl md:text-6xl lg:text-[5rem] leading-[0.95] tracking-tight text-foreground max-w-xl"
+              style={{ '--y': '16px', '--duration': '0.6s', '--delay': '0.1s' }}
+            >
+              The Future of <em className="not-italic font-display italic">Smarter</em> Automation
+            </h1>
+
+            {/* Subheadline */}
+            <p 
+              className="animate-fade-up mt-4 text-center text-base md:text-lg text-muted-foreground max-w-[650px] leading-relaxed font-body"
+              style={{ '--y': '16px', '--duration': '0.6s', '--delay': '0.2s' }}
+            >
+              Automate your busywork with intelligent agents that learn, adapt, and execute—so your team can focus on what matters most.
+            </p>
+
+            {/* CTA Buttons */}
+            <div 
+              className="animate-fade-up mt-5 flex items-center gap-3"
+              style={{ '--y': '16px', '--duration': '0.6s', '--delay': '0.3s' }}
+            >
+              <button className="rounded-full px-6 py-3 text-sm font-medium font-body bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                Book a demo
+              </button>
+              <button 
+                className="h-11 w-11 rounded-full border-0 bg-background flex items-center justify-center hover:bg-background/80 transition-colors"
+                style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+              >
+                <PlayIcon className="h-4 w-4 fill-foreground text-foreground" />
+              </button>
+            </div>
+
+            {/* Dashboard */}
+            <div 
+              className="animate-fade-up w-full flex justify-center"
+              style={{ '--y': '30px', '--duration': '0.8s', '--delay': '0.5s' }}
+            >
+              <Dashboard />
+            </div>
+          </section>
+        </>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
