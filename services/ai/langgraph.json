@@ -1,0 +1,8 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "chat_agent": "./app/agents/chat_agent/graph.py:graph",
+    "expense_extraction_agent": "./app/agents/expense_extraction_agent/graph.py:graph"
+  },
+  "env": ".env"
+}
