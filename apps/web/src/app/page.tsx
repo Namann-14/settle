@@ -19,6 +19,13 @@ import {
   X,
 } from "lucide-react";
 
+import { AiSpotlight } from "@/components/landing/ai-spotlight";
+import { Faq } from "@/components/landing/faq";
+import { Features, TrustStrip } from "@/components/landing/features";
+import { FinalCta, Footer } from "@/components/landing/footer";
+import { HowItWorks, SettleShowcase } from "@/components/landing/how-it-works";
+import { Pricing } from "@/components/landing/pricing";
+
 // Navbar Component
 function Navbar({ onOpenDemo }: { onOpenDemo: () => void }) {
   return (
@@ -428,6 +435,8 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-background overflow-x-hidden font-body">
+      {/* Hero wrapper keeps the background video scoped to the hero */}
+      <div className="relative min-h-screen flex flex-col">
       {/* Background Video */}
       <video
         autoPlay
@@ -533,6 +542,17 @@ export default function Home() {
           <Dashboard />
         </div>
       </main>
+      </div>
+
+      <TrustStrip />
+      <Features />
+      <HowItWorks />
+      <SettleShowcase />
+      <AiSpotlight />
+      <Pricing />
+      <Faq />
+      <FinalCta />
+      <Footer />
 
       {/* Demo Modal */}
       {showDemoModal && (
