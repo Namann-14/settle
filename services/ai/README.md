@@ -75,14 +75,15 @@ dependency bump, set both `LANGSMITH_*` and `LANGCHAIN_*` again.)
    The receipt-text → draft half of the pipeline is fully built — enabling a
    provider later (`app/llm/vision.py`) is a config change, not a feature
    build.
-2. **Chat memory is in-process only.** `InMemorySaver` dies on restart and
-   does not work across multiple uvicorn workers. Run with `--workers 1`
-   until it's swapped for a Postgres-backed checkpointer — that's a small
-   change localized to `app/agents/chat_agent/graph.py`; nothing else
-   changes.
-3. **Chat/draft history isn't durably persisted.** `services/api`'s
-   `chat_conversations`, `chat_messages`, and `ai_expense_drafts` tables stay
-   unused this pass.
+2. **Chat persistence needs `DATABASE_URL`.** With it, chat memory is a
+   Postgres LangGraph checkpointer and display history lives in
+   `ai_chat_threads` / `ai_chat_messages` (`app/db/`), both created on
+   startup. Without it, chats fall back to in-process memory (lost on
+   restart, single worker only) and the history endpoints return nothing.
+3. **Draft history isn't durably persisted.** `services/api`'s
+   `ai_expense_drafts` table stays unused, as do its `chat_conversations` /
+   `chat_messages` tables — chat history is owned by this service instead,
+   next to the checkpoints it has to stay consistent with.
 4. **Participant name resolution** depends on `GroupMemberResponse.user_name`
    / `user_email` (added to `services/api` alongside this service). On an
    unpatched `services/api`, everyone but the speaker resolves to

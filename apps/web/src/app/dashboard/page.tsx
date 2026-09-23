@@ -1,5 +1,6 @@
-import { Gauge, PiggyBank } from "lucide-react";
+import { Gauge } from "lucide-react";
 
+import { AskAiCard } from "@/components/dashboard/ask-ai-card";
 import { CostAnalysisCard, SpendChartCard } from "@/components/dashboard/chart-cards";
 import { DashboardPlaceholderCard } from "@/components/dashboard/dashboard-placeholder-card";
 import { GroupsCard } from "@/components/dashboard/groups-card";
@@ -29,11 +30,7 @@ export default function DashboardPage() {
         description="Overall balance health across your groups."
         icon={Gauge}
       />
-      <DashboardPlaceholderCard
-        title="Monthly spending limit"
-        description="Set and track a monthly budget."
-        icon={PiggyBank}
-      />
+      <AskAiCard />
 
       <div className="lg:col-span-2">
         <RecentSettlementsCard />

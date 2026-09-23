@@ -11,6 +11,12 @@
           "service": "api",
           "format": "url",
           "env": "BACKEND_URL"
+        },
+        {
+          "type": "service",
+          "service": "ai",
+          "format": "url",
+          "env": "AI_SERVICE_URL"
         }
       ]
     },

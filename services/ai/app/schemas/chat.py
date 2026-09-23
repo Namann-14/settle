@@ -8,6 +8,13 @@ class ChatRequest(BaseModel):
     conversation_id: str | None = Field(
         default=None, description="Omit to start a new conversation"
     )
+    checkpoint_id: str | None = Field(
+        default=None,
+        description=(
+            "Resume from this checkpoint of the conversation instead of its latest "
+            "state, forking the thread — used to restore an earlier point in the chat"
+        ),
+    )
 
 
 class ToolCallTrace(BaseModel):

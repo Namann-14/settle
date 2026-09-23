@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.errors import ApiError, CapabilityUnavailable, OcrError
+from app.db.persistence import close_persistence, init_persistence
 from app.routes import router
 from app.services.api_client import close_http_client, init_http_client
 
@@ -13,7 +14,9 @@ from app.services.api_client import close_http_client, init_http_client
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_http_client()
+    await init_persistence()
     yield
+    await close_persistence()
     await close_http_client()
 
 

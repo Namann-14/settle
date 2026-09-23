@@ -1,9 +1,9 @@
-from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from app.agents.chat_agent.nodes import call_model
 from app.agents.chat_agent.state import ChatAgentState
+from app.db.persistence import get_checkpointer
 from app.services.context import RequestContext
 from app.tools import CHAT_TOOLS
 
@@ -22,9 +22,17 @@ def build_graph(checkpointer=None):
     return builder.compile(checkpointer=checkpointer)
 
 
-# Module-level singleton: the checkpointer must be shared across requests,
-# otherwise every request would get a fresh, empty memory. This is
-# single-process only (see README) — run uvicorn with --workers 1 until it's
-# swapped for a Postgres-backed checkpointer.
-CHECKPOINTER = InMemorySaver()
-graph = build_graph(checkpointer=CHECKPOINTER)
+# For LangGraph Studio (langgraph.json), which supplies its own persistence.
+graph = build_graph()
+
+_chat_graph = None
+
+
+def get_chat_graph():
+    """The graph the chat routes run, bound to the app's checkpointer
+    (Postgres, or in-memory without DATABASE_URL). Built on first use because
+    the checkpointer only exists once the app lifespan has started."""
+    global _chat_graph
+    if _chat_graph is None:
+        _chat_graph = build_graph(checkpointer=get_checkpointer())
+    return _chat_graph

@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     api_service_url: str = "http://localhost:8000"
     api_request_timeout_s: float = 30.0
 
+    # Postgres for chat persistence (LangGraph checkpoints + chat history).
+    # Can be the same database services/api uses; tables don't overlap. Empty
+    # falls back to in-process memory: chats vanish on restart and history
+    # endpoints return nothing.
+    database_url: str = ""
+
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
     # path prefix the service is mounted under; Vercel forwards the full public
