@@ -124,8 +124,8 @@ export function ChatPanel({
 
   const focusInput = () => textareaRef.current?.focus();
 
-  // The new-chat route mints a fresh id and redirects to it.
-  const newChat = () => router.push("/dashboard/chat");
+  // New chats start from the dashboard home composer.
+  const newChat = () => router.push("/dashboard");
 
   const copyLastResponse = async () => {
     const last = messages.findLast((m) => m.role === "assistant");

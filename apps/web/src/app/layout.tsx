@@ -13,6 +13,8 @@ const instrumentSerif = Instrument_Serif({
 
 const inter = Inter({
   subsets: ["latin"],
+  // Optical size, for the dashboard home's display text ("opsz" 32).
+  axes: ["opsz"],
   variable: "--font-inter",
 });
 

@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Users,
-  Receipt,
   HandCoins,
-  Sparkles,
+  LayoutDashboard,
+  Receipt,
+  SquarePen,
+  Users,
 } from "lucide-react";
 
 import {
@@ -17,14 +17,13 @@ import {
   SidebarMenuItem,
 } from "@settle/ui/components/sidebar";
 
-// Only "Dashboard" and "AI Assistant" are real routes — the other three are
-// intentionally not built yet, and typedRoutes would reject linking to
-// pages that don't exist. Rendered as disabled "coming soon" items instead
-// of dead links, consistent with the same pattern used for search/
-// notifications/settle-up elsewhere in this dashboard.
+// Groups, Expenses and Settlements are intentionally not built yet, and
+// typedRoutes would reject linking to pages that don't exist. Rendered as
+// disabled "coming soon" items instead of dead links, consistent with the
+// same pattern used for search/notifications elsewhere in this dashboard.
 const items = [
-  { title: "Dashboard", url: "/dashboard" as const, icon: LayoutDashboard, enabled: true },
-  { title: "AI Assistant", url: "/dashboard/chat" as const, icon: Sparkles, enabled: true },
+  { title: "New chat", url: "/dashboard" as const, icon: SquarePen, enabled: true },
+  { title: "Overview", url: "/dashboard/overview" as const, icon: LayoutDashboard, enabled: true },
   { title: "Groups", icon: Users, enabled: false },
   { title: "Expenses", icon: Receipt, enabled: false },
   { title: "Settlements", icon: HandCoins, enabled: false },
@@ -41,9 +40,7 @@ export function NavMain() {
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 render={<Link href={item.url} />}
-                isActive={
-                  item.url === "/dashboard" ? pathname === item.url : pathname.startsWith(item.url)
-                }
+                isActive={pathname === item.url}
                 tooltip={item.title}
               >
                 <item.icon />

@@ -11,6 +11,7 @@ import {
   SidebarHeader,
 } from "@settle/ui/components/sidebar";
 
+import { NavChats } from "@/components/dashboard/nav-chats";
 import { NavMain } from "@/components/dashboard/nav-main";
 
 export function AppSidebar() {
@@ -27,6 +28,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <NavMain />
+        <NavChats />
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center gap-2 px-2 py-1.5">
