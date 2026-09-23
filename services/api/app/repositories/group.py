@@ -15,7 +15,7 @@ def get_group_by_id(db: Session, group_id: UUID, include_deleted: bool = False) 
     stmt = select(Group).options(joinedload(Group.members).joinedload(GroupMember.user)).where(Group.id == group_id)
     if not include_deleted:
         stmt = stmt.where(Group.deleted_at.is_(None))
-    return db.execute(stmt).scalar_one_or_none()
+    return db.execute(stmt).scalars().unique().one_or_none()
 
 
 def get_user_groups(db: Session, user_id: UUID, include_deleted: bool = False) -> list[Group]:

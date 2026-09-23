@@ -13,7 +13,7 @@ def get_expense_by_id(db: Session, expense_id: UUID, include_deleted: bool = Fal
     stmt = select(Expense).options(joinedload(Expense.splits)).where(Expense.id == expense_id)
     if not include_deleted:
         stmt = stmt.where(Expense.deleted_at.is_(None))
-    return db.execute(stmt).scalar_one_or_none()
+    return db.execute(stmt).scalars().unique().one_or_none()
 
 
 def get_user_expenses(
