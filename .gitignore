@@ -74,3 +74,9 @@ temp
 
 # Editors
 .freebuff
+# Agent skills (installed locally)
+.agents/
+.claude/skills/
+
+# Local Python installer cache
+services/api/Python/

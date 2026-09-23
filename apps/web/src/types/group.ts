@@ -4,6 +4,8 @@ export interface GroupMember {
   id: string;
   group_id: string;
   user_id: string;
+  user_name?: string | null;
+  user_email?: string | null;
   role: GroupRole;
   removed_at?: string | null;
   created_at: string;

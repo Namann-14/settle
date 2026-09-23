@@ -12,7 +12,7 @@ from app.schemas.group_member import GroupMemberCreate, GroupMemberUpdate
 
 
 def get_group_by_id(db: Session, group_id: UUID, include_deleted: bool = False) -> Group | None:
-    stmt = select(Group).options(joinedload(Group.members)).where(Group.id == group_id)
+    stmt = select(Group).options(joinedload(Group.members).joinedload(GroupMember.user)).where(Group.id == group_id)
     if not include_deleted:
         stmt = stmt.where(Group.deleted_at.is_(None))
     return db.execute(stmt).scalar_one_or_none()
@@ -21,7 +21,7 @@ def get_group_by_id(db: Session, group_id: UUID, include_deleted: bool = False) 
 def get_user_groups(db: Session, user_id: UUID, include_deleted: bool = False) -> list[Group]:
     stmt = (
         select(Group)
-        .options(joinedload(Group.members))
+        .options(joinedload(Group.members).joinedload(GroupMember.user))
         .join(GroupMember, Group.id == GroupMember.group_id)
         .where(GroupMember.user_id == user_id, GroupMember.removed_at.is_(None))
     )

@@ -34,3 +34,11 @@ class GroupMember(UUIDMixin, TimestampMixin, Base):
     # relationships
     group: Mapped["Group"] = relationship(back_populates="members")
     user: Mapped["User"] = relationship(back_populates="memberships")
+
+    @property
+    def user_name(self) -> str | None:
+        return self.user.name if self.user else None
+
+    @property
+    def user_email(self) -> str | None:
+        return self.user.email if self.user else None

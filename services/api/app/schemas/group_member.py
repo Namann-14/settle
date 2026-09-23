@@ -21,6 +21,8 @@ class GroupMemberResponse(BaseModel):
     id: UUID
     group_id: UUID
     user_id: UUID
+    user_name: str | None = None
+    user_email: str | None = None
     role: GroupRole
     removed_at: datetime | None = None
     created_at: datetime
