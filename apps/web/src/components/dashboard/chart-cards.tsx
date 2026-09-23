@@ -2,7 +2,10 @@
 
 import dynamic from "next/dynamic";
 
-import { Skeleton } from "@settle/ui/components/skeleton";
+import {
+  CategoryPanelSkeleton,
+  ChartPanelSkeleton,
+} from "@/components/dashboard/overview-skeleton";
 
 // Chart cards pull in recharts (a genuinely large client-only dependency) —
 // keep them out of the server render entirely and lazy-load on the client.
@@ -10,10 +13,10 @@ import { Skeleton } from "@settle/ui/components/skeleton";
 // disallows it directly inside a Server Component like dashboard/page.tsx.
 export const SpendChartCard = dynamic(
   () => import("@/components/dashboard/spend-chart-card").then((m) => m.SpendChartCard),
-  { ssr: false, loading: () => <Skeleton className="aspect-video w-full" /> },
+  { ssr: false, loading: () => <ChartPanelSkeleton /> },
 );
 
 export const CostAnalysisCard = dynamic(
   () => import("@/components/dashboard/cost-analysis-card").then((m) => m.CostAnalysisCard),
-  { ssr: false, loading: () => <Skeleton className="h-48 w-full" /> },
+  { ssr: false, loading: () => <CategoryPanelSkeleton /> },
 );

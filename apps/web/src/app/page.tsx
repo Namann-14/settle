@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import {
   Play,
@@ -27,7 +28,7 @@ import { HowItWorks, SettleShowcase } from "@/components/landing/how-it-works";
 import { Pricing } from "@/components/landing/pricing";
 
 // Navbar Component
-function Navbar({ onOpenDemo }: { onOpenDemo: () => void }) {
+function Navbar() {
   return (
     <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body">
       <div className="flex items-center gap-1.5 cursor-pointer">
@@ -75,12 +76,12 @@ function Navbar({ onOpenDemo }: { onOpenDemo: () => void }) {
           </SignUpButton>
         </Show>
         <Show when="signed-in">
-          <button
-            onClick={onOpenDemo}
+          <Link
+            href="/dashboard"
             className="rounded-full px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
           >
             Dashboard
-          </button>
+          </Link>
           <UserButton />
         </Show>
       </div>
@@ -436,7 +437,7 @@ export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col bg-background overflow-x-hidden font-body">
       {/* Hero wrapper keeps the background video scoped to the hero */}
-      <div className="relative min-h-screen flex flex-col">
+      <div id="home" className="relative min-h-screen flex flex-col">
       {/* Background Video */}
       <video
         autoPlay
@@ -452,7 +453,7 @@ export default function Home() {
       </video>
 
       {/* Navigation */}
-      <Navbar onOpenDemo={() => setShowDemoModal(true)} />
+      <Navbar />
 
       {/* Hero Section */}
       <main className="relative z-10 flex flex-col items-center w-full flex-1 px-4 pt-4 pb-16">

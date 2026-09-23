@@ -4,19 +4,14 @@ import { useMemo } from "react";
 import { HandCoins } from "lucide-react";
 
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@settle/ui/components/card";
-import {
   Empty,
   EmptyDescription,
   EmptyMedia,
   EmptyTitle,
 } from "@settle/ui/components/empty";
-import { Skeleton } from "@settle/ui/components/skeleton";
 
+import { ListRowsSkeleton } from "@/components/dashboard/overview-skeleton";
+import { Panel, PanelHeader } from "@/components/dashboard/panel";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGroups } from "@/hooks/useGroups";
 import { useSettlements } from "@/hooks/useSettlements";
@@ -47,56 +42,51 @@ export function RecentSettlementsCard() {
   };
 
   const recent = useMemo(
-    () => [...(settlements ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 6),
+    () => [...(settlements ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5),
     [settlements],
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Recent settlements</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex flex-col gap-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full" />
-            ))}
-          </div>
-        ) : isError ? (
-          <Empty>
-            <EmptyMedia variant="icon">
-              <HandCoins />
-            </EmptyMedia>
-            <EmptyTitle>Couldn&apos;t load settlements</EmptyTitle>
-            <EmptyDescription>Try refreshing the page.</EmptyDescription>
-          </Empty>
-        ) : recent.length === 0 ? (
-          <Empty>
-            <EmptyMedia variant="icon">
-              <HandCoins />
-            </EmptyMedia>
-            <EmptyTitle>No settlements yet</EmptyTitle>
-            <EmptyDescription>Payments made to settle a debt will show up here.</EmptyDescription>
-          </Empty>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {recent.map((s) => (
-              <li key={s.id} className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {describe(s.paid_by_id)} → {describe(s.received_by_id)}
-                </span>
-                <span className="font-medium">
-                  {Number(s.amount).toLocaleString(undefined, {
-                    style: "currency",
-                    currency: s.currency,
-                  })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+    <Panel className="h-full">
+      <PanelHeader title="Recent settlements" />
+      {isLoading ? (
+        <ListRowsSkeleton />
+      ) : isError ? (
+        <Empty>
+          <EmptyMedia variant="icon">
+            <HandCoins />
+          </EmptyMedia>
+          <EmptyTitle>Couldn&apos;t load settlements</EmptyTitle>
+          <EmptyDescription>Try refreshing the page.</EmptyDescription>
+        </Empty>
+      ) : recent.length === 0 ? (
+        <Empty>
+          <EmptyMedia variant="icon">
+            <HandCoins />
+          </EmptyMedia>
+          <EmptyTitle>No settlements yet</EmptyTitle>
+          <EmptyDescription>Payments made to settle a debt will show up here.</EmptyDescription>
+        </Empty>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {recent.map((s) => (
+            <li
+              key={s.id}
+              className="flex items-center justify-between gap-3 rounded-lg bg-muted px-3.5 py-2.5 text-sm"
+            >
+              <span className="truncate">
+                {describe(s.paid_by_id)} → {describe(s.received_by_id)}
+              </span>
+              <span className="font-semibold">
+                {Number(s.amount).toLocaleString(undefined, {
+                  style: "currency",
+                  currency: s.currency,
+                })}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
   );
 }
