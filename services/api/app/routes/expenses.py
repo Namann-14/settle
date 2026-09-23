@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.controllers import expense as expense_controller
 from app.dependencies.database import get_db
 from app.models.user import User
+from app.repositories.expense import ExpenseFilters
 from app.routes import get_current_db_user, handle_controller_errors
 from app.schemas.expense import ExpenseCreate, ExpenseResponse, ExpenseUpdate
 
@@ -33,15 +35,24 @@ def list_expenses(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=100),
     group_id: UUID | None = Query(default=None),
+    q: str | None = Query(default=None, max_length=200, description="Search description or merchant"),
+    category_id: UUID | None = Query(default=None),
+    paid_by_id: UUID | None = Query(default=None),
+    date_from: date | None = Query(default=None),
+    date_to: date | None = Query(default=None),
     current_user: User = Depends(get_current_db_user),
     db: Session = Depends(get_db),
 ):
     """
-    List expenses for the authenticated user or for a specific group.
+    List expenses for the authenticated user or for a specific group, with
+    optional search and filters.
     """
+    filters = ExpenseFilters(
+        q=q, category_id=category_id, paid_by_id=paid_by_id, date_from=date_from, date_to=date_to
+    )
     with handle_controller_errors():
         return expense_controller.list_user_expenses(
-            db, current_user, skip=skip, limit=limit, group_id=group_id
+            db, current_user, skip=skip, limit=limit, group_id=group_id, filters=filters
         )
 
 

@@ -25,6 +25,12 @@ def get_group_settlements(
     return list(db.execute(stmt).scalars().all())
 
 
+def get_all_group_settlements(db: Session, group_id: UUID) -> list[Settlement]:
+    """Every settlement in a group, unpaginated — used for balance math."""
+    stmt = select(Settlement).where(Settlement.group_id == group_id)
+    return list(db.execute(stmt).scalars().all())
+
+
 def get_user_settlements(
     db: Session, user_id: UUID, skip: int = 0, limit: int = 50
 ) -> list[Settlement]:

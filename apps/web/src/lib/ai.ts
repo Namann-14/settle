@@ -64,3 +64,21 @@ export function aiErrorStatus(error: unknown): number {
     }
     return 502;
 }
+
+// Keeps 4xx statuses (a bad draft request is the caller's problem) and pulls
+// FastAPI's `detail` out of the body so the UI can show a readable reason.
+export function aiErrorResponse(error: unknown) {
+    console.error(error);
+    let message = error instanceof Error ? error.message : "AI request failed";
+    try {
+        const body = JSON.parse(message);
+        const detail = body?.detail;
+        if (typeof detail === "string") message = detail;
+        else if (typeof detail?.reason === "string") message = detail.reason;
+    } catch {}
+    const status =
+        error instanceof AiServiceError && error.status >= 400 && error.status < 500
+            ? error.status
+            : aiErrorStatus(error);
+    return Response.json({ message }, { status });
+}

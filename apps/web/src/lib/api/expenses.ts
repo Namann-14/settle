@@ -34,6 +34,11 @@ export async function listExpenses(params?: ListExpensesParams): Promise<Expense
   if (params?.group_id) searchParams.set("group_id", params.group_id);
   if (params?.skip !== undefined) searchParams.set("skip", params.skip.toString());
   if (params?.limit !== undefined) searchParams.set("limit", params.limit.toString());
+  if (params?.q) searchParams.set("q", params.q);
+  if (params?.category_id) searchParams.set("category_id", params.category_id);
+  if (params?.paid_by_id) searchParams.set("paid_by_id", params.paid_by_id);
+  if (params?.date_from) searchParams.set("date_from", params.date_from);
+  if (params?.date_to) searchParams.set("date_to", params.date_to);
 
   const queryString = searchParams.toString();
   const url = `/api/expenses${queryString ? `?${queryString}` : ""}`;

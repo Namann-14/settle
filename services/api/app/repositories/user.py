@@ -1,5 +1,5 @@
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -17,8 +17,8 @@ def get_user_by_clerk_id(db: Session, clerk_user_id: str) -> User | None:
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:
-    stmt = select(User).where(User.email == email)
-    return db.execute(stmt).scalar_one_or_none()
+    stmt = select(User).where(func.lower(User.email) == email.lower())
+    return db.execute(stmt).scalars().first()
 
 
 def get_users_by_ids(db: Session, user_ids: list[UUID]) -> list[User]:

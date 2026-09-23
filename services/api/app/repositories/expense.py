@@ -1,12 +1,39 @@
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import date, datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import Select, delete, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.expense import Expense
 from app.models.expense_split import ExpenseSplit
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate
+
+
+@dataclass
+class ExpenseFilters:
+    q: str | None = None
+    category_id: UUID | None = None
+    paid_by_id: UUID | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+
+
+def _apply_filters(stmt: Select, filters: ExpenseFilters | None) -> Select:
+    if filters is None:
+        return stmt
+    if filters.q:
+        pattern = f"%{filters.q.strip()}%"
+        stmt = stmt.where(or_(Expense.description.ilike(pattern), Expense.merchant.ilike(pattern)))
+    if filters.category_id:
+        stmt = stmt.where(Expense.category_id == filters.category_id)
+    if filters.paid_by_id:
+        stmt = stmt.where(Expense.paid_by_id == filters.paid_by_id)
+    if filters.date_from:
+        stmt = stmt.where(Expense.date >= filters.date_from)
+    if filters.date_to:
+        stmt = stmt.where(Expense.date <= filters.date_to)
+    return stmt
 
 
 def get_expense_by_id(db: Session, expense_id: UUID, include_deleted: bool = False) -> Expense | None:
@@ -17,7 +44,12 @@ def get_expense_by_id(db: Session, expense_id: UUID, include_deleted: bool = Fal
 
 
 def get_user_expenses(
-    db: Session, user_id: UUID, skip: int = 0, limit: int = 50, include_deleted: bool = False
+    db: Session,
+    user_id: UUID,
+    skip: int = 0,
+    limit: int = 50,
+    include_deleted: bool = False,
+    filters: ExpenseFilters | None = None,
 ) -> list[Expense]:
     stmt = (
         select(Expense)
@@ -32,12 +64,18 @@ def get_user_expenses(
     )
     if not include_deleted:
         stmt = stmt.where(Expense.deleted_at.is_(None))
+    stmt = _apply_filters(stmt, filters)
     stmt = stmt.order_by(Expense.date.desc(), Expense.created_at.desc()).offset(skip).limit(limit)
     return list(db.execute(stmt).scalars().unique().all())
 
 
 def get_group_expenses(
-    db: Session, group_id: UUID, skip: int = 0, limit: int = 50, include_deleted: bool = False
+    db: Session,
+    group_id: UUID,
+    skip: int = 0,
+    limit: int = 50,
+    include_deleted: bool = False,
+    filters: ExpenseFilters | None = None,
 ) -> list[Expense]:
     stmt = (
         select(Expense)
@@ -46,7 +84,18 @@ def get_group_expenses(
     )
     if not include_deleted:
         stmt = stmt.where(Expense.deleted_at.is_(None))
+    stmt = _apply_filters(stmt, filters)
     stmt = stmt.order_by(Expense.date.desc(), Expense.created_at.desc()).offset(skip).limit(limit)
+    return list(db.execute(stmt).scalars().unique().all())
+
+
+def get_all_group_expenses(db: Session, group_id: UUID) -> list[Expense]:
+    """Every live expense in a group, unpaginated — used for balance math."""
+    stmt = (
+        select(Expense)
+        .options(joinedload(Expense.splits))
+        .where(Expense.group_id == group_id, Expense.deleted_at.is_(None))
+    )
     return list(db.execute(stmt).scalars().unique().all())
 
 

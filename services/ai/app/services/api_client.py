@@ -129,6 +129,9 @@ class ApiClient:
     async def get_group(self, group_id: str) -> dict:
         return await self._request("GET", f"/groups/{group_id}")
 
+    async def get_group_balances(self, group_id: str) -> dict:
+        return await self._request("GET", f"/groups/{group_id}/balances")
+
     # ---- categories
 
     async def list_categories(self) -> list[dict]:
