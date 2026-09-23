@@ -10,8 +10,8 @@ class Settings(BaseSettings):
 
     # model choice per role, so a slow/expensive model can be swapped in for one
     # job without touching the others
-    groq_chat_model: str = "llama-3.3-70b-versatile"
-    groq_extraction_model: str = "llama-3.3-70b-versatile"
+    groq_chat_model: str = "openai/gpt-oss-120b"
+    groq_extraction_model: str = "openai/gpt-oss-120b"
     groq_whisper_model: str = "whisper-large-v3-turbo"
 
     # receipt OCR needs a vision model; Groq currently exposes none, so this stays
