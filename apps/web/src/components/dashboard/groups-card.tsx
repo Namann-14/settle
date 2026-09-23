@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import { Users } from "lucide-react";
 
@@ -38,7 +39,14 @@ export function GroupsCard() {
 
   return (
     <Panel className="h-full">
-      <PanelHeader title="Your groups" />
+      <PanelHeader
+        title="Your groups"
+        action={
+          <Link href="/dashboard/groups" className="text-[13px] font-medium text-primary hover:underline">
+            View all
+          </Link>
+        }
+      />
       {isLoading ? (
         <ListRowsSkeleton avatar />
       ) : isError ? (

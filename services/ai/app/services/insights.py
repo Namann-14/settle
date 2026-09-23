@@ -20,6 +20,20 @@ from app.schemas.insights import (
 # hallucination.
 
 
+def top_payer(expenses: list[dict], *, days: int, today: date | None = None) -> tuple[str, float] | None:
+    """Who fronted the most money in the window: (user_id, total)."""
+    today = today or date.today()
+    start = today - timedelta(days=days)
+    totals: dict[str, Decimal] = defaultdict(Decimal)
+    for e in expenses:
+        if _in_window(e, start, today):
+            totals[str(e["paid_by_id"])] += Decimal(str(e["amount"]))
+    if not totals:
+        return None
+    user_id, total = max(totals.items(), key=lambda kv: kv[1])
+    return user_id, float(total)
+
+
 def _parse_date(value: str) -> date:
     return datetime.fromisoformat(value).date() if "T" in value else date.fromisoformat(value)
 

@@ -147,6 +147,7 @@ def list_user_expenses(
     skip: int = 0,
     limit: int = 50,
     group_id: UUID | None = None,
+    filters: expense_repo.ExpenseFilters | None = None,
 ) -> list[Expense]:
     """
     Lists expenses for the current user or a specific group.
@@ -160,9 +161,9 @@ def list_user_expenses(
         if not any(m.user_id == current_user.id for m in members):
             raise PermissionDeniedError("You are not a member of this group")
 
-        return expense_repo.get_group_expenses(db, group_id, skip=skip, limit=limit)
+        return expense_repo.get_group_expenses(db, group_id, skip=skip, limit=limit, filters=filters)
 
-    return expense_repo.get_user_expenses(db, current_user.id, skip=skip, limit=limit)
+    return expense_repo.get_user_expenses(db, current_user.id, skip=skip, limit=limit, filters=filters)
 
 
 def update_expense(

@@ -19,8 +19,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Nexora - The Future of Smarter Automation",
-  description: "Automate your busywork with intelligent agents that learn, adapt, and execute—so your team can focus on what matters most.",
+  title: "Settle - Split bills, not friendships",
+  description: "Track shared expenses for trips, flats and dinners. Add expenses in plain words, see who owes whom, and settle up in the fewest payments.",
 };
 
 export default function RootLayout({

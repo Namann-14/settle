@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import { HandCoins } from "lucide-react";
 
@@ -48,7 +49,14 @@ export function RecentSettlementsCard() {
 
   return (
     <Panel className="h-full">
-      <PanelHeader title="Recent settlements" />
+      <PanelHeader
+        title="Recent settlements"
+        action={
+          <Link href="/dashboard/settlements" className="text-[13px] font-medium text-primary hover:underline">
+            View all
+          </Link>
+        }
+      />
       {isLoading ? (
         <ListRowsSkeleton />
       ) : isError ? (

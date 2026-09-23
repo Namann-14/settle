@@ -4,6 +4,10 @@ import type {
   CreateGroupPayload,
   UpdateGroupPayload,
   AddMemberPayload,
+  GroupBalances,
+  Invitation,
+  InviteMemberPayload,
+  InviteMemberResponse,
 } from "@/types";
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -88,4 +92,42 @@ export async function addMember(groupId: string, data: AddMemberPayload): Promis
     body: JSON.stringify(data),
   });
   return handleResponse<GroupMember>(response);
+}
+
+export async function getGroupBalances(groupId: string): Promise<GroupBalances> {
+  const response = await fetch(`/api/groups/${groupId}/balances`);
+  return handleResponse<GroupBalances>(response);
+}
+
+export async function inviteMember(
+  groupId: string,
+  data: InviteMemberPayload,
+): Promise<InviteMemberResponse> {
+  const response = await fetch(`/api/groups/${groupId}/invitations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<InviteMemberResponse>(response);
+}
+
+export async function listInvitations(groupId: string): Promise<Invitation[]> {
+  const response = await fetch(`/api/groups/${groupId}/invitations`);
+  return handleResponse<Invitation[]>(response);
+}
+
+export async function cancelInvitation(groupId: string, invitationId: string): Promise<void> {
+  const response = await fetch(`/api/groups/${groupId}/invitations/${invitationId}`, {
+    method: "DELETE",
+  });
+  return handleResponse<void>(response);
+}
+
+export async function removeMember(groupId: string, memberId: string): Promise<void> {
+  const response = await fetch(`/api/groups/${groupId}/members/${memberId}`, {
+    method: "DELETE",
+  });
+  return handleResponse<void>(response);
 }

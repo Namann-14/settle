@@ -9,7 +9,13 @@ from app.db.enums import GroupRole
 from app.dependencies.database import get_db
 from app.models.user import User
 from app.routes import get_current_db_user, handle_controller_errors
+from app.schemas.balances import GroupBalancesResponse
 from app.schemas.group import GroupCreate, GroupResponse, GroupUpdate
+from app.schemas.invitation import (
+    InvitationResponse,
+    InviteMemberRequest,
+    InviteMemberResponse,
+)
 from app.schemas.group_member import GroupMemberResponse
 
 
@@ -108,3 +114,80 @@ def add_group_member(
             user_id_to_add=payload.user_id,
             role=payload.role,
         )
+
+
+@router.delete("/{group_id}/members/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_group_member(
+    group_id: UUID,
+    member_id: UUID,
+    current_user: User = Depends(get_current_db_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Remove a member (admins) or leave the group (yourself). Refused while the
+    member still has an unsettled balance.
+    """
+    with handle_controller_errors():
+        group_controller.remove_member(db, group_id, member_id, current_user)
+        return None
+
+
+@router.post("/{group_id}/invitations", response_model=InviteMemberResponse, status_code=status.HTTP_201_CREATED)
+def invite_group_member(
+    group_id: UUID,
+    payload: InviteMemberRequest,
+    current_user: User = Depends(get_current_db_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Add someone by email. Existing users join immediately; anyone else gets a
+    pending invite that's claimed when they first sign in with that email.
+    """
+    with handle_controller_errors():
+        member, invitation = group_controller.invite_by_email(
+            db, group_id, current_user, str(payload.email), payload.role
+        )
+        if member is not None:
+            return InviteMemberResponse(status="added", member=member)
+        return InviteMemberResponse(status="invited", invitation=invitation)
+
+
+@router.get("/{group_id}/invitations", response_model=list[InvitationResponse])
+def list_group_invitations(
+    group_id: UUID,
+    current_user: User = Depends(get_current_db_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Pending, unexpired invitations for a group.
+    """
+    with handle_controller_errors():
+        return group_controller.list_invitations(db, group_id, current_user)
+
+
+@router.delete("/{group_id}/invitations/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def cancel_group_invitation(
+    group_id: UUID,
+    invitation_id: UUID,
+    current_user: User = Depends(get_current_db_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Cancel a pending invitation.
+    """
+    with handle_controller_errors():
+        group_controller.cancel_invitation(db, group_id, invitation_id, current_user)
+        return None
+
+
+@router.get("/{group_id}/balances", response_model=GroupBalancesResponse)
+def get_group_balances(
+    group_id: UUID,
+    current_user: User = Depends(get_current_db_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Each member's net position plus the fewest transfers that settle the group.
+    """
+    with handle_controller_errors():
+        return group_controller.get_group_balances(db, group_id, current_user)

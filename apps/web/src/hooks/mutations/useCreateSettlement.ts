@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateBalances } from "./invalidate";
 import { createSettlement } from "@/lib/api/settlements";
 import type { CreateSettlementPayload } from "@/types";
 
@@ -11,6 +12,7 @@ export function useCreateSettlement() {
       queryClient.invalidateQueries({
         queryKey: ["settlements"],
       });
+      invalidateBalances(queryClient);
     },
   });
 }

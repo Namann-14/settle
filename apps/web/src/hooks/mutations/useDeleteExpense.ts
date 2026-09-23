@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateBalances } from "./invalidate";
 import { deleteExpense } from "@/lib/api/expenses";
 
 export function useDeleteExpense() {
@@ -10,6 +11,7 @@ export function useDeleteExpense() {
       queryClient.invalidateQueries({
         queryKey: ["expenses"],
       });
+      invalidateBalances(queryClient);
     },
   });
 }

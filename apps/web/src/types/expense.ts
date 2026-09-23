@@ -68,4 +68,12 @@ export interface ListExpensesParams {
   group_id?: string;
   skip?: number;
   limit?: number;
+  /** Matches description or merchant. */
+  q?: string;
+  category_id?: string;
+  paid_by_id?: string;
+  /** ISO date, inclusive. */
+  date_from?: string;
+  /** ISO date, inclusive. */
+  date_to?: string;
 }
