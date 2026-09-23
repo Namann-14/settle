@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "apps/web"],
+      "port": 3001
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["--directory", "services/api", "run", "uvicorn", "app.main:app", "--reload", "--reload-dir", "app", "--port", "8000"],
+      "port": 8000
+    },
+    {
+      "name": "ai",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["--directory", "services/ai", "run", "uvicorn", "app.main:app", "--reload", "--reload-dir", "app", "--port", "8001", "--workers", "1"],
+      "port": 8001
+    }
+  ]
+}
