@@ -1,7 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 
-const BACKEND_URL =
-    process.env.BACKEND_URL ?? "http://localhost:8000";
+// On Vercel this is injected by the service binding and may end with "/"
+const BACKEND_URL = (
+    process.env.BACKEND_URL ?? "http://localhost:8000"
+).replace(/\/+$/, "");
 
 export async function backendFetch<T>(
     path: string,

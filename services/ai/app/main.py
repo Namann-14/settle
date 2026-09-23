@@ -54,9 +54,9 @@ async def ocr_error_handler(request: Request, exc: OcrError):
     return JSONResponse(status_code=502, content={"detail": exc.detail})
 
 
-@app.get("/health")
+@app.get(f"{settings.ai_route_prefix}/health")
 def health():
     return {"status": "ok"}
 
 
-app.include_router(router)
+app.include_router(router, prefix=settings.ai_route_prefix)

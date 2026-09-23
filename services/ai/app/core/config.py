@@ -30,5 +30,9 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
+    # path prefix the service is mounted under; Vercel forwards the full public
+    # path (e.g. /ai/chat), so routes must include it. Empty for local dev.
+    ai_route_prefix: str = ""
+
 
 settings = Settings()
