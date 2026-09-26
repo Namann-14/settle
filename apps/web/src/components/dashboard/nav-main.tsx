@@ -6,6 +6,7 @@ import {
   HandCoins,
   LayoutDashboard,
   Receipt,
+  Settings,
   SquarePen,
   Users,
   Wallet,
@@ -25,6 +26,7 @@ const items = [
   { title: "Groups", url: "/dashboard/groups" as const, icon: Users },
   { title: "Expenses", url: "/dashboard/expenses" as const, icon: Receipt },
   { title: "Settlements", url: "/dashboard/settlements" as const, icon: HandCoins },
+  { title: "Settings", url: "/dashboard/settings" as const, icon: Settings },
 ];
 
 // "/dashboard" only matches exactly; the rest also match their sub-pages

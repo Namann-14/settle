@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     api_service_url: str = "http://localhost:8000"
     api_request_timeout_s: float = 30.0
 
+    # shared secret services/api sends on /internal/* (WhatsApp bot extraction);
+    # empty disables those routes
+    internal_api_key: str = ""
+
     # Postgres for chat persistence (LangGraph checkpoints + chat history).
     # Can be the same database services/api uses; tables don't overlap. Empty
     # falls back to in-process memory: chats vanish on restart and history

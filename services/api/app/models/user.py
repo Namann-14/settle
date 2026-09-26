@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from sqlalchemy import Boolean, String
+from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -17,6 +19,14 @@ class User(UUIDMixin, TimestampMixin, Base):
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     default_currency: Mapped[str] = mapped_column(String(3), default="INR", nullable=False)
+
+    # WhatsApp bot link. Phone is digits only, as WhatsApp sends it (e.g. 919876543210).
+    whatsapp_phone: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True)
+    whatsapp_linked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    whatsapp_link_code: Mapped[str | None] = mapped_column(String(8), index=True, nullable=True)
+    whatsapp_link_code_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # relationships
     memberships: Mapped[list["GroupMember"]] = relationship(back_populates="user")

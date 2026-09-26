@@ -23,7 +23,15 @@
     "api": {
       "root": "services/api",
       "framework": "fastapi",
-      "entrypoint": "app.main:app"
+      "entrypoint": "app.main:app",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "ai",
+          "format": "url",
+          "env": "AI_SERVICE_URL"
+        }
+      ]
     },
     "ai": {
       "root": "services/ai",
@@ -40,6 +48,10 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/webhooks/(.*)",
+      "destination": { "service": "api" }
+    },
     {
       "source": "/ai/(.*)",
       "destination": { "service": "ai" }

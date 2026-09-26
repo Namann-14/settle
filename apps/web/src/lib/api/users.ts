@@ -1,4 +1,4 @@
-import type { User, UpdateUserPayload } from "@/types";
+import type { User, UpdateUserPayload, WhatsAppLinkCode } from "@/types";
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -43,4 +43,14 @@ export async function updateCurrentUser(data: UpdateUserPayload): Promise<User> 
     body: JSON.stringify(data),
   });
   return handleResponse<User>(response);
+}
+
+export async function createWhatsAppLinkCode(): Promise<WhatsAppLinkCode> {
+  const response = await fetch("/api/users/me/whatsapp/link-code", { method: "POST" });
+  return handleResponse<WhatsAppLinkCode>(response);
+}
+
+export async function unlinkWhatsApp(): Promise<void> {
+  const response = await fetch("/api/users/me/whatsapp", { method: "DELETE" });
+  return handleResponse<void>(response);
 }

@@ -25,6 +25,7 @@ class UserResponse(BaseModel):
     name: str | None = None
     is_active: bool
     default_currency: str
+    whatsapp_phone: str | None = None
     created_at: datetime
     updated_at: datetime
 

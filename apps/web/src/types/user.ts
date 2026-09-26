@@ -5,6 +5,7 @@ export interface User {
   name: string | null;
   is_active: boolean;
   default_currency: string;
+  whatsapp_phone: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -14,4 +15,10 @@ export interface UpdateUserPayload {
   name?: string | null;
   is_active?: boolean;
   default_currency?: string;
+}
+
+export interface WhatsAppLinkCode {
+  code: string;
+  expires_at: string;
+  bot_number: string | null;
 }

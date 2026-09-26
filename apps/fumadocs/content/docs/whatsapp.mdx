@@ -1,0 +1,64 @@
+---
+title: WhatsApp bot
+description: Log personal expenses by messaging Settle on WhatsApp
+---
+
+Users link their number once, then send messages like `lunch 250` or a voice note. The bot saves each one as a personal expense, so it shows up in the Spending tracker.
+
+It runs on Meta's WhatsApp Cloud API. The bot only ever replies to a user's message, inside the 24-hour customer-service window, so no message is billed.
+
+## How it works
+
+1. Meta sends every inbound message to `POST /webhooks/whatsapp` on `services/api`.
+2. The API checks the `X-Hub-Signature-256` header against the app secret.
+3. The message id (`wamid`) is stored with a unique constraint, so when Meta resends a message it is ignored.
+4. The sender's phone number is matched to a user. Numbers that aren't linked yet can only send `LINK <code>`.
+5. What happens next depends on the message:
+   - Commands answer straight from the database.
+   - Text is sent to `services/ai` at `/internal/extract/text`.
+   - Voice notes are downloaded from the Graph API and sent to `/internal/extract/voice`, which transcribes them with Groq Whisper.
+   - Both extraction routes are protected by the shared `INTERNAL_API_KEY`.
+6. Extraction confidence decides the outcome:
+   - **0.75 or higher:** the expense is saved straight away.
+   - **Below 0.75:** a pending `AIExpenseDraft` is created and the user gets **Save** / **Cancel** buttons.
+   - **No amount found:** the bot asks the user to resend with one.
+
+Commands: `help`, `undo` (removes the last expense logged over WhatsApp in the past 24 hours), `today`, `month`.
+
+## Meta setup
+
+1. On [developers.facebook.com](https://developers.facebook.com), create an app of type **Business** and add the **WhatsApp** product.
+2. Under **WhatsApp → API Setup**:
+   - Copy the test number's **Phone number ID** into `WHATSAPP_PHONE_NUMBER_ID`.
+   - Add your own phone as a recipient. The test number can message up to 5 recipients.
+3. Generate a permanent token: **Business settings → System users → Generate token**, with the `whatsapp_business_messaging` permission. Put it in `WHATSAPP_ACCESS_TOKEN`.
+4. Copy **App settings → Basic → App secret** into `WHATSAPP_APP_SECRET`.
+5. Choose any random string for `WHATSAPP_VERIFY_TOKEN`.
+6. Set `WHATSAPP_BOT_NUMBER` to the bot's number, digits only (for example `15551234567`). The Settings page uses it for the "Open WhatsApp" link.
+7. Generate `INTERNAL_API_KEY` with `openssl rand -hex 32` and set the same value in both `services/api` and `services/ai`.
+8. Under **WhatsApp → Configuration**:
+   - Set the callback URL to `https://<your-domain>/webhooks/whatsapp` and the verify token to the value from step 5.
+   - Subscribe to the **messages** field.
+
+## Local development
+
+Meta must be able to reach your machine, so run a tunnel:
+
+```bash
+cd services/api && uv run uvicorn app.main:app --reload --port 8000
+cd services/ai && uv run uvicorn app.main:app --reload --port 8001
+cloudflared tunnel --url http://localhost:8000
+```
+
+Use `https://<random>.trycloudflare.com/webhooks/whatsapp` as the callback URL. It changes every time the tunnel restarts.
+
+## Linking a number
+
+Go to **Dashboard → Settings → WhatsApp** and click **Generate code**. Then send `LINK <code>` to the bot; the code expires after 15 minutes. The card switches to "Linked" once the bot has accepted the code.
+
+## Vercel
+
+`vercel.json` routes `/webhooks/*` to the `api` service and binds `AI_SERVICE_URL` into it.
+
+- Set `AI_ROUTE_PREFIX=/ai` on the api service, matching the web service.
+- Use the production domain for the webhook. Preview deployments sit behind Deployment Protection, which blocks Meta's requests.
