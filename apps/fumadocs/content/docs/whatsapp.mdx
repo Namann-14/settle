@@ -58,7 +58,7 @@ Go to **Dashboard → Settings → WhatsApp** and click **Generate code**. Then 
 
 ## Vercel
 
-`vercel.json` routes `/webhooks/*` to the `api` service and binds `AI_SERVICE_URL` into it.
+`vercel.json` routes `/webhooks/*` to the `api` service.
 
-- Set `AI_ROUTE_PREFIX=/ai` on the api service, matching the web service.
+- The api service can't take a service binding to `ai`: ai already binds to api, and Vercel rejects circular bindings. Instead, on the api service set `AI_SERVICE_URL=https://<your-domain>` and `AI_ROUTE_PREFIX=/ai`. The bot then reaches ai through the public `/ai/*` rewrite, protected by `INTERNAL_API_KEY`.
 - Use the production domain for the webhook. Preview deployments sit behind Deployment Protection, which blocks Meta's requests.

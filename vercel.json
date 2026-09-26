@@ -23,15 +23,7 @@
     "api": {
       "root": "services/api",
       "framework": "fastapi",
-      "entrypoint": "app.main:app",
-      "bindings": [
-        {
-          "type": "service",
-          "service": "ai",
-          "format": "url",
-          "env": "AI_SERVICE_URL"
-        }
-      ]
+      "entrypoint": "app.main:app"
     },
     "ai": {
       "root": "services/ai",
