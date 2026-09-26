@@ -21,4 +21,4 @@ export * from "./useBudgetMutations";
 export * from "./useIncomeMutations";
 export * from "./useRecurringMutations";
 
-export * from "./useWhatsAppLink";
+export * from "./useTelegramLink";

@@ -11,8 +11,8 @@ from app.models.income import Income
 from app.models.invitation import GroupInvitation
 from app.models.recurring_expense import RecurringExpense, RecurringExpenseSplit
 from app.models.settlement import Settlement
+from app.models.telegram_message import TelegramMessage
 from app.models.user import User
-from app.models.whatsapp_message import WhatsAppMessage
 
 __all__ = [
     "AIExpenseDraft",
@@ -30,6 +30,6 @@ __all__ = [
     "RecurringExpense",
     "RecurringExpenseSplit",
     "Settlement",
+    "TelegramMessage",
     "User",
-    "WhatsAppMessage",
 ]

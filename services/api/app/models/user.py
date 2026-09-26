@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import BigInteger, Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -20,13 +20,18 @@ class User(UUIDMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     default_currency: Mapped[str] = mapped_column(String(3), default="INR", nullable=False)
 
-    # WhatsApp bot link. Phone is digits only, as WhatsApp sends it (e.g. 919876543210).
-    whatsapp_phone: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True)
-    whatsapp_linked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    whatsapp_link_code: Mapped[str | None] = mapped_column(String(8), index=True, nullable=True)
-    whatsapp_link_code_expires_at: Mapped[datetime | None] = mapped_column(
+    # Telegram bot link: the private chat the bot talks to this user in.
+    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, nullable=True)
+    telegram_username: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    telegram_linked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    telegram_link_code: Mapped[str | None] = mapped_column(String(16), index=True, nullable=True)
+    telegram_link_code_expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+    @property
+    def telegram_linked(self) -> bool:
+        return self.telegram_chat_id is not None
 
     # relationships
     memberships: Mapped[list["GroupMember"]] = relationship(back_populates="user")

@@ -22,8 +22,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
           in-app assistant.
         </li>
         <li>
-          <b>WhatsApp</b>, only if you link it: your WhatsApp phone number, the text or voice notes you send to the
-          Settle bot, and message ids used to avoid logging the same message twice.
+          <b>Telegram</b>, only if you link it: your Telegram chat id and username, the text or voice notes you
+          send to the Settle bot, and update ids used to avoid logging the same message twice.
         </li>
       </ul>
     ),
@@ -33,8 +33,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
     body: (
       <p>
         Only to run Settle for you: storing and totalling your expenses, working out balances between group
-        members, and replying to you on WhatsApp. We don&apos;t sell your data, show ads, or use it to market to
-        you. The WhatsApp bot only replies to messages you send it; it never messages you first.
+        members, and replying to you on Telegram. We don&apos;t sell your data, show ads, or use it to market to
+        you. The Telegram bot only replies to messages you send it; it never messages you first.
       </p>
     ),
   },
@@ -49,7 +49,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
           Groq: turns the text and voice notes you send into expense details (amount, category, date). Voice notes
           are transcribed and not kept by Settle after processing.
         </li>
-        <li>Meta (WhatsApp Cloud API): delivers messages between you and the Settle bot.</li>
+        <li>Telegram: delivers messages between you and the Settle bot.</li>
       </ul>
     ),
   },
@@ -57,8 +57,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "Keeping and deleting your data",
     body: (
       <p>
-        Your data is kept while your account exists. You can unlink WhatsApp at any time from Settings, which
-        removes your phone number from your account. To delete your account and everything in it, email us from
+        Your data is kept while your account exists. You can unlink Telegram at any time from Settings, which
+        removes your Telegram details from your account. To delete your account and everything in it, email us from
         the address on your account and we&apos;ll remove it within 30 days.
       </p>
     ),

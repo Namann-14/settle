@@ -1,5 +1,5 @@
 """
-Server-to-server extraction for services/api (the WhatsApp bot).
+Server-to-server extraction for services/api (the Telegram bot).
 
 The bot has no Clerk session, so these routes skip build_request_context:
 services/api already knows the user and sends their categories, name and
