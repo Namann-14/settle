@@ -94,3 +94,23 @@ Settle was built for splitting bills. We extended it so it also works as a perso
 **Revisit Redis when:** the timing logs show a specific endpoint that is still slow after the region move, and whose data is either per-user or easy to invalidate.
 
 **Next steps if needed:** prefetch dashboard data in Server Components (hydrating the React Query cache), or add a single aggregated dashboard endpoint to replace the roughly 7 parallel requests.
+
+---
+
+## 2026-09-27 — Faster first load: landing page and dashboard
+
+**Problem:** the landing page shipped more JavaScript than a static marketing page needs. Dashboard data only started loading after the page's JS and Clerk had booted in the browser, followed by about 8 browser → Next proxy → API round trips.
+
+**Decisions:**
+1. **Prefetch dashboard data on the server** (`apps/web/src/lib/server-prefetch.tsx`). Each dashboard page starts its API calls while it renders on the server. The results are streamed into the React Query cache under the same keys the client hooks use. The prefetches are not awaited, so the HTML streams out immediately and each result follows on the same response.
+   - Queries that fail on the server are refetched by the client as before.
+   - Dashboard pages are now rendered on each request (`connection()`) instead of served as a static shell.
+   - On the Overview, the browser now makes 1 API call on load instead of about 8, and first paint was about 390 ms in a local production build.
+2. **Keep the landing page server-rendered.** Only the navbar's auth buttons, the play button and the hero video are client components.
+3. **Move dashboard-only providers out of the root layout.** React Query, tooltips and toasts now live in `DashboardProviders`, so public pages don't download them. Clerk and the theme provider stay site-wide.
+4. **Defer the 18 MB hero video** until the page has loaded and the browser is idle. It is skipped entirely for visitors with data saver or reduced motion turned on.
+5. **Drop Inter's unused optical-size axis**, which made the font file larger.
+
+**Result (local production build, compressed transfer):** landing JS went from 342 KB to 261 KB, and fonts from 101 KB to 77 KB. The live site is measured with Brotli and the local build with gzip, so the real saving is a little larger.
+
+**Not changed:** the landing page's time to first byte was already about 110 ms, served from Vercel's edge cache.
