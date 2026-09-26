@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     api_service_url: str = "http://localhost:8000"
     api_request_timeout_s: float = 30.0
 
-    # shared secret services/api sends on /internal/* (WhatsApp bot extraction);
+    # shared secret services/api sends on /internal/* (Telegram bot extraction);
     # empty disables those routes
     internal_api_key: str = ""
 

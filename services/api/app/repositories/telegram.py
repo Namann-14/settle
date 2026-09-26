@@ -8,13 +8,13 @@ from sqlalchemy.orm import Session
 from app.db.enums import AIDraftStatus, AISourceType
 from app.models.ai_expense_draft import AIExpenseDraft
 from app.models.expense import Expense
+from app.models.telegram_message import TelegramMessage
 from app.models.user import User
-from app.models.whatsapp_message import WhatsAppMessage
 
 
-def record_message(db: Session, *, wamid: str, from_phone: str, kind: str) -> WhatsAppMessage | None:
-    """Insert the inbound message. None means we've seen this wamid already (a Meta retry)."""
-    msg = WhatsAppMessage(wamid=wamid, from_phone=from_phone, kind=kind)
+def record_update(db: Session, *, update_id: int, chat_id: int, kind: str) -> TelegramMessage | None:
+    """Insert the inbound update. None means we've seen this update_id already (a Telegram retry)."""
+    msg = TelegramMessage(update_id=update_id, chat_id=chat_id, kind=kind)
     db.add(msg)
     try:
         db.commit()
@@ -27,7 +27,7 @@ def record_message(db: Session, *, wamid: str, from_phone: str, kind: str) -> Wh
 
 def attach(
     db: Session,
-    msg: WhatsAppMessage,
+    msg: TelegramMessage,
     *,
     user_id: UUID | None = None,
     expense_id: UUID | None = None,
@@ -43,28 +43,28 @@ def attach(
     db.commit()
 
 
-def get_user_by_phone(db: Session, phone: str) -> User | None:
-    stmt = select(User).where(User.whatsapp_phone == phone)
+def get_user_by_chat(db: Session, chat_id: int) -> User | None:
+    stmt = select(User).where(User.telegram_chat_id == chat_id)
     return db.execute(stmt).scalar_one_or_none()
 
 
 def get_user_by_link_code(db: Session, code: str) -> User | None:
-    stmt = select(User).where(User.whatsapp_link_code == code)
+    stmt = select(User).where(User.telegram_link_code == code)
     return db.execute(stmt).scalars().first()
 
 
 def last_undoable(db: Session, user_id: UUID, within: timedelta = timedelta(hours=24)) -> Expense | None:
-    """The newest live expense this user logged over WhatsApp in the last day."""
+    """The newest live expense this user logged through the bot in the last day."""
     since = datetime.now(timezone.utc) - within
     stmt = (
         select(Expense)
-        .join(WhatsAppMessage, WhatsAppMessage.expense_id == Expense.id)
+        .join(TelegramMessage, TelegramMessage.expense_id == Expense.id)
         .where(
-            WhatsAppMessage.user_id == user_id,
-            WhatsAppMessage.created_at >= since,
+            TelegramMessage.user_id == user_id,
+            TelegramMessage.created_at >= since,
             Expense.deleted_at.is_(None),
         )
-        .order_by(WhatsAppMessage.created_at.desc())
+        .order_by(TelegramMessage.created_at.desc())
         .limit(1)
     )
     return db.execute(stmt).scalar_one_or_none()

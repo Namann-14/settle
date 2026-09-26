@@ -1,4 +1,4 @@
-import { WhatsAppCard } from "@/components/settings/whatsapp-card";
+import { TelegramCard } from "@/components/settings/telegram-card";
 import { Eyebrow } from "@/components/dashboard/panel";
 
 export default function SettingsPage() {
@@ -10,7 +10,7 @@ export default function SettingsPage() {
           <em className="italic">Settings</em>
         </h1>
       </div>
-      <WhatsAppCard />
+      <TelegramCard />
     </div>
   );
 }

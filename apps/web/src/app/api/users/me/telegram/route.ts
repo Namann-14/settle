@@ -3,7 +3,7 @@ import { backendErrorResponse, backendFetch } from "@/lib/backend";
 
 export async function DELETE() {
   try {
-    await backendFetch("/users/me/whatsapp", { method: "DELETE" });
+    await backendFetch("/users/me/telegram", { method: "DELETE" });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     return backendErrorResponse(error);

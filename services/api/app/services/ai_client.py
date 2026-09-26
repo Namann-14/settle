@@ -1,5 +1,5 @@
 """
-Server-to-server calls into services/ai for the WhatsApp bot.
+Server-to-server calls into services/ai for the Telegram bot.
 
 The bot has no Clerk session, so these hit ai's /internal routes with the
 shared INTERNAL_API_KEY instead of a user token.

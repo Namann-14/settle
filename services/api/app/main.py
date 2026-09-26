@@ -4,13 +4,20 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.config import settings
 from app.core.timing import TimingMiddleware
+from app.db.migrate import upgrade_to_head
 from app.db.session import engine
-from app.routes import budgets, categories, expenses, groups, incomes, recurring, settlements, spending, users, whatsapp
+from app.routes import budgets, categories, expenses, groups, incomes, recurring, settlements, spending, telegram, users
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # Unlike the warm-up below this is not best effort: serving requests against
+    # an out-of-date schema breaks every query that touches a new column.
+    if settings.RUN_MIGRATIONS_ON_STARTUP:
+        upgrade_to_head()
+
     # Opening a connection to the remote database costs a TLS handshake
     # (~1.5s). The dashboard fires several requests at once, so fill the pool
     # up front instead of making the first page load pay for each one.
@@ -58,4 +65,4 @@ app.include_router(budgets.router)
 app.include_router(incomes.router)
 app.include_router(recurring.router)
 app.include_router(spending.router)
-app.include_router(whatsapp.router)
+app.include_router(telegram.router)

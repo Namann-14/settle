@@ -8,15 +8,13 @@ import { Button, buttonVariants } from "@settle/ui/components/button";
 import { Skeleton } from "@settle/ui/components/skeleton";
 
 import { Panel, PanelHeader } from "@/components/dashboard/panel";
-import { useCreateWhatsAppLinkCode, useUnlinkWhatsApp } from "@/hooks/mutations";
+import { useCreateTelegramLinkCode, useUnlinkTelegram } from "@/hooks/mutations";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import type { WhatsAppLinkCode } from "@/types";
+import type { TelegramLinkCode } from "@/types";
 
-// WhatsApp sends numbers as bare digits with the country code, e.g. 919876543210.
-function maskPhone(phone: string) {
-  const tail = phone.slice(-3);
-  const country = phone.length > 10 ? phone.slice(0, phone.length - 10) : "";
-  return `${country ? `+${country} ` : ""}••••••${tail}`;
+// tg:// opens the Telegram app directly, so linking still works where t.me is blocked.
+function appLink(link: TelegramLinkCode) {
+  return link.bot_username ? `tg://resolve?domain=${link.bot_username}&start=${link.code}` : null;
 }
 
 function useSecondsLeft(expiresAt: string | undefined) {
@@ -30,14 +28,14 @@ function useSecondsLeft(expiresAt: string | undefined) {
   return Math.max(0, Math.round((new Date(expiresAt).getTime() - now) / 1000));
 }
 
-export function WhatsAppCard() {
+export function TelegramCard() {
   const queryClient = useQueryClient();
   const { data: me, isLoading } = useCurrentUser();
-  const createCode = useCreateWhatsAppLinkCode();
-  const unlink = useUnlinkWhatsApp();
-  const [link, setLink] = useState<WhatsAppLinkCode | null>(null);
+  const createCode = useCreateTelegramLinkCode();
+  const unlink = useUnlinkTelegram();
+  const [link, setLink] = useState<TelegramLinkCode | null>(null);
   const secondsLeft = useSecondsLeft(link?.expires_at);
-  const linked = Boolean(me?.whatsapp_phone);
+  const linked = Boolean(me?.telegram_linked);
   const waiting = Boolean(link) && secondsLeft > 0 && !linked;
 
   // While a code is live, poll the profile so the card flips to "linked" on its own.
@@ -50,26 +48,31 @@ export function WhatsAppCard() {
   useEffect(() => {
     if (linked && link) {
       setLink(null);
-      toast.success("WhatsApp linked");
+      toast.success("Telegram linked");
     }
   }, [linked, link]);
 
-  const generate = () =>
+  const connect = () =>
     createCode.mutate(undefined, {
-      onSuccess: setLink,
+      onSuccess: (code) => {
+        setLink(code);
+        // Open the Telegram app straight away; the card keeps fallbacks in case nothing happens.
+        const url = appLink(code);
+        if (url) window.location.href = url;
+      },
       onError: (err) => toast.error(err.message),
     });
 
   const disconnect = () =>
     unlink.mutate(undefined, {
-      onSuccess: () => toast.success("WhatsApp unlinked"),
+      onSuccess: () => toast.success("Telegram unlinked"),
       onError: (err) => toast.error(err.message),
     });
 
   return (
     <Panel>
       <PanelHeader
-        title="WhatsApp"
+        title="Telegram"
         description="Log expenses by messaging the Settle bot — type “lunch 250” or send a voice note."
       />
 
@@ -78,9 +81,11 @@ export function WhatsAppCard() {
       ) : linked ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 p-4">
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">Linked to {maskPhone(me!.whatsapp_phone!)}</span>
+            <span className="text-sm font-medium">
+              Linked{me?.telegram_username ? ` to @${me.telegram_username}` : ""}
+            </span>
             <span className="text-[13px] text-muted-foreground">
-              Send <b>help</b> to the bot to see what it can do.
+              Send <b>/help</b> to the bot to see what it can do.
             </span>
           </div>
           <Button variant="destructive" size="sm" onClick={disconnect} disabled={unlink.isPending}>
@@ -88,35 +93,42 @@ export function WhatsAppCard() {
           </Button>
         </div>
       ) : waiting && link ? (
-        <div className="flex flex-col gap-4 rounded-xl border border-border/70 p-4">
-          <p className="text-[13px] text-muted-foreground">Send this message to the Settle bot on WhatsApp:</p>
-          <code className="self-start rounded-lg bg-muted px-3 py-2 font-mono text-lg tracking-[0.2em]">
-            LINK {link.code}
-          </code>
+        <div className="flex flex-col gap-3 rounded-xl border border-border/70 p-4">
+          <p className="text-[13px] text-muted-foreground">
+            Tap <b>Start</b> in Telegram to finish linking.
+          </p>
           <div className="flex flex-wrap items-center gap-3">
-            {link.bot_number && (
+            {appLink(link) && (
+              <a className={buttonVariants({ size: "sm" })} href={appLink(link)!}>
+                Open Telegram app
+              </a>
+            )}
+            {link.deep_link && (
               <a
-                className={buttonVariants({ size: "sm" })}
-                href={`https://wa.me/${link.bot_number}?text=${encodeURIComponent(`LINK ${link.code}`)}`}
+                className={buttonVariants({ size: "sm", variant: "outline" })}
+                href={link.deep_link}
                 target="_blank"
                 rel="noreferrer"
               >
-                Open WhatsApp
+                Open in browser
               </a>
             )}
             <span className="text-[13px] text-muted-foreground">
-              Expires in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} · waiting for
-              your message…
+              Expires in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} · waiting…
             </span>
           </div>
+          <p className="text-[13px] text-muted-foreground">
+            Nothing opened? In Telegram, search <b>@{link.bot_username ?? "the Settle bot"}</b> and send{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">/start {link.code}</code>
+          </p>
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border p-4">
           <span className="text-[13px] text-muted-foreground">
-            {link ? "That code expired. Generate a new one." : "Not linked yet."}
+            {link ? "That link expired. Try again." : "Not linked yet."}
           </span>
-          <Button size="sm" onClick={generate} disabled={createCode.isPending}>
-            {createCode.isPending ? "Generating…" : "Generate code"}
+          <Button size="sm" onClick={connect} disabled={createCode.isPending}>
+            {createCode.isPending ? "Opening…" : "Connect Telegram"}
           </Button>
         </div>
       )}
