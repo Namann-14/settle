@@ -12,6 +12,11 @@ import { useCreateTelegramLinkCode, useUnlinkTelegram } from "@/hooks/mutations"
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { TelegramLinkCode } from "@/types";
 
+// tg:// opens the Telegram app directly, so linking still works where t.me is blocked.
+function appLink(link: TelegramLinkCode) {
+  return link.bot_username ? `tg://resolve?domain=${link.bot_username}&start=${link.code}` : null;
+}
+
 function useSecondsLeft(expiresAt: string | undefined) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -51,8 +56,9 @@ export function TelegramCard() {
     createCode.mutate(undefined, {
       onSuccess: (code) => {
         setLink(code);
-        // Open Telegram straight away; the card keeps a fallback link in case the popup is blocked.
-        if (code.deep_link) window.open(code.deep_link, "_blank", "noopener,noreferrer");
+        // Open the Telegram app straight away; the card keeps fallbacks in case nothing happens.
+        const url = appLink(code);
+        if (url) window.location.href = url;
       },
       onError: (err) => toast.error(err.message),
     });
@@ -92,22 +98,29 @@ export function TelegramCard() {
             Tap <b>Start</b> in Telegram to finish linking.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            {link.deep_link ? (
+            {appLink(link) && (
+              <a className={buttonVariants({ size: "sm" })} href={appLink(link)!}>
+                Open Telegram app
+              </a>
+            )}
+            {link.deep_link && (
               <a
-                className={buttonVariants({ size: "sm" })}
+                className={buttonVariants({ size: "sm", variant: "outline" })}
                 href={link.deep_link}
                 target="_blank"
                 rel="noreferrer"
               >
-                Open Telegram
+                Open in browser
               </a>
-            ) : (
-              <code className="rounded-lg bg-muted px-3 py-1.5 font-mono text-sm">/start {link.code}</code>
             )}
             <span className="text-[13px] text-muted-foreground">
               Expires in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} · waiting…
             </span>
           </div>
+          <p className="text-[13px] text-muted-foreground">
+            Nothing opened? In Telegram, search <b>@{link.bot_username ?? "the Settle bot"}</b> and send{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">/start {link.code}</code>
+          </p>
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border p-4">
