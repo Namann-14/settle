@@ -137,6 +137,16 @@ class ApiClient:
     async def list_categories(self) -> list[dict]:
         return await self._request("GET", "/categories")
 
+    # ---- spending tracker
+
+    async def get_spending_summary(self, month: str | None = None) -> dict:
+        """The user's own share of spending for a month (YYYY-MM), with budgets and income."""
+        params = {"month": month} if month else None
+        return await self._request("GET", "/spending/summary", params=params)
+
+    async def list_budgets(self) -> list[dict]:
+        return await self._request("GET", "/budgets")
+
     # ---- settlements
 
     async def list_settlements(self, *, skip: int = 0, limit: int = 100) -> list[dict]:

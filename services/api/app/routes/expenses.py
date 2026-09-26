@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -40,6 +41,7 @@ def list_expenses(
     paid_by_id: UUID | None = Query(default=None),
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),
+    scope: Literal["personal", "group"] | None = Query(default=None, description="personal = no group"),
     current_user: User = Depends(get_current_db_user),
     db: Session = Depends(get_db),
 ):
@@ -48,7 +50,7 @@ def list_expenses(
     optional search and filters.
     """
     filters = ExpenseFilters(
-        q=q, category_id=category_id, paid_by_id=paid_by_id, date_from=date_from, date_to=date_to
+        q=q, category_id=category_id, paid_by_id=paid_by_id, date_from=date_from, date_to=date_to, scope=scope
     )
     with handle_controller_errors():
         return expense_controller.list_user_expenses(

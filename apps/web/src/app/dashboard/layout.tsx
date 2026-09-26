@@ -4,6 +4,7 @@ import {
 } from "@settle/ui/components/sidebar";
 
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { RecurringSync } from "@/components/dashboard/recurring-sync";
 import { Topbar } from "@/components/dashboard/topbar";
 
 export default function DashboardLayout({
@@ -13,6 +14,7 @@ export default function DashboardLayout({
 }) {
   return (
     <SidebarProvider>
+      <RecurringSync />
       <AppSidebar />
       <SidebarInset>
         <Topbar />

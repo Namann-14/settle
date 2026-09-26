@@ -1,54 +1,30 @@
 "use client";
 
-import { useMemo } from "react";
+import Link from "next/link";
 
 import { CategoryPanelSkeleton } from "@/components/dashboard/overview-skeleton";
 import { Panel, PanelHeader } from "@/components/dashboard/panel";
-import { useCategories } from "@/hooks/useCategories";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useExpenses } from "@/hooks/useExpenses";
+import { categoryColor } from "@/components/spending/category-icon";
+import { useSpendingSummary } from "@/hooks/useSpendingSummary";
+import { formatMoney } from "@/lib/balances";
+import { num } from "@/lib/people";
 
-const CHART_COLORS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-];
-
+// This month's spending by category: the user's own share (personal expenses
+// plus their split of group ones), not the full bill amounts.
 export function CostAnalysisCard() {
-  const { data: expenses, isLoading: expensesLoading } = useExpenses({ limit: 100 });
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
-  const { data: me } = useCurrentUser();
-  const currency = me?.default_currency ?? "USD";
-
-  const isLoading = expensesLoading || categoriesLoading;
-
-  const { breakdown, total } = useMemo(() => {
-    const totals = new Map<string, number>();
-    for (const expense of expenses ?? []) {
-      const key = expense.category_id ?? "uncategorized";
-      totals.set(key, (totals.get(key) ?? 0) + Number(expense.amount));
-    }
-
-    const nameById = new Map((categories ?? []).map((c) => [c.id, c.name]));
-    nameById.set("uncategorized", "Uncategorized");
-
-    const sorted = [...totals.entries()].sort((a, b) => b[1] - a[1]);
-    const total = sorted.reduce((sum, [, v]) => sum + v, 0);
-
-    const breakdown = sorted.map(([categoryId, amount], i) => ({
-      categoryId,
-      name: nameById.get(categoryId) ?? "Uncategorized",
-      amount,
-      color: CHART_COLORS[i % CHART_COLORS.length],
-      pct: total > 0 ? (amount / total) * 100 : 0,
-    }));
-
-    return { breakdown, total };
-  }, [expenses, categories]);
+  const { data: summary, isLoading } = useSpendingSummary();
 
   if (isLoading) return <CategoryPanelSkeleton />;
+
+  const total = num(summary?.total);
+  const breakdown = (summary?.by_category ?? [])
+    .filter((c) => num(c.amount) > 0)
+    .map((c, i) => ({
+      key: c.category_id ?? "uncategorized",
+      name: c.name,
+      color: categoryColor(c.color, i),
+      pct: total > 0 ? (num(c.amount) / total) * 100 : 0,
+    }));
 
   return (
     <Panel className="h-full">
@@ -56,25 +32,28 @@ export function CostAnalysisCard() {
         title="By category"
         description={
           <>
-            <span className="font-medium text-foreground">
-              {total.toLocaleString(undefined, { style: "currency", currency })}
-            </span>{" "}
-            across recent expenses
+            <span className="font-medium text-foreground">{formatMoney(total, summary?.currency ?? "INR")}</span> your
+            share this month
           </>
+        }
+        action={
+          <Link href="/dashboard/spending" className="text-xs text-muted-foreground hover:text-foreground">
+            Details
+          </Link>
         }
       />
       {breakdown.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No expenses yet.</p>
+        <p className="text-sm text-muted-foreground">No expenses this month yet.</p>
       ) : (
         <>
           <div className="flex h-3 gap-0.5 overflow-hidden rounded-full" aria-hidden>
             {breakdown.map((b) => (
-              <span key={b.categoryId} style={{ width: `${b.pct}%`, backgroundColor: b.color }} />
+              <span key={b.key} style={{ width: `${b.pct}%`, backgroundColor: b.color }} />
             ))}
           </div>
           <ul className="flex flex-col gap-3 text-sm">
             {breakdown.map((b) => (
-              <li key={b.categoryId} className="flex items-center justify-between gap-3">
+              <li key={b.key} className="flex items-center justify-between gap-3">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: b.color }} />
                   <span className="truncate">{b.name}</span>

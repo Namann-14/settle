@@ -39,6 +39,7 @@ export async function listExpenses(params?: ListExpensesParams): Promise<Expense
   if (params?.paid_by_id) searchParams.set("paid_by_id", params.paid_by_id);
   if (params?.date_from) searchParams.set("date_from", params.date_from);
   if (params?.date_to) searchParams.set("date_to", params.date_to);
+  if (params?.scope) searchParams.set("scope", params.scope);
 
   const queryString = searchParams.toString();
   const url = `/api/expenses${queryString ? `?${queryString}` : ""}`;

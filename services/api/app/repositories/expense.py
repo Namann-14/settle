@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Literal
 from datetime import date, datetime, timezone
 from uuid import UUID
 
@@ -17,6 +18,8 @@ class ExpenseFilters:
     paid_by_id: UUID | None = None
     date_from: date | None = None
     date_to: date | None = None
+    # "personal" => no group, "group" => any group, None => both
+    scope: Literal["personal", "group"] | None = None
 
 
 def _apply_filters(stmt: Select, filters: ExpenseFilters | None) -> Select:
@@ -33,6 +36,10 @@ def _apply_filters(stmt: Select, filters: ExpenseFilters | None) -> Select:
         stmt = stmt.where(Expense.date >= filters.date_from)
     if filters.date_to:
         stmt = stmt.where(Expense.date <= filters.date_to)
+    if filters.scope == "personal":
+        stmt = stmt.where(Expense.group_id.is_(None))
+    elif filters.scope == "group":
+        stmt = stmt.where(Expense.group_id.is_not(None))
     return stmt
 
 

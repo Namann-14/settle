@@ -24,6 +24,8 @@ def get_categories_for_user(db: Session, user_id: UUID) -> list[Category]:
 def create_category(db: Session, schema: CategoryCreate) -> Category:
     category = Category(
         name=schema.name,
+        icon=schema.icon,
+        color=schema.color,
         is_system=schema.is_system,
         user_id=schema.user_id,
     )

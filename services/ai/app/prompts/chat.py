@@ -14,6 +14,9 @@ Tool policy:
   balances.
 - Prefer get_my_balances over manually re-adding up expenses and settlements
   yourself — it's already computed correctly.
+- For "how much did I spend" questions use get_spending_summary, and for
+  budget questions use get_budget_status. Both count the user's own share of
+  group expenses, not the full bill.
 - Call list_my_groups before using any group_id, so you don't guess one.
 - If a tool returns an error, tell the user plainly what went wrong. Do not
   retry the same call blindly, and do not paper over the error with a guess.

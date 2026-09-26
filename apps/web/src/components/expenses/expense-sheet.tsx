@@ -16,16 +16,18 @@ import {
 import { cn } from "@settle/ui/lib/utils";
 
 import { CURRENCIES, Field, FormError, controlClass } from "@/components/forms/field";
-import { useCreateExpense, useDeleteExpense, useUpdateExpense } from "@/hooks/mutations";
+import { useCreateExpense, useCreateRecurring, useDeleteExpense, useUpdateExpense } from "@/hooks/mutations";
 import { useCategories } from "@/hooks/useCategories";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGroups } from "@/hooks/useGroups";
+import { FREQUENCY_LABELS } from "@/lib/frequency";
 import { num, todayIso } from "@/lib/people";
 import type {
   CreateExpensePayload,
   CreateExpenseSplitPayload,
   Expense,
   ExpenseDraft,
+  Frequency,
   GroupMember,
   SplitType,
 } from "@/types";
@@ -84,6 +86,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
+  const createRecurring = useCreateRecurring();
 
   const draft = seed.mode === "draft" ? seed.draft : null;
   const editing = seed.mode === "edit" ? seed.expense : null;
@@ -128,6 +131,8 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
         .filter((p) => p.resolution === "unresolved" || p.resolution === "ambiguous")
         .map((p) => ({ rawName: p.raw_name, candidates: p.candidates, userId: "" })) ?? [],
   );
+  // Personal expenses can repeat; "" means a one-off.
+  const [repeats, setRepeats] = useState<Frequency | "">("");
   const [error, setError] = useState<unknown>(null);
 
   const group = groups?.find((g) => g.id === groupId);
@@ -228,6 +233,23 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
     };
 
     try {
+      if (repeats && !groupId && !editing) {
+        // A repeating expense is a recurring rule; the sync logs this first
+        // occurrence (and any past-dated ones) right away.
+        const { created } = await createRecurring.mutateAsync({
+          description: payload.description,
+          amount: total.toFixed(2),
+          currency,
+          category_id: payload.category_id,
+          frequency: repeats,
+          start_date: date,
+        });
+        toast.success(
+          created > 0 ? `Expense added · repeats ${FREQUENCY_LABELS[repeats].toLowerCase()}` : "Recurring expense scheduled",
+        );
+        onDone();
+        return;
+      }
       if (editing) {
         await updateExpense.mutateAsync({ id: editing.id, data: payload });
         toast.success("Expense updated");
@@ -252,7 +274,8 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
     }
   };
 
-  const busy = createExpense.isPending || updateExpense.isPending || deleteExpense.isPending;
+  const busy =
+    createExpense.isPending || updateExpense.isPending || deleteExpense.isPending || createRecurring.isPending;
   const canEdit = !editing || editing.created_by_id === me?.id;
 
   return (
@@ -273,7 +296,11 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
           </SheetDescription>
         ) : (
           <SheetDescription className="text-[13px]">
-            {editing ? "Changes update everyone’s balances." : "Split a bill with your group."}
+            {!groupId
+              ? "Track a personal expense."
+              : editing
+                ? "Changes update everyone’s balances."
+                : "Split a bill with your group."}
           </SheetDescription>
         )}
       </SheetHeader>
@@ -359,6 +386,26 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
             </select>
           </Field>
         </div>
+
+        {!groupId && !editing && (
+          <Field
+            label="Repeats"
+            hint={repeats ? "Logged automatically each time it falls due. Manage it under Spending → Recurring." : undefined}
+          >
+            <select
+              value={repeats}
+              onChange={(e) => setRepeats(e.target.value as Frequency | "")}
+              className={controlClass}
+            >
+              <option value="">Never</option>
+              {(["WEEKLY", "MONTHLY", "YEARLY"] as const).map((f) => (
+                <option key={f} value={f}>
+                  {FREQUENCY_LABELS[f]}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
 
         {groupId && (
           <div className="flex gap-3">

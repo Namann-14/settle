@@ -8,6 +8,7 @@ import {
   Receipt,
   SquarePen,
   Users,
+  Wallet,
 } from "lucide-react";
 
 import {
@@ -20,6 +21,7 @@ import {
 const items = [
   { title: "New chat", url: "/dashboard" as const, icon: SquarePen },
   { title: "Overview", url: "/dashboard/overview" as const, icon: LayoutDashboard },
+  { title: "Spending", url: "/dashboard/spending" as const, icon: Wallet },
   { title: "Groups", url: "/dashboard/groups" as const, icon: Users },
   { title: "Expenses", url: "/dashboard/expenses" as const, icon: Receipt },
   { title: "Settlements", url: "/dashboard/settlements" as const, icon: HandCoins },
