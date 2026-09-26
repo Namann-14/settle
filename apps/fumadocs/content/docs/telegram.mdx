@@ -59,6 +59,6 @@ Go to **Dashboard → Settings → Telegram** and click **Connect Telegram**. Te
 
 `vercel.json` routes `/webhooks/*` to the `api` service.
 
-- On the api service set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` and `INTERNAL_API_KEY`, plus `AI_SERVICE_URL=https://<your-domain>` and `AI_ROUTE_PREFIX=/ai`. There is no service binding from api to ai: ai already binds to api, and Vercel rejects circular bindings, so the bot reaches ai through the public `/ai/*` rewrite, protected by `INTERNAL_API_KEY`.
+- On the api service set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` and `INTERNAL_API_KEY`, plus `BOT_AI_SERVICE_URL=https://<your-domain>/ai`. (The `BOT_` name avoids clashing with the `AI_SERVICE_URL` the web service gets from its binding, since Vercel env vars are project-wide.) There is no service binding from api to ai: ai already binds to api, and Vercel rejects circular bindings, so the bot reaches ai through the public `/ai/*` rewrite, protected by `INTERNAL_API_KEY`.
 - Set `INTERNAL_API_KEY` on the ai service too.
 - Then run the webhook script with `https://<your-domain>/webhooks/telegram`. Use the production domain: preview deployments sit behind Deployment Protection.
