@@ -4,3 +4,7 @@ export * from "./expenses";
 export * from "./groups";
 export * from "./settlements";
 export * from "./categories";
+export * from "./budgets";
+export * from "./incomes";
+export * from "./recurring";
+export * from "./spending";

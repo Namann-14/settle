@@ -4,18 +4,24 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CategoryCreate(BaseModel):
-    name: str = Field(..., max_length=100)
+    name: str = Field(..., min_length=1, max_length=100)
+    icon: str | None = Field(default=None, max_length=32)
+    color: str | None = Field(default=None, max_length=16)
     is_system: bool = False
     user_id: UUID | None = None
 
 
 class CategoryUpdate(BaseModel):
-    name: str | None = Field(default=None, max_length=100)
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    icon: str | None = Field(default=None, max_length=32)
+    color: str | None = Field(default=None, max_length=16)
 
 
 class CategoryResponse(BaseModel):
     id: UUID
     name: str
+    icon: str | None = None
+    color: str | None = None
     is_system: bool
     user_id: UUID | None = None
 

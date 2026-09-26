@@ -76,4 +76,6 @@ export interface ListExpensesParams {
   date_from?: string;
   /** ISO date, inclusive. */
   date_to?: string;
+  /** "personal" = no group, "group" = any group. */
+  scope?: "personal" | "group";
 }

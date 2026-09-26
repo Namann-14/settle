@@ -55,9 +55,13 @@ export function ExpensesPage() {
   const [seed, setSeed] = useState<ExpenseSheetSeed | null>(null);
   const deferredQ = useDeferredValue(q.trim());
 
+  // The group filter doubles as a scope filter: "personal" and "group" are
+  // pseudo-ids that map to ?scope=, anything else is a real group id.
+  const scope = groupId === "personal" || groupId === "group" ? groupId : undefined;
   const params: ListExpensesParams = {
     limit: 100,
-    group_id: groupId || undefined,
+    group_id: (!scope && groupId) || undefined,
+    scope,
     category_id: categoryId || undefined,
     paid_by_id: payer === "me" ? me?.id : undefined,
     q: deferredQ || undefined,
@@ -92,7 +96,9 @@ export function ExpensesPage() {
         </div>
         <button
           type="button"
-          onClick={() => setSeed({ mode: "create", groupId: groupId || groups?.[0]?.id })}
+          onClick={() =>
+            setSeed({ mode: "create", groupId: scope === "personal" ? null : (!scope && groupId) || groups?.[0]?.id })
+          }
           className="inline-flex h-11 items-center gap-2 self-start rounded-full border border-border bg-card px-5 text-sm font-medium transition-colors hover:bg-muted sm:self-auto"
         >
           <Plus className="size-4" />
@@ -114,7 +120,9 @@ export function ExpensesPage() {
           />
         </label>
         <select aria-label="Group" value={groupId} onChange={(e) => setGroupId(e.target.value)} className={filterClass}>
-          <option value="">All groups</option>
+          <option value="">Personal and groups</option>
+          <option value="personal">Personal only</option>
+          <option value="group">Groups only</option>
           {groups?.map((g) => (
             <option key={g.id} value={g.id}>
               {g.name}

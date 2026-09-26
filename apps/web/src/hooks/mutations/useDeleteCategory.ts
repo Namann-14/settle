@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateSpending } from "./invalidate";
 import { deleteCategory } from "@/lib/api/categories";
 
 export function useDeleteCategory() {
@@ -10,6 +11,10 @@ export function useDeleteCategory() {
       queryClient.invalidateQueries({
         queryKey: ["categories"],
       });
+      // Deleting uncategorizes its expenses and drops its budget.
+      queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      invalidateSpending(queryClient);
     },
   });
 }
