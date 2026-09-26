@@ -12,6 +12,7 @@ from app.models.invitation import GroupInvitation
 from app.models.recurring_expense import RecurringExpense, RecurringExpenseSplit
 from app.models.settlement import Settlement
 from app.models.user import User
+from app.models.whatsapp_message import WhatsAppMessage
 
 __all__ = [
     "AIExpenseDraft",
@@ -30,4 +31,5 @@ __all__ = [
     "RecurringExpenseSplit",
     "Settlement",
     "User",
+    "WhatsAppMessage",
 ]

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.timing import TimingMiddleware
 from app.db.session import engine
-from app.routes import budgets, categories, expenses, groups, incomes, recurring, settlements, spending, users
+from app.routes import budgets, categories, expenses, groups, incomes, recurring, settlements, spending, users, whatsapp
 
 
 @asynccontextmanager
@@ -58,3 +58,4 @@ app.include_router(budgets.router)
 app.include_router(incomes.router)
 app.include_router(recurring.router)
 app.include_router(spending.router)
+app.include_router(whatsapp.router)
