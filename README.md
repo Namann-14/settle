@@ -1,95 +1,76 @@
-# settle
+# Settle
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, and more.
+Personal expense tracker with groups and settlements. Describe an expense in plain words (or by voice), see who owes whom, and settle up in the fewest payments.
+
+![Settle landing page](docs/hero.png)
 
 ## Features
 
-- **TypeScript** - For type safety and improved developer experience
-- **Next.js** - Full-stack React framework
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **Turborepo** - Optimized monorepo build system
+- **Groups and settlements**: split trips, flats and dinners, with simplified settle-up plans.
+- **AI assistant**: chat and expense extraction from text, voice and receipts (LangGraph + Groq).
+- **Telegram bot**: add and query expenses from Telegram.
+- **Personal tracking**: your share of spending, categories, budgets and recurring expenses.
 
-## Getting Started
+## Stack
 
-First, install the dependencies:
+| Path | What |
+| --- | --- |
+| `apps/web` | Next.js 16 / React 19 app (port 3001): Clerk auth, TanStack Query, AI SDK chat UI, Tailwind 4 |
+| `apps/fumadocs` | Public docs site (serves `llms.txt`) |
+| `services/api` | FastAPI + SQLAlchemy 2 + Alembic + Postgres (port 8000); source of truth for data and permissions |
+| `services/ai` | FastAPI + LangGraph (port 8001); chat and expense-extraction agents |
+| `packages/ui` | Shared shadcn/ui primitives (`@settle/ui`) |
+
+Browser -> Next route handlers (`apps/web/src/app/api/**`) -> `services/api` or `services/ai`. See [CLAUDE.md](CLAUDE.md) for architecture details and gotchas, and `llm-docs/` for per-file docs.
+
+## Getting started
+
+Requires Node, npm, [uv](https://docs.astral.sh/uv/) and a Postgres database (Neon in production).
 
 ```bash
 npm install
-```
+cp apps/web/.env.example apps/web/.env
+cp services/api/.env.example services/api/.env
+cp services/ai/.env.example services/ai/.env
+# fill in Clerk keys, DATABASE_URL, GROQ_API_KEY, INTERNAL_API_KEY, ...
 
-Then, run the development server:
-
-```bash
+uv --directory services/api run alembic upgrade head
 npm run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
-
-## UI Customization
-
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
-
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
-
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
+`npm run dev` starts everything via Turborepo. To run pieces separately:
 
 ```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
+npm run dev:web                                                         # http://localhost:3001
+uv --directory services/api run uvicorn app.main:app --reload --port 8000
+uv --directory services/ai run uvicorn app.main:app --reload --port 8001 --workers 1
 ```
 
-Import shared components like this:
+## Scripts
+
+| Command | What |
+| --- | --- |
+| `npm run build` | Build the web app |
+| `npm run check-types` | Type-check |
+| `uv --directory services/api run pytest` | API tests |
+| `npm run env:preview` / `env:production` | Sync env vars to Vercel |
+| `npm run deploy` / `deploy:prod` | Vercel preview / production deploy |
+| `npm run deploy:check` | Dry-run deploy |
+
+## Deployment
+
+Vercel multi-service (`vercel.json`): `web`, `api`, `ai`, region `sin1`. Link the project with `npm run deploy:setup`, then sync env vars (`npm run env:preview` or `env:production`) before the first deploy, since local `.env` files are not uploaded.
+
+## UI
+
+Shared shadcn primitives live in `packages/ui`; add more with:
+
+```bash
+npx shadcn@latest add <component> -c packages/ui
+```
 
 ```tsx
 import { Button } from "@settle/ui/components/button";
 ```
 
-### Add app-specific blocks
-
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
-
-## Deployment
-
-### Vercel Services
-
-- Target: web
-- Config: `vercel.json`
-- Link the project first: npm run deploy:setup
-- Local Vercel dev: npm run dev:vercel
-- Sync preview env: npm run env:preview
-- Sync production env: npm run env:production
-- Dry-run check (no upload): npm run deploy:check
-- Preview deploy: npm run deploy
-- Production deploy: npm run deploy:prod
-  Vercel Services share project environment variables, but deploys do not upload local `.env` files automatically. Link the project with `vercel link`, then run the env sync command before your first deploy (otherwise the deployment starts with no env vars), or pass one-off envs with `vercel deploy -e KEY=value`.
-  Pass Vercel CLI flags to the env sync command directly, for example: `npm run env:production --scope your-team`.
-
-For more details, see the guide on [Deploying to Vercel](https://www.better-t-stack.dev/docs/guides/vercel).
-
-## Project Structure
-
-```
-settle/
-├── apps/
-│   ├── web/         # Frontend application (Next.js)
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-```
-
-## Available Scripts
-
-- `npm run dev`: Start all applications in development mode
-- `npm run build`: Build all applications
-- `npm run dev:web`: Start only the web application
-- `npm run check-types`: Check TypeScript types across all apps
-- `npm run deploy:setup`: Link this repo to a Vercel project (first-time setup)
-- `npm run dev:vercel`: Run the Vercel Services dev environment locally
-- `npm run env:preview`: Sync local env files to the Vercel preview environment
-- `npm run env:production`: Sync local env files to the Vercel production environment
-- `npm run deploy`: Create a Vercel preview deployment
-- `npm run deploy:prod`: Deploy to Vercel production
-- `npm run deploy:check`: Dry-run a deploy to preview framework detection and included files without uploading
+App-specific blocks: run the shadcn CLI from `apps/web`.
