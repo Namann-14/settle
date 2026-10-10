@@ -17,6 +17,7 @@ import { HeroVideo } from "@/components/landing/hero-video";
 import { HowItWorks, SettleShowcase } from "@/components/landing/how-it-works";
 import { NavAuth } from "@/components/landing/nav-auth";
 import { Pricing } from "@/components/landing/pricing";
+import { SettleLogo } from "@/components/settle-logo";
 
 const NAV_LINKS = [
   { href: "#features", label: "Features" },
@@ -29,10 +30,8 @@ const NAV_LINKS = [
 function Navbar() {
   return (
     <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body">
-      <a href="#home" className="flex items-center gap-1.5">
-        <span className="text-xl font-semibold tracking-tight text-foreground">
-          ✦ Settle
-        </span>
+      <a href="#home" aria-label="Settle home">
+        <SettleLogo />
       </a>
       <div className="hidden md:flex items-center gap-8">
         {NAV_LINKS.map((link) => (

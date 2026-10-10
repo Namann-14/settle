@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
-import { HandCoins } from "lucide-react";
 
 import {
   Sidebar,
@@ -13,6 +12,7 @@ import {
 
 import { NavChats } from "@/components/dashboard/nav-chats";
 import { NavMain } from "@/components/dashboard/nav-main";
+import { SettleMark } from "@/components/settle-logo";
 
 export function AppSidebar() {
   return (
@@ -22,7 +22,7 @@ export function AppSidebar() {
           href="/dashboard"
           className="flex items-center gap-2 px-2 py-1.5 font-display text-lg"
         >
-          <HandCoins className="size-5 shrink-0 text-primary" />
+          <SettleMark className="size-5" />
           <span className="group-data-[collapsible=icon]:hidden">Settle</span>
         </Link>
       </SidebarHeader>

@@ -1,4 +1,5 @@
 import { GetStartedButton } from "./get-started-button";
+import { SettleLogo } from "@/components/settle-logo";
 
 export function FinalCta() {
   return (
@@ -47,7 +48,7 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col gap-12">
         <div className="flex flex-col justify-between gap-10 md:flex-row">
           <div className="flex max-w-xs flex-col gap-3">
-            <span className="text-xl font-semibold tracking-tight text-foreground">✦ Settle</span>
+            <SettleLogo />
             <p className="text-sm leading-relaxed text-muted-foreground">
               Shared expenses, split fairly and settled simply.
             </p>
