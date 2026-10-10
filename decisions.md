@@ -114,3 +114,11 @@ Settle was built for splitting bills. We extended it so it also works as a perso
 **Result (local production build, compressed transfer):** landing JS went from 342 KB to 261 KB, and fonts from 101 KB to 77 KB. The live site is measured with Brotli and the local build with gzip, so the real saving is a little larger.
 
 **Not changed:** the landing page's time to first byte was already about 110 ms, served from Vercel's edge cache.
+
+## 2026-10-11 — Logo: split coin
+
+The logo is a coin cut on the diagonal into two slightly offset halves (a split bill): a solid half in the primary green `#2E5E4E` and a lighter half in `#8FBFA4`. On green tiles the halves are white and `#9FD0B4`. Picked over five other concepts because it still reads at 16 px.
+
+- `apps/web/src/app/icon.svg`, `favicon.ico` (16/32/48) and `apple-icon.png` (180) are picked up by Next's file conventions; no `metadata.icons` needed.
+- `apps/web/public/brand/` holds the mark (`settle-mark.svg`, `settle-mark-light.svg` for dark backgrounds), a full-bleed square (`settle-square.svg`) and `settle-telegram-512.png` for the bot's profile photo. Telegram crops avatars to a circle, so the square has no rounded corners and the mark sits well inside the circle.
+- The PNG and ICO files were rendered from the SVGs with `sharp`. Re-render them if the SVGs change.

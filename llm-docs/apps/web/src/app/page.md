@@ -2,7 +2,7 @@
 
 **Purpose:** Public landing page.
 
-**Key contents:** Navbar, hero (badge, headline, CTAs), a static illustrative `DashboardPreview` with sample data, then landing sections (trust strip, features, how it works, AI spotlight, pricing, FAQ, footer).
+**Key contents:** Navbar (with `SettleLogo`), hero (badge, headline, CTAs), a static illustrative `DashboardPreview` with sample data, then landing sections (trust strip, features, how it works, AI spotlight, pricing, FAQ, footer).
 
 **Depends on / used by:** Uses `components/landing/*`. Route `/`.
 
