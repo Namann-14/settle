@@ -24,11 +24,23 @@ LOCK_KEY = 72_531_904
 
 
 def upgrade_to_head() -> None:
-    with engine.connect() as conn:
-        conn.execute(text("select pg_advisory_lock(:k)"), {"k": LOCK_KEY})
-        try:
-            command.upgrade(Config(str(ALEMBIC_INI)), "head")
-        finally:
-            conn.execute(text("select pg_advisory_unlock(:k)"), {"k": LOCK_KEY})
-            conn.commit()
+    config = Config(str(ALEMBIC_INI))
+    # Leave the app's logging alone (see alembic/env.py).
+    config.attributes["configure_logger"] = False
+
+    # Alembic chats at INFO on every cold start (plugin setup, dialect impl)
+    # even when there is nothing to apply. Warnings and errors still get through.
+    alembic_logger = logging.getLogger("alembic")
+    previous_level = alembic_logger.level
+    alembic_logger.setLevel(logging.WARNING)
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("select pg_advisory_lock(:k)"), {"k": LOCK_KEY})
+            try:
+                command.upgrade(config, "head")
+            finally:
+                conn.execute(text("select pg_advisory_unlock(:k)"), {"k": LOCK_KEY})
+                conn.commit()
+    finally:
+        alembic_logger.setLevel(previous_level)
     logger.info("database migrated to head")

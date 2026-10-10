@@ -19,10 +19,11 @@ elif db_url.startswith("postgres://"):
 
 config.set_main_option("sqlalchemy.url", db_url)
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+# Interpret the config file for Python logging, but only from the CLI. When the
+# app migrates itself at startup (app/db/migrate.py) fileConfig would reset the
+# root logger and disable every logger the app already created.
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
