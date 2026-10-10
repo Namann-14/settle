@@ -6,4 +6,4 @@
 
 **Depends on / used by:** `app/core/config.py`, `app/db/base.py`, `app/models/user.py` (importing the models registers them on metadata), `alembic.ini`.
 
-**Decisions & caveats:** `include_object` skips reflected tables that have no model. services/ai keeps its own tables in the same database (LangGraph checkpoints, `ai_chat_*`), and without this filter autogenerate would propose dropping them. The driver rewrite matters because Neon URLs use the plain `postgresql://` scheme but the app uses psycopg 3.
+**Decisions & caveats:** `include_object` skips reflected tables that have no model. services/ai keeps its own tables in the same database (LangGraph checkpoints, `ai_chat_*`), and without this filter autogenerate would propose dropping them. The driver rewrite matters because Neon URLs use the plain `postgresql://` scheme but the app uses psycopg 3. `fileConfig` (logging from alembic.ini) runs only from the CLI, skipped when the caller sets `configure_logger` to False, and always with `disable_existing_loggers=False`: at startup it used to disable every app logger and silence production logs.
