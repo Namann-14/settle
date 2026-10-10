@@ -1,5 +1,8 @@
 import { Check } from "lucide-react";
 
+import { Reveal, Spotlight } from "./motion";
+import { DebtCollapse } from "./page-extras";
+import { TraceLine } from "./scroll-effects";
 import { SectionBadge, SectionHeading } from "./section-heading";
 
 const steps = [
@@ -19,7 +22,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="how" className="scroll-mt-8 px-6 md:px-12 lg:px-20 pt-32">
+    <section id="how" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-32">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-14">
         <SectionHeading
           badge="How it works"
@@ -29,20 +32,22 @@ export function HowItWorks() {
             </>
           }
         />
-        <ol className="grid w-full grid-cols-1 gap-5 md:grid-cols-3">
+        <TraceLine steps={steps.length} />
+        <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-3">
           {steps.map((step, i) => {
             const last = i === steps.length - 1;
             return (
-              <li
-                key={step.title}
+              <Reveal key={step.title} delay={i * 0.1} className="h-full">
+              <Spotlight
+                inverted={last}
                 className={
                   last
-                    ? "flex flex-col gap-3 rounded-2xl bg-primary p-8 text-primary-foreground shadow-dashboard"
-                    : "flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-8"
+                    ? "flex h-full flex-col gap-3 rounded-2xl bg-primary p-8 text-primary-foreground shadow-dashboard"
+                    : "flex h-full flex-col gap-3 rounded-2xl border border-border/70 bg-card p-8"
                 }
               >
                 <span
-                  className={`font-display text-6xl italic leading-none ${last ? "text-primary-foreground/60" : "text-secondary"}`}
+                  className={`font-display text-6xl italic leading-none transition-all duration-300 group-hover/spot:translate-x-1 ${last ? "text-primary-foreground/60 group-hover/spot:text-primary-foreground" : "text-secondary group-hover/spot:text-primary"}`}
                 >
                   0{i + 1}
                 </span>
@@ -52,10 +57,11 @@ export function HowItWorks() {
                 >
                   {step.body}
                 </p>
-              </li>
+              </Spotlight>
+              </Reveal>
             );
           })}
-        </ol>
+        </div>
       </div>
     </section>
   );
@@ -77,7 +83,7 @@ export function SettleShowcase() {
   return (
     <section className="px-6 md:px-12 lg:px-20 pt-32">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-12 lg:flex-row lg:gap-16">
-        <div className="flex flex-1 flex-col gap-5">
+        <Reveal className="flex flex-1 flex-col gap-5">
           <SectionBadge className="self-start">Simplified debts</SectionBadge>
           <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl leading-none tracking-tight text-foreground">
             Fewer payments, <em className="italic">zero</em> awkward maths
@@ -96,9 +102,10 @@ export function SettleShowcase() {
               </li>
             ))}
           </ul>
-        </div>
+        </Reveal>
 
-        <div
+        <Reveal
+          delay={0.1}
           className="w-full flex-1 rounded-[22px] p-3.5 backdrop-blur-md"
           style={{
             background: "rgba(255, 255, 255, 0.55)",
@@ -106,24 +113,10 @@ export function SettleShowcase() {
             boxShadow: "0 25px 80px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)",
           }}
         >
-          <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-card p-6 sm:p-7">
-            <span className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Before</span>
-            <div className="flex flex-col gap-2 text-sm text-foreground">
-              {before.map((row) => (
-                <div key={row.label} className="flex justify-between rounded-lg bg-muted px-3.5 py-2.5">
-                  <span>{row.label}</span>
-                  <span className="font-semibold">{row.amount}</span>
-                </div>
-              ))}
-            </div>
-            <div className="h-px bg-border/70" />
-            <span className="text-xs uppercase tracking-[0.08em] text-primary">After Settle</span>
-            <div className="flex items-center justify-between rounded-xl bg-primary px-4 py-3.5 text-[15px] text-primary-foreground">
-              <span>Aman pays Kabir</span>
-              <span className="font-semibold">₹400</span>
-            </div>
+          <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-7">
+            <DebtCollapse before={before} result={{ label: "Aman pays Kabir", amount: "₹400" }} />
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -1,5 +1,7 @@
 import { cn } from "@settle/ui/lib/utils";
 
+import { Reveal } from "./motion";
+
 export function SectionBadge({
   children,
   className,
@@ -31,7 +33,7 @@ export function SectionHeading({
   align?: "center" | "left";
 }) {
   return (
-    <div
+    <Reveal
       className={cn(
         "flex flex-col gap-4",
         align === "center" ? "items-center text-center" : "items-start text-left",
@@ -46,6 +48,6 @@ export function SectionHeading({
           {description}
         </p>
       )}
-    </div>
+    </Reveal>
   );
 }

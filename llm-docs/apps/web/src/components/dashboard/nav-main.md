@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `@settle/ui` sidebar; rendered by `app-sidebar.tsx`.
 
-**Decisions & caveats:** `/dashboard` matches exactly, others also match sub-routes so e.g. a group detail page keeps Groups highlighted. Routes use `as const` for typed Next links.
+**Decisions & caveats:** `/dashboard` matches exactly, others also match sub-routes so e.g. a group detail page keeps Groups highlighted. Routes use `as const` for typed Next links. Sidebar icons scale slightly on hover.

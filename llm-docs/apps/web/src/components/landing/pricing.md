@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `get-started-button.tsx` and `section-heading.tsx`.
 
-**Decisions & caveats:** Marketing copy only; no billing logic exists here. Feature claims (e.g. Pro tier items) are not enforced in code by this file.
+**Decisions & caveats:** Marketing copy only; no billing logic exists here. Feature claims (e.g. Pro tier items) are not enforced in code by this file. Plan cards use `Reveal` + `Spotlight`; primary button uses `.btn-shine`. Pro card floats up on scroll (`ScrollFx`).

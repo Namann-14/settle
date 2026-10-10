@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `section-heading.tsx`; rendered by the landing page.
 
-**Decisions & caveats:** Server component with static copy.
+**Decisions & caveats:** Server component with static copy. Steps and the showcase use `Reveal`/`Spotlight` from `motion.tsx`; the steps list is now a `div` grid (was `ol`). Showcase card is now `DebtCollapse` from `page-extras.tsx`; step numbers shift and tint on hover; sections use `scroll-mt-20`. A `TraceLine` draws above the steps as you scroll.

@@ -6,7 +6,7 @@ export function Panel({ className, ...props }: React.ComponentProps<"section">) 
   return (
     <section
       className={cn(
-        "flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-6 text-card-foreground",
+        "lift flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-6 text-card-foreground",
         className,
       )}
       {...props}

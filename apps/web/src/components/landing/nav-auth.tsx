@@ -15,7 +15,7 @@ export function NavAuth() {
           </button>
         </SignInButton>
         <SignUpButton mode="modal">
-          <button className="rounded-full px-5 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm cursor-pointer">
+          <button className="rounded-lg px-5 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm cursor-pointer">
             Get Started
           </button>
         </SignUpButton>
@@ -23,7 +23,7 @@ export function NavAuth() {
       <Show when="signed-in">
         <Link
           href="/dashboard"
-          className="rounded-full px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
+          className="rounded-lg px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
         >
           Dashboard
         </Link>
