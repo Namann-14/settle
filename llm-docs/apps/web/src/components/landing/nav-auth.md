@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `@clerk/nextjs`; embedded in the landing navbar.
 
-**Decisions & caveats:** Split out so the rest of the navbar stays server-rendered (decisions.md, faster first load).
+**Decisions & caveats:** Split out so the rest of the navbar stays server-rendered (decisions.md, faster first load). Buttons use `rounded-lg` to match the rectangular navbar.

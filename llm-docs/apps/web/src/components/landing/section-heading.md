@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `cn` from `@settle/ui`; used by faq, features, how-it-works and pricing.
 
-**Decisions & caveats:** Nothing notable.
+**Decisions & caveats:** Nothing notable. Root is now a `Reveal`, so every section heading fades in on scroll.

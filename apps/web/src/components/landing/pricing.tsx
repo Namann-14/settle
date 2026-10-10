@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 
 import { GetStartedButton } from "./get-started-button";
+import { Reveal, Spotlight } from "./motion";
 import { SectionHeading } from "./section-heading";
 
 const freeFeatures = [
@@ -23,8 +24,8 @@ function FeatureList({ items, inverted }: { items: string[]; inverted?: boolean 
       className={`flex flex-col gap-2.5 text-sm ${inverted ? "text-primary-foreground/80" : "text-foreground/80"}`}
     >
       {items.map((item) => (
-        <li key={item} className="flex items-center gap-2.5">
-          <Check className="h-4 w-4 shrink-0" />
+        <li key={item} className="group/li flex items-center gap-2.5">
+          <Check className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover/li:scale-125" />
           {item}
         </li>
       ))}
@@ -34,7 +35,7 @@ function FeatureList({ items, inverted }: { items: string[]; inverted?: boolean 
 
 export function Pricing() {
   return (
-    <section id="pricing" className="scroll-mt-8 px-6 md:px-12 lg:px-20 pt-32">
+    <section id="pricing" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-20 md:pt-32">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-14">
         <SectionHeading
           badge="Pricing"
@@ -45,7 +46,8 @@ export function Pricing() {
           }
         />
         <div className="grid w-full max-w-[880px] grid-cols-1 gap-5 md:grid-cols-2">
-          <div className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-9">
+          <Reveal className="h-full">
+          <Spotlight className="flex h-full flex-col gap-4 rounded-2xl border border-border/70 bg-card p-9">
             <span className="text-[15px] font-semibold text-foreground">Free</span>
             <div className="flex items-baseline gap-1.5">
               <span className="font-display text-6xl leading-none text-foreground">₹0</span>
@@ -54,11 +56,13 @@ export function Pricing() {
             <FeatureList items={freeFeatures} />
             <GetStartedButton
               label="Get started"
-              className="mt-auto rounded-full border border-border px-6 py-3 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted cursor-pointer"
+              className="mt-auto rounded-full border border-border px-6 py-3 text-center text-sm font-medium text-foreground transition-all hover:bg-muted hover:-translate-y-px active:scale-[0.98] cursor-pointer"
             />
-          </div>
+          </Spotlight>
+          </Reveal>
 
-          <div className="flex flex-col gap-4 rounded-2xl bg-primary p-9 text-primary-foreground shadow-[0_25px_80px_-12px_rgba(46,89,70,0.35)]">
+          <Reveal className="h-full" delay={0.1}>
+          <Spotlight inverted className="flex h-full flex-col gap-4 rounded-2xl bg-primary p-9 text-primary-foreground shadow-[0_25px_80px_-12px_rgba(46,89,70,0.35)]">
             <div className="flex items-center justify-between">
               <span className="text-[15px] font-semibold">Pro</span>
               <span className="rounded-full bg-primary-foreground px-2.5 py-0.5 text-xs text-primary">
@@ -71,9 +75,10 @@ export function Pricing() {
             <FeatureList items={proFeatures} inverted />
             <GetStartedButton
               label="Start free today"
-              className="mt-auto rounded-full bg-primary-foreground px-6 py-3 text-center text-sm font-medium text-primary transition-all hover:shadow-lg active:scale-[0.98] cursor-pointer"
+              className="btn-shine mt-auto rounded-full bg-primary-foreground px-6 py-3 text-center text-sm font-medium text-primary hover:shadow-lg active:scale-[0.98] cursor-pointer"
             />
-          </div>
+          </Spotlight>
+          </Reveal>
         </div>
       </div>
     </section>

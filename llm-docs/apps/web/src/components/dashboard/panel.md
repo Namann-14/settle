@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Used throughout dashboard, expenses, groups and spending components.
 
-**Decisions & caveats:** Nothing notable.
+**Decisions & caveats:** Nothing notable. `Panel` uses `.lift` for a small hover lift.

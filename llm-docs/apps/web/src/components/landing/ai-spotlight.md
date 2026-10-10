@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `get-started-button.tsx`; rendered by the landing page.
 
-**Decisions & caveats:** Server-rendered on purpose (see decisions.md, faster first load); only the CTA button is a client component. Content is static marketing copy and mock data.
+**Decisions & caveats:** Server-rendered on purpose (see decisions.md, faster first load); only the CTA button is a client component. Content is static marketing copy and mock data. Chat demo plays in sequence on scroll (staggered `Reveal` delays, `GrowBar` bars). Reply is preceded by `TypingDots`.

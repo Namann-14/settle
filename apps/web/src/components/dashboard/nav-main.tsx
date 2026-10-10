@@ -47,6 +47,7 @@ export function NavMain() {
               render={<Link href={item.url} />}
               isActive={isActive(pathname, item.url)}
               tooltip={item.title}
+              className="[&_svg]:transition-transform [&_svg]:duration-200 hover:[&_svg]:scale-110"
             >
               <item.icon />
               <span>{item.title}</span>

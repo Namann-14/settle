@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `SectionBadge` from `section-heading.tsx`; rendered by the landing page.
 
-**Decisions & caveats:** Native `<details>` with a shared `name` gives exclusive accordion behaviour with no JS. FAQ copy claims currency conversion, whereas decisions.md says totals are not converted and exchange rates are unused; verify before relying on it.
+**Decisions & caveats:** Native `<details>` with a shared `name` gives exclusive accordion behaviour with no JS. FAQ copy claims currency conversion, whereas decisions.md says totals are not converted and exchange rates are unused; verify before relying on it. Items use `Reveal`; `.faq-item` in `index.css` animates open/close where `interpolate-size` is supported.

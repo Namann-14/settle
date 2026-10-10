@@ -11,12 +11,21 @@ import { AiSpotlight } from "@/components/landing/ai-spotlight";
 import { Faq } from "@/components/landing/faq";
 import { Features, TrustStrip } from "@/components/landing/features";
 import { FinalCta, Footer } from "@/components/landing/footer";
-import { DemoVideoButton } from "@/components/landing/demo-video-button";
 import { GetStartedButton } from "@/components/landing/get-started-button";
 import { HeroVideo } from "@/components/landing/hero-video";
 import { HowItWorks, SettleShowcase } from "@/components/landing/how-it-works";
+import {
+  CountUp,
+  LandingMotion,
+  Tilt,
+  Typewriter,
+} from "@/components/landing/motion";
 import { NavAuth } from "@/components/landing/nav-auth";
 import { Pricing } from "@/components/landing/pricing";
+import { ActivityToasts, BackToTop } from "@/components/landing/page-extras";
+import { ResizableNav } from "@/components/landing/resizable-nav";
+import { SplitYourWay } from "@/components/landing/split-your-way";
+import { WhatIsSettle } from "@/components/landing/what-is-settle";
 import { SettleLogo } from "@/components/settle-logo";
 
 const NAV_LINKS = [
@@ -26,28 +35,26 @@ const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
-// Navbar Component
 function Navbar() {
   return (
-    <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body">
-      <a href="#home" aria-label="Settle home">
-        <SettleLogo />
-      </a>
-      <div className="hidden md:flex items-center gap-8">
-        {NAV_LINKS.map((link) => (
-          <a
-            key={link.href}
-            href={link.href}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {link.label}
-          </a>
-        ))}
-      </div>
+    <ResizableNav
+      links={NAV_LINKS}
+      logo={
+        <a href="#home" aria-label="Settle home" className="relative z-10">
+          <SettleLogo />
+        </a>
+      }
+    >
       <NavAuth />
-    </nav>
+    </ResizableNav>
   );
 }
+
+const PREVIEW_PROMPTS = [
+  "Dinner 2400 at Toit with Riya and Aman, I paid",
+  "Uber to the airport 850, split with Kabir",
+  "Wi-Fi bill 1199, Kavya paid, split three ways",
+];
 
 const PREVIEW_GROUPS = [
   {
@@ -122,8 +129,10 @@ function DashboardPreview() {
   ];
 
   return (
-    <div className="mt-10 w-full max-w-5xl select-none" aria-hidden="true">
+    <Tilt className="relative mt-10 w-full max-w-5xl select-none">
+      <ActivityToasts />
       <div
+        aria-hidden="true"
         className="rounded-2xl overflow-hidden p-3 md:p-4 backdrop-blur-md"
         style={{
           background: "rgba(255, 255, 255, 0.4)",
@@ -146,10 +155,10 @@ function DashboardPreview() {
             {nav.map((item) => (
               <div
                 key={item.label}
-                className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-[11px] ${
+                className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-[11px] transition-colors ${
                   item.active
                     ? "bg-accent font-medium text-foreground"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground hover:bg-accent/50"
                 }`}
               >
                 <item.icon className="size-3.5" />
@@ -166,9 +175,10 @@ function DashboardPreview() {
 
             <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 shadow-xs">
               <Sparkles className="size-3.5 shrink-0 text-primary" />
-              <span className="flex-1 truncate text-[11px] text-muted-foreground">
-                Dinner 2400 at Toit with Riya and Aman, I paid
-              </span>
+              <Typewriter
+                phrases={PREVIEW_PROMPTS}
+                className="flex-1 text-[11px] text-muted-foreground"
+              />
               <Mic className="size-3.5 text-primary" />
               <span className="rounded-full bg-primary px-2.5 py-1 text-[10px] font-medium text-primary-foreground">
                 Draft with AI
@@ -180,7 +190,9 @@ function DashboardPreview() {
                 <p className="text-[9px] uppercase tracking-wider opacity-70">
                   You’re owed
                 </p>
-                <p className="font-display text-xl leading-tight">₹7,760</p>
+                <p className="font-display text-xl leading-tight">
+                  <CountUp prefix="₹" value={7760} delay={0.7} />
+                </p>
               </div>
               <div className="rounded-xl border border-border bg-card p-3">
                 <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
@@ -194,7 +206,9 @@ function DashboardPreview() {
                 <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
                   Spent this month
                 </p>
-                <p className="font-display text-xl leading-tight">₹18,420</p>
+                <p className="font-display text-xl leading-tight">
+                  ₹18,420
+                </p>
               </div>
             </div>
 
@@ -206,7 +220,7 @@ function DashboardPreview() {
                 {PREVIEW_GROUPS.map((g) => (
                   <div
                     key={g.name}
-                    className="flex items-center gap-2 border-b border-border/40 py-2 last:border-b-0"
+                    className="-mx-1.5 flex items-center gap-2 rounded-md border-b border-border/40 px-1.5 py-2 transition-colors last:border-b-0 hover:bg-accent/40"
                   >
                     <span className="flex size-6 items-center justify-center rounded-md bg-accent text-[9px] font-semibold text-primary">
                       {g.initials}
@@ -241,7 +255,7 @@ function DashboardPreview() {
                   ].map(([label, amount]) => (
                     <div
                       key={label}
-                      className="flex items-center justify-between rounded-lg bg-white/[0.07] px-2 py-1.5 text-[10px]"
+                      className="flex items-center justify-between rounded-lg bg-white/[0.07] px-2 py-1.5 text-[10px] transition-colors hover:bg-white/[0.14]"
                     >
                       <span>{label}</span>
                       <span className="font-semibold">{amount}</span>
@@ -278,7 +292,7 @@ function DashboardPreview() {
                   {PREVIEW_EXPENSES.map((e) => (
                     <tr
                       key={e.description}
-                      className="border-b border-border/50 last:border-b-0"
+                      className="border-b border-border/50 transition-colors last:border-b-0 hover:bg-accent/30"
                     >
                       <td className="py-2 text-muted-foreground">{e.date}</td>
                       <td className="py-2 font-medium text-foreground">
@@ -304,16 +318,20 @@ function DashboardPreview() {
           </div>
         </div>
       </div>
-    </div>
+    </Tilt>
   );
 }
 
-// Server-rendered: only the navbar's auth buttons, the play button and the
-// hero video are client components, so the rest of the page ships no JS.
+// Server-rendered: the navbar's auth buttons, the play button, the hero video
+// and the small motion helpers in `landing/motion.tsx` are the only client
+// components. `LandingMotion` loads motion's lightweight feature set once.
 export default function Home() {
   return (
-    <div className="relative min-h-screen flex flex-col bg-background overflow-x-hidden font-body">
+    <LandingMotion>
+    <div className="relative min-h-screen flex flex-col bg-background overflow-x-clip font-body">
       {/* Hero wrapper keeps the background video scoped to the hero */}
+      {/* Page content sits above the sticky footer, which is uncovered as you reach the bottom */}
+      <div className="relative z-10 rounded-b-[2rem] bg-background pb-24 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.22)]">
       <div id="home" className="relative min-h-screen flex flex-col">
         {/* Background video, loaded once the page is idle */}
         <HeroVideo />
@@ -336,7 +354,7 @@ export default function Home() {
             }
           >
             <Sparkles className="size-3.5 text-primary" />
-            <span>Add expenses by typing or talking</span>
+            <span className="shiny-text">Add expenses by typing or talking</span>
           </a>
 
           {/* Headline */}
@@ -372,7 +390,7 @@ export default function Home() {
 
           {/* CTA Buttons */}
           <div
-            className="animate-fade-up mt-6 flex items-center gap-3"
+            className="animate-fade-up mt-6 flex flex-wrap items-center justify-center gap-3"
             style={
               {
                 "--y": "16px",
@@ -381,14 +399,13 @@ export default function Home() {
               } as React.CSSProperties
             }
           >
-            <GetStartedButton className="rounded-full px-6 py-3 text-sm font-medium font-body bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md hover:shadow-lg active:scale-[0.98] cursor-pointer" />
+            <GetStartedButton className="rounded-full px-6 py-3 text-sm font-medium font-body whitespace-nowrap bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-colors hover:shadow-lg active:scale-[0.98] cursor-pointer" />
             <a
               href="#how"
-              className="rounded-full px-5 py-3 text-sm font-medium font-body bg-background text-foreground hover:bg-secondary transition-all shadow-md"
+              className="rounded-full px-5 py-3 text-sm font-medium font-body whitespace-nowrap bg-background text-foreground hover:bg-secondary transition-all shadow-md hover:-translate-y-px active:scale-[0.98]"
             >
               See how it works
             </a>
-            <DemoVideoButton />
           </div>
 
           {/* Dashboard Preview */}
@@ -408,14 +425,19 @@ export default function Home() {
       </div>
 
       <TrustStrip />
+      <WhatIsSettle />
       <Features />
       <HowItWorks />
+      <SplitYourWay />
       <SettleShowcase />
       <AiSpotlight />
       <Pricing />
       <Faq />
       <FinalCta />
+      </div>
       <Footer />
+      <BackToTop />
     </div>
+    </LandingMotion>
   );
 }
