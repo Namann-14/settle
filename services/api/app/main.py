@@ -1,3 +1,4 @@
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 
@@ -9,6 +10,10 @@ from app.core.timing import TimingMiddleware
 from app.db.migrate import upgrade_to_head
 from app.db.session import engine
 from app.routes import budgets, categories, expenses, groups, incomes, recurring, settlements, spending, telegram, users
+
+# httpx logs every request URL at INFO, and Telegram Bot API URLs carry the bot
+# token (/bot<token>/sendMessage), which would end up in the Vercel logs.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 @asynccontextmanager

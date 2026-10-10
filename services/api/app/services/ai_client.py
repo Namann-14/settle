@@ -48,7 +48,13 @@ class Extracted:
 
 
 def _url(path: str) -> str:
-    return f"{settings.AI_SERVICE_URL.rstrip('/')}{settings.AI_ROUTE_PREFIX}{path}"
+    base = settings.AI_SERVICE_URL.rstrip("/")
+    prefix = settings.AI_ROUTE_PREFIX.rstrip("/")
+    # On Vercel the base is https://<domain>/ai and AI_ROUTE_PREFIX (project-wide)
+    # is also /ai; appending it again gives /ai/ai/... and a 404.
+    if prefix and base.endswith(prefix):
+        prefix = ""
+    return f"{base}{prefix}{path}"
 
 
 def _headers() -> dict[str, str]:
