@@ -35,8 +35,9 @@ export function SplitCoinArt() {
       ref={ref}
       onPointerEnter={() => setHover(true)}
       onPointerLeave={() => setHover(false)}
-      className="absolute bottom-0 right-0 top-0 w-[58%] min-w-[280px]"
+      className="absolute inset-x-0 bottom-24 top-20 md:inset-x-auto md:bottom-0 md:right-0 md:top-0 md:w-[58%] md:min-w-[280px]"
     >
+      <div className="absolute inset-0 origin-center scale-[0.72] md:scale-100">
       {/* friends orbiting the coin */}
       <div className="absolute left-1/2 top-1/2 size-[250px] -translate-x-1/2 -translate-y-[42%] animate-[spin_26s_linear_infinite] motion-reduce:animate-none">
         <div className="absolute inset-0 rounded-full border border-dashed border-primary/25" />
@@ -77,6 +78,7 @@ export function SplitCoinArt() {
         >
           ₹800
         </m.span>
+      </div>
       </div>
     </div>
   );

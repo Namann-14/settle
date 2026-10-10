@@ -28,7 +28,7 @@ const faqs = [
 
 export function Faq() {
   return (
-    <section id="faq" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-32">
+    <section id="faq" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-20 md:pt-32">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 lg:flex-row lg:gap-16">
         <Reveal className="flex flex-col gap-4 lg:w-[420px]">
           <SectionBadge className="self-start">FAQ</SectionBadge>

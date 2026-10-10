@@ -94,9 +94,43 @@ export function ResizableNav({
 
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 80));
 
+  // The menu closes on Escape and when the layout switches to desktop, and
+  // the page behind it does not scroll while it is open.
+  useEffect(() => {
+    if (desktop) setOpen(false);
+  }, [desktop]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const frosted = scrolled || open;
+
   return (
     <>
       <div aria-hidden className="h-[72px]" />
+      {/* Outside the bar on purpose: the bar is transformed, which would make
+          a `fixed` child relative to it instead of the viewport. */}
+      <AnimatePresence>
+        {open && (
+          <m.div
+            aria-hidden
+            onClick={() => setOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-30 bg-foreground/20 backdrop-blur-[2px] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
       <header className="pointer-events-none fixed inset-x-0 top-0 z-40 px-6 pt-4 md:px-12 lg:px-20">
         <m.div
           initial={false}
@@ -110,8 +144,8 @@ export function ResizableNav({
           style={{ boxShadow: scrolled ? SHADOW : "0 0 0 rgba(0,0,0,0)" }}
           className={cn(
             "pointer-events-auto relative mx-auto flex items-center justify-between rounded-xl border py-2 font-body transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 lg:min-w-[760px]",
-            scrolled
-              ? "border-border/70 bg-background/75 backdrop-blur-md"
+            frosted
+              ? "border-border/70 bg-background/90 backdrop-blur-md"
               : "border-transparent bg-transparent",
           )}
         >
@@ -147,33 +181,37 @@ export function ResizableNav({
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls="mobile-menu"
             onClick={() => setOpen((o) => !o)}
-            className="flex size-9 cursor-pointer items-center justify-center rounded-lg text-foreground transition-colors hover:bg-foreground/[0.06] lg:hidden"
+            className="flex size-11 cursor-pointer items-center justify-center rounded-lg text-foreground transition-colors active:bg-foreground/10 hover:bg-foreground/[0.06] lg:hidden"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
 
           <AnimatePresence>
             {open && (
-              <m.div
-                initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-                className="absolute inset-x-0 top-full mt-2 flex flex-col gap-1 rounded-2xl border border-border bg-background/95 p-3 shadow-lg backdrop-blur-md lg:hidden"
-              >
-                {links.map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-xl px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-foreground/[0.06]"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-                <div className="mt-1 flex border-t border-border/60 pt-3">{children}</div>
-              </m.div>
+                <m.div
+                  id="mobile-menu"
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute inset-x-0 top-full mt-2 flex flex-col gap-1 rounded-2xl border border-border bg-background p-3 shadow-xl lg:hidden"
+                >
+                  {links.map((link) => (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className="flex min-h-12 items-center rounded-xl px-3 text-base text-foreground transition-colors active:bg-foreground/10 hover:bg-foreground/[0.06]"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                  <div className="mt-2 border-t border-border/60 pt-3 [&>div]:w-full [&_a]:flex-1 [&_a]:py-3 [&_a]:text-center [&_button]:min-h-11 [&_button]:flex-1">
+                    {children}
+                  </div>
+                </m.div>
             )}
           </AnimatePresence>
         </m.div>

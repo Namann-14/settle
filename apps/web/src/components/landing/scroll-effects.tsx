@@ -9,55 +9,11 @@ import {
   useSpring,
   useTransform,
   type MotionValue,
-  type UseScrollOptions,
 } from "motion/react";
 
 import { cn } from "@settle/ui/lib/utils";
 
-type Offset = NonNullable<UseScrollOptions["offset"]>;
 type Range = [number, number];
-
-// Scroll-linked transform: values follow how far the element has travelled
-// through the viewport, forwards and backwards (scrubbed), unlike `Reveal`,
-// which plays once. Ranges map progress 0 -> 1 to [from, to].
-export function ScrollFx({
-  children,
-  className,
-  y,
-  scale,
-  opacity,
-  rotateX,
-  offset = ["start end", "end start"],
-}: {
-  children: React.ReactNode;
-  className?: string;
-  y?: Range;
-  scale?: Range;
-  opacity?: Range;
-  rotateX?: Range;
-  offset?: Offset;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset });
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.4 });
-  const yV = useTransform(progress, [0, 1], y ?? [0, 0]);
-  const scaleV = useTransform(progress, [0, 1], scale ?? [1, 1]);
-  const opacityV = useTransform(progress, [0, 1], opacity ?? [1, 1]);
-  const rotateV = useTransform(progress, [0, 1], rotateX ?? [0, 0]);
-
-  if (reduced) return <div className={className}>{children}</div>;
-
-  return (
-    <m.div
-      ref={ref}
-      className={className}
-      style={{ y: yV, scale: scaleV, opacity: opacityV, rotateX: rotateV, transformPerspective: 1200 }}
-    >
-      {children}
-    </m.div>
-  );
-}
 
 function TraceDot({ progress, at }: { progress: MotionValue<number>; at: number }) {
   const on = useTransform(progress, [at - 0.04, at], [0, 1]);
@@ -84,7 +40,7 @@ export function TraceLine({ steps = 3 }: { steps?: number }) {
   const progress = reduced ? full : spring;
 
   return (
-    <div ref={ref} aria-hidden className="relative -my-4 hidden h-3 w-full md:block">
+    <div ref={ref} aria-hidden className="relative -my-4 hidden h-3 w-full lg:block">
       <div className="absolute inset-x-0 top-1/2 h-px bg-border" />
       <m.div
         className="absolute inset-x-0 top-1/2 h-px origin-left bg-primary"

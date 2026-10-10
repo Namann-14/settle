@@ -31,7 +31,8 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Fade, lift and un-blur once when scrolled into view.
+// Fade and lift once when scrolled into view. Opacity and transform only:
+// animating a blur filter repaints the whole block every frame.
 export function Reveal({
   children,
   className,
@@ -49,8 +50,8 @@ export function Reveal({
     <m.div
       className={className}
       style={style}
-      initial={{ opacity: 0, y, filter: "blur(6px)" }}
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.6, delay, ease: EASE }}
     >

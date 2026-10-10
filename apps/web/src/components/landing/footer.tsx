@@ -7,7 +7,7 @@ import { SettleLogo } from "@/components/settle-logo";
 
 export function FinalCta() {
   return (
-    <section className="px-6 md:px-12 lg:px-20 pt-32">
+    <section className="px-6 md:px-12 lg:px-20 pt-20 md:pt-32">
       <Reveal className="relative mx-auto flex max-w-6xl flex-col items-center gap-5 overflow-hidden rounded-[28px] border border-border bg-linear-to-b from-muted to-accent px-6 py-20 text-center md:py-24">
         <span
           aria-hidden
@@ -88,12 +88,10 @@ export function Footer() {
               Shared expenses, split fairly and settled simply. Describe it in a sentence, see who
               owes whom, and clear it in the fewest payments.
             </p>
-            <Magnet>
-              <GetStartedButton
-                label="Create a group"
-                className="btn-shine rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md active:scale-[0.98] cursor-pointer"
-              />
-            </Magnet>
+            <GetStartedButton
+              label="Create a group"
+              className="w-fit rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 cursor-pointer"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-10 text-sm sm:grid-cols-3 sm:gap-16">

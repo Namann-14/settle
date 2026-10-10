@@ -2,11 +2,11 @@ import { GetStartedButton } from "./get-started-button";
 import { Reveal, Spotlight } from "./motion";
 import { AutoToggle, SettleLine, SplitCoinArt } from "./what-is-demos";
 
-const cardBase = "relative flex h-[320px] flex-col justify-between overflow-hidden rounded-[22px] p-6";
+const cardBase = "relative flex h-[400px] flex-col md:h-[320px] justify-between overflow-hidden rounded-[22px] p-6";
 
 export function WhatIsSettle() {
   return (
-    <section id="what" className="scroll-mt-20 px-6 pt-28 md:px-12 lg:px-20">
+    <section id="what" className="scroll-mt-20 px-6 pt-20 md:pt-28 md:px-12 lg:px-20">
       <div className="mx-auto max-w-6xl">
         <Reveal className="flex flex-col justify-between gap-8 lg:flex-row lg:items-start">
           <div className="flex flex-col items-start gap-6">

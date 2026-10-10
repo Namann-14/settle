@@ -2,7 +2,6 @@ import { Check } from "lucide-react";
 
 import { GetStartedButton } from "./get-started-button";
 import { Reveal, Spotlight } from "./motion";
-import { ScrollFx } from "./scroll-effects";
 import { SectionHeading } from "./section-heading";
 
 const freeFeatures = [
@@ -36,7 +35,7 @@ function FeatureList({ items, inverted }: { items: string[]; inverted?: boolean 
 
 export function Pricing() {
   return (
-    <section id="pricing" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-32">
+    <section id="pricing" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-20 md:pt-32">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-14">
         <SectionHeading
           badge="Pricing"
@@ -62,7 +61,6 @@ export function Pricing() {
           </Spotlight>
           </Reveal>
 
-          <ScrollFx className="h-full" y={[36, -12]}>
           <Reveal className="h-full" delay={0.1}>
           <Spotlight inverted className="flex h-full flex-col gap-4 rounded-2xl bg-primary p-9 text-primary-foreground shadow-[0_25px_80px_-12px_rgba(46,89,70,0.35)]">
             <div className="flex items-center justify-between">
@@ -81,7 +79,6 @@ export function Pricing() {
             />
           </Spotlight>
           </Reveal>
-          </ScrollFx>
         </div>
       </div>
     </section>

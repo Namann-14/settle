@@ -6,7 +6,6 @@ import {
   RecurringRows,
 } from "./feature-demos";
 import { Reveal, Spotlight } from "./motion";
-import { ScrollFx } from "./scroll-effects";
 import { SectionHeading } from "./section-heading";
 
 const audiences = ["Roommates", "Trips", "Couples", "Friends", "Teams", "Events"];
@@ -48,31 +47,27 @@ function FeatureCard({
   eyebrow,
   title,
   delay,
-  drift,
   children,
 }: {
   eyebrow: string;
   title: string;
   delay?: number;
-  drift: [number, number];
   children: React.ReactNode;
 }) {
   return (
-    <ScrollFx className="h-full" y={drift}>
-      <Reveal className="h-full" delay={delay}>
-        <Spotlight className="flex h-full flex-col gap-3.5 rounded-2xl border border-border/70 bg-card p-7 hover:shadow-dashboard">
-          <Eyebrow>{eyebrow}</Eyebrow>
-          <h3 className="font-display text-3xl leading-[1.05] text-foreground">{title}</h3>
-          {children}
-        </Spotlight>
-      </Reveal>
-    </ScrollFx>
+    <Reveal className="h-full" delay={delay}>
+      <Spotlight className="flex h-full flex-col gap-3.5 rounded-2xl border border-border/70 bg-card p-7 hover:shadow-dashboard">
+        <Eyebrow>{eyebrow}</Eyebrow>
+        <h3 className="font-display text-3xl leading-[1.05] text-foreground">{title}</h3>
+        {children}
+      </Spotlight>
+    </Reveal>
   );
 }
 
 export function Features() {
   return (
-    <section id="features" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-28">
+    <section id="features" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-20 md:pt-28">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-14">
         <SectionHeading
           badge="Features"
@@ -132,19 +127,19 @@ export function Features() {
             </div>
           </Reveal>
 
-          <FeatureCard eyebrow="Receipt scan" title="Snap the bill, skip the typing" delay={0.08} drift={[26, -26]}>
+          <FeatureCard eyebrow="Receipt scan" title="Snap the bill, skip the typing" delay={0.08}>
             <ReceiptScan />
           </FeatureCard>
 
-          <FeatureCard eyebrow="Smart categories" title="Sorted before you ask" delay={0.04} drift={[18, -18]}>
+          <FeatureCard eyebrow="Smart categories" title="Sorted before you ask" delay={0.04}>
             <CategoryCycle items={["Food", "Rent", "Travel", "Utilities", "Groceries", "Fun"]} />
           </FeatureCard>
 
-          <FeatureCard eyebrow="Multi-currency" title="Travel abroad, settle at home" delay={0.08} drift={[34, -34]}>
+          <FeatureCard eyebrow="Multi-currency" title="Travel abroad, settle at home" delay={0.08}>
             <CurrencyConvert />
           </FeatureCard>
 
-          <FeatureCard eyebrow="Recurring expenses" title="Rent and Wi‑Fi, on autopilot" delay={0.12} drift={[22, -22]}>
+          <FeatureCard eyebrow="Recurring expenses" title="Rent and Wi‑Fi, on autopilot" delay={0.12}>
             <RecurringRows />
           </FeatureCard>
         </div>

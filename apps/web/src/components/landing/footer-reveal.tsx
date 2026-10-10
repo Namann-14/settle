@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { m, useMotionValueEvent, useScroll } from "motion/react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -12,11 +12,17 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 export function useFooterRevealed(distance = 420) {
   const { scrollY } = useScroll();
   const [revealed, setRevealed] = useState(false);
+  const done = useRef(false);
 
+  // Reading scrollHeight forces layout, so stop as soon as it has fired once.
   const check = () => {
+    if (done.current) return;
     const root = document.documentElement;
     const remaining = root.scrollHeight - (window.scrollY + window.innerHeight);
-    if (remaining < distance) setRevealed(true);
+    if (remaining < distance) {
+      done.current = true;
+      setRevealed(true);
+    }
   };
 
   useEffect(check, []); // eslint-disable-line react-hooks/exhaustive-deps

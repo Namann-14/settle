@@ -1,6 +1,8 @@
 import { Check } from "lucide-react";
 
-import { Reveal, Spotlight } from "./motion";
+import { BentoCard } from "./bento";
+import { AddMethodsDemo, InviteDemo, SettleUpDemo } from "./bento-demos";
+import { Reveal } from "./motion";
 import { DebtCollapse } from "./page-extras";
 import { TraceLine } from "./scroll-effects";
 import { SectionBadge, SectionHeading } from "./section-heading";
@@ -9,20 +11,26 @@ const steps = [
   {
     title: "Create a group",
     body: "Start a group for the flat, the Goa trip or date nights, and invite people with a link.",
+    tone: "light",
+    demo: <InviteDemo />,
   },
   {
     title: "Add expenses your way",
     body: "Chat a sentence, scan a receipt or fill a form. Split equally, by shares or exact amounts.",
+    tone: "card",
+    demo: <AddMethodsDemo />,
   },
   {
     title: "Settle up",
     body: "Settle works out the fewest payments needed to clear every balance, then records them.",
+    tone: "light",
+    demo: <SettleUpDemo />,
   },
-];
+] as const;
 
 export function HowItWorks() {
   return (
-    <section id="how" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-32">
+    <section id="how" className="scroll-mt-20 px-6 md:px-12 lg:px-20 pt-20 md:pt-32">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-14">
         <SectionHeading
           badge="How it works"
@@ -33,34 +41,19 @@ export function HowItWorks() {
           }
         />
         <TraceLine steps={steps.length} />
-        <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-3">
-          {steps.map((step, i) => {
-            const last = i === steps.length - 1;
-            return (
-              <Reveal key={step.title} delay={i * 0.1} className="h-full">
-              <Spotlight
-                inverted={last}
-                className={
-                  last
-                    ? "flex h-full flex-col gap-3 rounded-2xl bg-primary p-8 text-primary-foreground shadow-dashboard"
-                    : "flex h-full flex-col gap-3 rounded-2xl border border-border/70 bg-card p-8"
-                }
-              >
-                <span
-                  className={`font-display text-6xl italic leading-none transition-all duration-300 group-hover/spot:translate-x-1 ${last ? "text-primary-foreground/60 group-hover/spot:text-primary-foreground" : "text-secondary group-hover/spot:text-primary"}`}
-                >
-                  0{i + 1}
-                </span>
-                <h3 className="text-lg font-semibold">{step.title}</h3>
-                <p
-                  className={`text-[15px] leading-relaxed ${last ? "text-primary-foreground/80" : "text-muted-foreground"}`}
-                >
-                  {step.body}
-                </p>
-              </Spotlight>
-              </Reveal>
-            );
-          })}
+        <div className="grid w-full grid-cols-1 gap-5 lg:grid-cols-3">
+          {steps.map((step, i) => (
+            <BentoCard
+              key={step.title}
+              tone={step.tone}
+              eyebrow={`Step ${i + 1}`}
+              title={step.title}
+              description={step.body}
+              delay={i * 0.1}
+            >
+              {step.demo}
+            </BentoCard>
+          ))}
         </div>
       </div>
     </section>
@@ -81,7 +74,7 @@ const perks = [
 
 export function SettleShowcase() {
   return (
-    <section className="px-6 md:px-12 lg:px-20 pt-32">
+    <section className="px-6 md:px-12 lg:px-20 pt-20 md:pt-32">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-12 lg:flex-row lg:gap-16">
         <Reveal className="flex flex-1 flex-col gap-5">
           <SectionBadge className="self-start">Simplified debts</SectionBadge>

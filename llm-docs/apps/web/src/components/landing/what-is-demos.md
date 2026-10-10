@@ -6,4 +6,4 @@
 
 **Depends on / used by:** `coin.tsx`, `motion/react`; used by `what-is-settle.tsx`.
 
-**Decisions & caveats:** `SettleLine` writes the path straight to the DOM from an `animate()` loop (no per-frame renders). Orbit/ring spins use CSS and are disabled under reduced motion. Amounts are sample data.
+**Decisions & caveats:** `SettleLine` writes the path straight to the DOM from an `animate()` loop (no per-frame renders). Orbit/ring spins use CSS and are disabled under reduced motion. Amounts are sample data. `SplitCoinArt` is re-seated between title and copy below `md` and scaled to 0.72 so the orbit does not overlap the text.

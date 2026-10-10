@@ -1,7 +1,6 @@
 import { GetStartedButton } from "./get-started-button";
 import { GrowBar, Reveal } from "./motion";
 import { TypingDots } from "./page-extras";
-import { ScrollFx } from "./scroll-effects";
 
 const breakdown = [
   { group: "Flat", width: "w-44", color: "bg-primary-foreground/80" },
@@ -11,9 +10,8 @@ const breakdown = [
 
 export function AiSpotlight() {
   return (
-    <section className="px-6 md:px-12 lg:px-20 pt-32">
-      <ScrollFx scale={[0.92, 1]} offset={["start end", "start 35%"]} className="mx-auto max-w-6xl">
-      <Reveal className="flex flex-col gap-12 rounded-[28px] bg-accent-foreground p-8 text-primary-foreground sm:p-12 lg:flex-row lg:items-center lg:gap-16 lg:p-[72px]">
+    <section className="px-6 md:px-12 lg:px-20 pt-20 md:pt-32">
+      <Reveal className="mx-auto flex max-w-6xl flex-col gap-12 rounded-[28px] bg-accent-foreground p-8 text-primary-foreground sm:p-12 lg:flex-row lg:items-center lg:gap-16 lg:p-[72px]">
         <div className="flex flex-1 flex-col gap-5">
           <span className="self-start rounded-full border border-primary-foreground/20 px-3.5 py-1 text-[13px] text-primary-foreground/80">
             AI assistant
@@ -71,7 +69,6 @@ export function AiSpotlight() {
           </Reveal>
         </div>
       </Reveal>
-      </ScrollFx>
     </section>
   );
 }

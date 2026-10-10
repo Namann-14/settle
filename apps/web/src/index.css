@@ -80,10 +80,14 @@ body::-webkit-scrollbar {
 
 /* Dashboard: lift cards a touch on hover */
 .lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-.lift:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.12); }
+@media (hover: hover) {
+  .lift:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.12); }
+}
 
 /* Pause the marquee under the pointer */
-.marquee:hover .animate-marquee { animation-play-state: paused; }
+@media (hover: hover) {
+  .marquee:hover .animate-marquee { animation-play-state: paused; }
+}
 
 /* Sheen that sweeps across a button on hover */
 .btn-shine {
@@ -99,10 +103,12 @@ body::-webkit-scrollbar {
   transform: translateX(-120%);
   pointer-events: none;
 }
-.btn-shine:hover { transform: translateY(-1px); }
-.btn-shine:hover::after {
-  transform: translateX(120%);
-  transition: transform 0.75s ease;
+@media (hover: hover) {
+  .btn-shine:hover { transform: translateY(-1px); }
+  .btn-shine:hover::after {
+    transform: translateX(120%);
+    transition: transform 0.75s ease;
+  }
 }
 
 /* Smoothly open and close FAQ items where the browser supports it */

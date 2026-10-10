@@ -11,22 +11,20 @@ import { AiSpotlight } from "@/components/landing/ai-spotlight";
 import { Faq } from "@/components/landing/faq";
 import { Features, TrustStrip } from "@/components/landing/features";
 import { FinalCta, Footer } from "@/components/landing/footer";
-import { DemoVideoButton } from "@/components/landing/demo-video-button";
 import { GetStartedButton } from "@/components/landing/get-started-button";
 import { HeroVideo } from "@/components/landing/hero-video";
 import { HowItWorks, SettleShowcase } from "@/components/landing/how-it-works";
 import {
   CountUp,
   LandingMotion,
-  Magnet,
   Tilt,
   Typewriter,
 } from "@/components/landing/motion";
 import { NavAuth } from "@/components/landing/nav-auth";
 import { Pricing } from "@/components/landing/pricing";
 import { ActivityToasts, BackToTop } from "@/components/landing/page-extras";
-import { ScrollFx } from "@/components/landing/scroll-effects";
 import { ResizableNav } from "@/components/landing/resizable-nav";
+import { SplitYourWay } from "@/components/landing/split-your-way";
 import { WhatIsSettle } from "@/components/landing/what-is-settle";
 import { SettleLogo } from "@/components/settle-logo";
 
@@ -392,7 +390,7 @@ export default function Home() {
 
           {/* CTA Buttons */}
           <div
-            className="animate-fade-up mt-6 flex items-center gap-3"
+            className="animate-fade-up mt-6 flex flex-wrap items-center justify-center gap-3"
             style={
               {
                 "--y": "16px",
@@ -401,16 +399,13 @@ export default function Home() {
               } as React.CSSProperties
             }
           >
-            <Magnet>
-              <GetStartedButton className="rounded-full px-6 py-3 text-sm font-medium font-body bg-primary text-primary-foreground hover:bg-primary/90 btn-shine shadow-md hover:shadow-lg active:scale-[0.98] cursor-pointer" />
-            </Magnet>
+            <GetStartedButton className="rounded-full px-6 py-3 text-sm font-medium font-body whitespace-nowrap bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-colors hover:shadow-lg active:scale-[0.98] cursor-pointer" />
             <a
               href="#how"
-              className="rounded-full px-5 py-3 text-sm font-medium font-body bg-background text-foreground hover:bg-secondary transition-all shadow-md hover:-translate-y-px active:scale-[0.98]"
+              className="rounded-full px-5 py-3 text-sm font-medium font-body whitespace-nowrap bg-background text-foreground hover:bg-secondary transition-all shadow-md hover:-translate-y-px active:scale-[0.98]"
             >
               See how it works
             </a>
-            <DemoVideoButton />
           </div>
 
           {/* Dashboard Preview */}
@@ -424,16 +419,7 @@ export default function Home() {
               } as React.CSSProperties
             }
           >
-            <ScrollFx
-              className="w-full flex justify-center"
-              offset={["start 70%", "end start"]}
-              scale={[1, 0.9]}
-              opacity={[1, 0.35]}
-              y={[0, 50]}
-              rotateX={[0, 8]}
-            >
-              <DashboardPreview />
-            </ScrollFx>
+            <DashboardPreview />
           </div>
         </main>
       </div>
@@ -442,6 +428,7 @@ export default function Home() {
       <WhatIsSettle />
       <Features />
       <HowItWorks />
+      <SplitYourWay />
       <SettleShowcase />
       <AiSpotlight />
       <Pricing />

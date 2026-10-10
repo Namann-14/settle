@@ -6,4 +6,4 @@
 
 **Depends on / used by:** `get-started-button.tsx`, `motion.tsx`, `what-is-demos.tsx`; rendered by `app/page.tsx` right after the trust strip.
 
-**Decisions & caveats:** Copy only claims what the product does. Server component; the interactive parts are the client demos. Card titles use `font-display` at 34px like the feature cards; body copy is Inter 15px.
+**Decisions & caveats:** Copy only claims what the product does. Server component; the interactive parts are the client demos. Card titles use `font-display` at 34px like the feature cards; body copy is Inter 15px. Cards are 400px tall on phones, 320px from `md`.

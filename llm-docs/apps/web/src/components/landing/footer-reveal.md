@@ -6,4 +6,4 @@
 
 **Depends on / used by:** `motion/react`; used by `footer.tsx` and `footer-wordmark.tsx`.
 
-**Decisions & caveats:** The footer is `sticky bottom-0` behind the page, so it is "in view" from first paint and `whileInView` would fire while still covered. The 420px default must stay below the footer height.
+**Decisions & caveats:** The footer is `sticky bottom-0` behind the page, so it is "in view" from first paint and `whileInView` would fire while still covered. The 420px default must stay below the footer height. After it fires once it stops reading `scrollHeight` (a layout-forcing read) on every scroll event.
