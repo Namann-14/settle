@@ -19,7 +19,7 @@ import {
   SidebarMenuItem,
 } from "@settle/ui/components/sidebar";
 
-const items = [
+export const NAV_ITEMS = [
   { title: "New chat", url: "/dashboard" as const, icon: SquarePen },
   { title: "Overview", url: "/dashboard/overview" as const, icon: LayoutDashboard },
   { title: "Spending", url: "/dashboard/spending" as const, icon: Wallet },
@@ -41,7 +41,7 @@ export function NavMain() {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {items.map((item) => (
+        {NAV_ITEMS.map((item) => (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton
               render={<Link href={item.url} />}

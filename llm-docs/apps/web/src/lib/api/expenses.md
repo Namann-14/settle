@@ -2,7 +2,7 @@
 
 **Purpose:** Client for `/api/expenses`.
 
-**Key contents:** `listExpenses` (builds query string from group_id, skip, limit, q, category_id, paid_by_id, date_from, date_to, scope), `getExpense`, `createExpense`, `updateExpense`, `deleteExpense`.
+**Key contents:** `listExpenses` (builds query string from group_id, skip, limit, q, category_id, paid_by_id, date_from, date_to, scope, include_group_expenses), `getExpense`, `createExpense`, `updateExpense`, `deleteExpense`.
 
 **Depends on / used by:** `types/expense.ts`; `hooks/useExpenses.ts`.
 

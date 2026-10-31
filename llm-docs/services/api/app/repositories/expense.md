@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `models/expense.py`, `models/expense_split.py`; used by `controllers/expense.py`, `routes/expenses.py` (builds filters).
 
-**Decisions & caveats:** A user's expense list matches paid-by, created-by or any split containing the user, using an outer join plus `DISTINCT`. Updating `splits` deletes and re-inserts all splits. Soft delete sets `deleted_at`; reads exclude deleted unless asked. `scope` was added for the personal/group filter (decisions.md).
+**Decisions & caveats:** A user's expense list matches paid-by, created-by or any split containing the user, using an outer join plus `DISTINCT`. Updating `splits` replaces them through the relationship (`expense.splits.clear()`, flush, append): a bulk `delete()` left the eagerly loaded splits marked deleted and every split edit crashed with "Instance has been deleted". The flush is needed because (expense_id, user_id) is unique. Soft delete sets `deleted_at`; reads exclude deleted unless asked. `scope` was added for the personal/group filter (decisions.md).

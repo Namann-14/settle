@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendFetch } from "@/lib/backend";
+import { backendErrorResponse, backendFetch } from "@/lib/backend";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -9,12 +9,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     const data = await backendFetch(`/expenses/${id}`);
     return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    const message = error instanceof Error ? error.message : "Backend request failed";
-    return NextResponse.json(
-      { message },
-      { status: message === "Unauthorized" ? 401 : 500 }
-    );
+    return backendErrorResponse(error);
   }
 }
 
@@ -28,12 +23,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     });
     return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    const message = error instanceof Error ? error.message : "Backend request failed";
-    return NextResponse.json(
-      { message },
-      { status: message === "Unauthorized" ? 401 : 500 }
-    );
+    return backendErrorResponse(error);
   }
 }
 
@@ -43,11 +33,6 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     await backendFetch(`/expenses/${id}`, { method: "DELETE" });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error(error);
-    const message = error instanceof Error ? error.message : "Backend request failed";
-    return NextResponse.json(
-      { message },
-      { status: message === "Unauthorized" ? 401 : 500 }
-    );
+    return backendErrorResponse(error);
   }
 }

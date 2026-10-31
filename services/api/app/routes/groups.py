@@ -15,6 +15,8 @@ from app.schemas.invitation import (
     InvitationResponse,
     InviteMemberRequest,
     InviteMemberResponse,
+    JoinLinkResponse,
+    JoinPreviewResponse,
 )
 from app.schemas.group_member import GroupMemberResponse
 
@@ -53,6 +55,39 @@ def list_groups(
     """
     with handle_controller_errors():
         return group_controller.list_user_groups(db, current_user)
+
+
+@router.get("/join/{code}", response_model=JoinPreviewResponse)
+def preview_join(
+    code: str,
+    current_user: User = Depends(get_current_db_user),
+    db: Session = Depends(get_db),
+):
+    """
+    What a join link points at, shown before the user decides to join.
+    """
+    with handle_controller_errors():
+        group, member_count, already = group_controller.preview_join(db, code, current_user)
+        return JoinPreviewResponse(
+            group_id=group.id,
+            name=group.name,
+            description=group.description,
+            member_count=member_count,
+            already_member=already,
+        )
+
+
+@router.post("/join/{code}", response_model=GroupResponse)
+def join_group(
+    code: str,
+    current_user: User = Depends(get_current_db_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Join a group through its shareable link.
+    """
+    with handle_controller_errors():
+        return group_controller.join_by_code(db, code, current_user)
 
 
 @router.get("/{group_id}", response_model=GroupResponse)
@@ -140,16 +175,11 @@ def invite_group_member(
     db: Session = Depends(get_db),
 ):
     """
-    Add someone by email. Existing users join immediately; anyone else gets a
-    pending invite that's claimed when they first sign in with that email.
+    Invite someone by email. They join only once they accept the invite.
     """
     with handle_controller_errors():
-        member, invitation = group_controller.invite_by_email(
-            db, group_id, current_user, str(payload.email), payload.role
-        )
-        if member is not None:
-            return InviteMemberResponse(status="added", member=member)
-        return InviteMemberResponse(status="invited", invitation=invitation)
+        invitation = group_controller.invite_by_email(db, group_id, current_user, str(payload.email))
+        return InviteMemberResponse(invitation=invitation)
 
 
 @router.get("/{group_id}/invitations", response_model=list[InvitationResponse])
@@ -191,3 +221,29 @@ def get_group_balances(
     """
     with handle_controller_errors():
         return group_controller.get_group_balances(db, group_id, current_user)
+
+
+@router.get("/{group_id}/join-link", response_model=JoinLinkResponse)
+def get_join_link(
+    group_id: UUID,
+    current_user: User = Depends(get_current_db_user),
+    db: Session = Depends(get_db),
+):
+    """
+    The group's shareable join code (created on first request).
+    """
+    with handle_controller_errors():
+        return JoinLinkResponse(code=group_controller.get_join_code(db, group_id, current_user))
+
+
+@router.post("/{group_id}/join-link", response_model=JoinLinkResponse)
+def reset_join_link(
+    group_id: UUID,
+    current_user: User = Depends(get_current_db_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Replace the join code so the old link stops working. Admins only.
+    """
+    with handle_controller_errors():
+        return JoinLinkResponse(code=group_controller.reset_join_code(db, group_id, current_user))

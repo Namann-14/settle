@@ -2,7 +2,7 @@
 
 **Purpose:** Types for expenses and their splits.
 
-**Key contents:** `SplitType` (EQUAL, UNEQUAL, PERCENTAGE), `Expense`, `ExpenseSplit`, create/update payloads, `ListExpensesParams`.
+**Key contents:** `SplitType` (EQUAL, UNEQUAL, PERCENTAGE), `Expense`, `ExpenseSplit`, create/update payloads, `ListExpensesParams` (includes `include_group_expenses` for search).
 
 **Depends on / used by:** `lib/api/expenses.ts`, `lib/balances.ts`.
 

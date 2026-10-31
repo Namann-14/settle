@@ -2,7 +2,7 @@
 
 **Purpose:** FastAPI application entrypoint for the API service.
 
-**Key contents:** Lifespan that optionally runs migrations (`RUN_MIGRATIONS_ON_STARTUP`) and warms the DB connection pool; `TimingMiddleware`; CORS for localhost:3000/3001; `GET /health`; includes routers for users, expenses, groups, settlements, categories, budgets, incomes, recurring, spending and telegram.
+**Key contents:** Lifespan that optionally runs migrations (`RUN_MIGRATIONS_ON_STARTUP`) and warms the DB connection pool; `TimingMiddleware`; CORS for localhost:3000/3001; `GET /health`; includes routers for users, expenses, groups, settlements, categories, budgets, incomes, recurring, spending, telegram and invitations.
 
 **Depends on / used by:** `core/*`, `db/*`, `app/routes/*`. Run by uvicorn / Vercel.
 

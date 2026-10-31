@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendFetch } from "@/lib/backend";
+import { backendErrorResponse, backendFetch } from "@/lib/backend";
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,12 +7,7 @@ export async function GET(request: NextRequest) {
     const data = await backendFetch(`/settlements${search ? `?${search}` : ""}`);
     return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    const message = error instanceof Error ? error.message : "Backend request failed";
-    return NextResponse.json(
-      { message },
-      { status: message === "Unauthorized" ? 401 : 500 }
-    );
+    return backendErrorResponse(error);
   }
 }
 
@@ -25,11 +20,6 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    const message = error instanceof Error ? error.message : "Backend request failed";
-    return NextResponse.json(
-      { message },
-      { status: message === "Unauthorized" ? 401 : 500 }
-    );
+    return backendErrorResponse(error);
   }
 }

@@ -62,7 +62,7 @@ export interface GroupBalances {
   transfers: Transfer[];
 }
 
-export type InvitationStatus = "PENDING" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
+export type InvitationStatus = "PENDING" | "ACCEPTED" | "EXPIRED" | "CANCELLED" | "DECLINED";
 
 export interface Invitation {
   id: string;
@@ -72,15 +72,28 @@ export interface Invitation {
   expires_at: string;
   invited_by_id: string;
   created_at: string;
+  group_name?: string | null;
+  invited_by_name?: string | null;
 }
 
 export interface InviteMemberPayload {
   email: string;
-  role?: GroupRole;
 }
 
+/** Nobody is added straight away: every invite waits for the invitee to accept. */
 export interface InviteMemberResponse {
-  status: "added" | "invited";
-  member?: GroupMember | null;
-  invitation?: Invitation | null;
+  status: "invited";
+  invitation: Invitation;
+}
+
+export interface JoinLink {
+  code: string;
+}
+
+export interface JoinPreview {
+  group_id: string;
+  name: string;
+  description?: string | null;
+  member_count: number;
+  already_member: boolean;
 }

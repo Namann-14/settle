@@ -51,3 +51,13 @@ class GroupInvitation(UUIDMixin, TimestampMixin, Base):
     invited_user: Mapped["User | None"] = relationship(
         back_populates="received_invitations", foreign_keys=[invited_user_id]
     )
+
+    @property
+    def group_name(self) -> str | None:
+        return self.group.name if self.group else None
+
+    @property
+    def invited_by_name(self) -> str | None:
+        if not self.invited_by:
+            return None
+        return self.invited_by.name or self.invited_by.email

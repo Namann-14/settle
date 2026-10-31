@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `useDraftExpenseFromText`/`Voice` in `@/hooks/mutations`, `useGroups`; opens `expense-sheet.tsx` via callers (`expenses-page.tsx`, `groups/group-detail.tsx`).
 
-**Decisions & caveats:** The AI only drafts; the user confirms in the sheet before anything is saved. Group defaults to the first group because the AI resolves names against that group's members. Voice uses MediaRecorder with feature detection, mic-permission error toast, auto-stop, and cleanup of timers/tracks on unmount. `groupId` prop locks it to one group.
+**Decisions & caveats:** The AI only drafts; the user confirms in the sheet before anything is saved. Group defaults to the first group because the AI resolves names against that group's members. `pickedGroup` is `undefined` until the user picks and `""` for "No group"; collapsing both to `null` made "No group" snap back to the default. Voice uses MediaRecorder with feature detection, mic-permission error toast, auto-stop, and cleanup of timers/tracks on unmount. `groupId` prop locks it to one group.

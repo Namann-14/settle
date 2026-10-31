@@ -42,6 +42,9 @@ def list_expenses(
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),
     scope: Literal["personal", "group"] | None = Query(default=None, description="personal = no group"),
+    include_group_expenses: bool = Query(
+        default=False, description="Also expenses in your groups that you're not part of (search)"
+    ),
     current_user: User = Depends(get_current_db_user),
     db: Session = Depends(get_db),
 ):
@@ -54,7 +57,13 @@ def list_expenses(
     )
     with handle_controller_errors():
         return expense_controller.list_user_expenses(
-            db, current_user, skip=skip, limit=limit, group_id=group_id, filters=filters
+            db,
+            current_user,
+            skip=skip,
+            limit=limit,
+            group_id=group_id,
+            filters=filters,
+            include_group_expenses=include_group_expenses,
         )
 
 

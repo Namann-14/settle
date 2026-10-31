@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import ROUND_FLOOR, ROUND_HALF_UP, Decimal
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -21,44 +21,103 @@ from app.schemas.expense import ExpenseCreate, ExpenseUpdate
 from app.schemas.expense_split import ExpenseSplitCreate
 
 
+CENT = Decimal("0.01")
+
+
+def _allocate(amount: Decimal, weights: list[Decimal]) -> list[Decimal]:
+    """
+    Splits amount in proportion to weights, to the cent. Leftover cents go to
+    the largest fractional remainders (earliest row on ties), so the parts
+    always add up to amount exactly.
+    """
+    total_cents = int((amount * 100).to_integral_value())
+    total_weight = sum(weights)
+    raw = [Decimal(total_cents) * w / total_weight for w in weights]
+    cents = [int(r.to_integral_value(rounding=ROUND_FLOOR)) for r in raw]
+    leftover = total_cents - sum(cents)
+    by_remainder = sorted(range(len(raw)), key=lambda i: raw[i] - cents[i], reverse=True)
+    for i in by_remainder[:leftover]:
+        cents[i] += 1
+    return [(Decimal(c) / 100).quantize(CENT) for c in cents]
+
+
 def _validate_splits(
     amount: Decimal,
     split_type: SplitType,
     splits: list[ExpenseSplitCreate],
 ) -> None:
     """
-    Validates split totals and strategy against expense amount.
+    Validates splits and rewrites amount_owed so the splits always sum to the
+    expense amount exactly. EQUAL and PERCENTAGE amounts are computed here
+    (client amounts are ignored); UNEQUAL amounts must already add up.
     """
     if not splits:
         raise ValidationError("Expense must have at least one split record")
 
+    user_ids = [s.user_id for s in splits]
+    if len(set(user_ids)) != len(user_ids):
+        raise ValidationError("Each person can appear only once in a split")
+
     if split_type == SplitType.PERCENTAGE:
-        total_pct = sum(s.percentage or Decimal("0.00") for s in splits)
-        if abs(total_pct - Decimal("100.00")) > Decimal("0.01"):
+        if any(s.percentage is None for s in splits):
+            raise ValidationError("Every person in a percentage split needs a percentage")
+        total_pct = sum(s.percentage for s in splits)
+        if abs(total_pct - Decimal("100.00")) > CENT:
             raise ValidationError(
                 f"Percentage splits must sum to 100%. Given: {total_pct}%"
             )
-        for s in splits:
-            if s.percentage is not None:
-                calculated_owed = (s.percentage / Decimal("100.00")) * amount
-                if abs(s.amount_owed - calculated_owed) > Decimal("0.05") or s.amount_owed == Decimal("0.00"):
-                    s.amount_owed = round(calculated_owed, 2)
+        for s, owed in zip(splits, _allocate(amount, [s.percentage for s in splits])):
+            s.amount_owed = owed
 
     elif split_type == SplitType.EQUAL:
-        count = Decimal(len(splits))
-        equal_share = round(amount / count, 2)
-        total_owed = sum(s.amount_owed for s in splits)
-        if total_owed == Decimal("0.00") or abs(total_owed - amount) > Decimal("0.05"):
-            remainder = amount - (equal_share * count)
-            for idx, s in enumerate(splits):
-                s.amount_owed = equal_share + (remainder if idx == 0 else Decimal("0.00"))
+        for s, owed in zip(splits, _allocate(amount, [Decimal(1)] * len(splits))):
+            s.amount_owed = owed
+            s.percentage = None
 
     elif split_type == SplitType.UNEQUAL:
+        for s in splits:
+            s.amount_owed = s.amount_owed.quantize(CENT, rounding=ROUND_HALF_UP)
+            s.percentage = None
         total_owed = sum(s.amount_owed for s in splits)
-        if abs(total_owed - amount) > Decimal("0.01"):
+        if total_owed != amount:
             raise ValidationError(
                 f"Split amounts total ({total_owed}) must equal expense amount ({amount})"
             )
+        if total_owed <= 0:
+            raise ValidationError("At least one person must owe something")
+
+
+def _check_group_people(
+    db: Session,
+    group_id: UUID,
+    current_user: User,
+    paid_by_id: UUID,
+    splits: list[ExpenseSplitCreate],
+) -> None:
+    """The caller, the payer and everyone in the split must be active members."""
+    group = group_repo.get_group_by_id(db, group_id)
+    if not group:
+        raise GroupNotFoundError("Group not found")
+
+    member_user_ids = {m.user_id for m in group_repo.get_group_members(db, group_id)}
+
+    if current_user.id not in member_user_ids:
+        raise PermissionDeniedError("You are not a member of this group")
+
+    if paid_by_id not in member_user_ids:
+        raise ValidationError("Payer must be a member of the group")
+
+    for split in splits:
+        if split.user_id not in member_user_ids:
+            raise ValidationError(
+                f"Split user {split.user_id} is not a member of the group"
+            )
+
+
+def _check_personal_people(current_user: User, paid_by_id: UUID, splits: list[ExpenseSplitCreate]) -> None:
+    """A personal expense is only ever the current user's own spending."""
+    if paid_by_id != current_user.id or any(s.user_id != current_user.id for s in splits):
+        raise ValidationError("Add the expense to a group to split it with other people")
 
 
 def create_expense(
@@ -76,26 +135,10 @@ def create_expense(
     if not schema.paid_by_id:
         schema.paid_by_id = current_user.id
 
-    # Group validation if group_id is provided
+    schema.amount = schema.amount.quantize(CENT, rounding=ROUND_HALF_UP)
+
     if schema.group_id is not None:
-        group = group_repo.get_group_by_id(db, schema.group_id)
-        if not group:
-            raise GroupNotFoundError("Group not found")
-
-        members = group_repo.get_group_members(db, schema.group_id)
-        member_user_ids = {m.user_id for m in members}
-
-        if current_user.id not in member_user_ids:
-            raise PermissionDeniedError("You are not a member of this group")
-
-        if schema.paid_by_id not in member_user_ids:
-            raise ValidationError("Payer must be a member of the group")
-
-        for split in schema.splits:
-            if split.user_id not in member_user_ids:
-                raise ValidationError(
-                    f"Split user {split.user_id} is not a member of the group"
-                )
+        _check_group_people(db, schema.group_id, current_user, schema.paid_by_id, schema.splits)
     else:
         # Personal expense default split if splits list is empty
         if not schema.splits:
@@ -106,6 +149,7 @@ def create_expense(
                     percentage=Decimal("100.00") if schema.split_type == SplitType.PERCENTAGE else None,
                 )
             ]
+        _check_personal_people(current_user, schema.paid_by_id, schema.splits)
 
     # Validate split totals and rules
     _validate_splits(schema.amount, schema.split_type, schema.splits)
@@ -148,6 +192,7 @@ def list_user_expenses(
     limit: int = 50,
     group_id: UUID | None = None,
     filters: expense_repo.ExpenseFilters | None = None,
+    include_group_expenses: bool = False,
 ) -> list[Expense]:
     """
     Lists expenses for the current user or a specific group.
@@ -163,7 +208,14 @@ def list_user_expenses(
 
         return expense_repo.get_group_expenses(db, group_id, skip=skip, limit=limit, filters=filters)
 
-    return expense_repo.get_user_expenses(db, current_user.id, skip=skip, limit=limit, filters=filters)
+    return expense_repo.get_user_expenses(
+        db,
+        current_user.id,
+        skip=skip,
+        limit=limit,
+        filters=filters,
+        include_group_expenses=include_group_expenses,
+    )
 
 
 def update_expense(
@@ -182,10 +234,28 @@ def update_expense(
     if expense.created_by_id != current_user.id:
         raise PermissionDeniedError("Only the creator may edit this expense")
 
-    # If splits or amount are updated, re-validate splits
+    if schema.amount is not None:
+        schema.amount = schema.amount.quantize(CENT, rounding=ROUND_HALF_UP)
+
+    fields = schema.model_fields_set
+    target_amount = schema.amount if schema.amount is not None else expense.amount
+    target_split_type = schema.split_type if schema.split_type is not None else expense.split_type
+    target_group_id = schema.group_id if "group_id" in fields else expense.group_id
+    target_paid_by_id = schema.paid_by_id if schema.paid_by_id is not None else expense.paid_by_id
+
+    # Changing the amount or split type re-splits the existing people, so the
+    # stored splits never drift from the expense amount.
+    if schema.splits is None and fields & {"amount", "split_type", "group_id", "paid_by_id"}:
+        schema.splits = [
+            ExpenseSplitCreate(user_id=s.user_id, amount_owed=s.amount_owed, percentage=s.percentage)
+            for s in expense.splits
+        ]
+
     if schema.splits is not None:
-        target_amount = schema.amount if schema.amount is not None else expense.amount
-        target_split_type = schema.split_type if schema.split_type is not None else expense.split_type
+        if target_group_id is not None:
+            _check_group_people(db, target_group_id, current_user, target_paid_by_id, schema.splits)
+        else:
+            _check_personal_people(current_user, target_paid_by_id, schema.splits)
         _validate_splits(target_amount, target_split_type, schema.splits)
 
     return expense_repo.update_expense(db, expense, schema)

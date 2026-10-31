@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -49,6 +50,23 @@ def create_group(db: Session, schema: GroupCreate) -> Group:
     )
     db.add(admin_member)
 
+    db.commit()
+    db.refresh(group)
+    return group
+
+
+def get_group_by_join_code(db: Session, code: str) -> Group | None:
+    stmt = (
+        select(Group)
+        .options(joinedload(Group.members).joinedload(GroupMember.user))
+        .where(Group.join_code == code, Group.deleted_at.is_(None))
+    )
+    return db.execute(stmt).scalars().unique().one_or_none()
+
+
+def set_join_code(db: Session, group: Group) -> Group:
+    group.join_code = secrets.token_urlsafe(12)
+    db.add(group)
     db.commit()
     db.refresh(group)
     return group

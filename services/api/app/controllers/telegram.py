@@ -21,6 +21,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from app.controllers import expense as expense_controller
+from app.controllers import group as group_controller
 from app.controllers import spending as spending_controller
 from app.controllers.exceptions import ConflictError, ControllerError
 from app.core.config import settings
@@ -373,8 +374,24 @@ def _handle_expense(
     )
 
 
+def _handle_invite_button(db: Session, user: User, update: InboundUpdate, data: str) -> None:
+    accept = data.startswith(group_controller.INVITE_ACCEPT_PREFIX)
+    try:
+        invitation_id = UUID(data[len(group_controller.INVITE_ACCEPT_PREFIX):])
+        group = group_controller.respond_to_invitation(db, invitation_id, user, accept=accept)
+    except (ValueError, ControllerError) as err:
+        text = "That invite is no longer valid." if isinstance(err, ValueError) else escape(str(err))
+        _replace_buttons(update, text)
+        return
+    name = escape(group.name)
+    _replace_buttons(update, f"✅ You joined <b>{name}</b>." if accept else f"✖️ Declined the invite to <b>{name}</b>.")
+
+
 def _handle_button(db: Session, user: User, update: InboundUpdate, record) -> None:
     data = update.callback_data or ""
+    if data.startswith((group_controller.INVITE_ACCEPT_PREFIX, group_controller.INVITE_DECLINE_PREFIX)):
+        _handle_invite_button(db, user, update, data)
+        return
     if data.startswith(SAVE_PREFIX):
         action, raw_id = "save", data[len(SAVE_PREFIX):]
     elif data.startswith(CANCEL_PREFIX):

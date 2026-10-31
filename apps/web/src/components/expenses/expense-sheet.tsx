@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,6 +19,7 @@ import { CURRENCIES, Field, FormError, controlClass } from "@/components/forms/f
 import { useCreateExpense, useCreateRecurring, useDeleteExpense, useUpdateExpense } from "@/hooks/mutations";
 import { useCategories } from "@/hooks/useCategories";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useGroup } from "@/hooks/useGroup";
 import { useGroups } from "@/hooks/useGroups";
 import { FREQUENCY_LABELS } from "@/lib/frequency";
 import { num, todayIso } from "@/lib/people";
@@ -49,6 +50,15 @@ function equalShares(total: number, n: number) {
   const cents = Math.round(total * 100);
   const base = Math.floor(cents / n);
   return Array.from({ length: n }, (_, i) => (base + (i === 0 ? cents - base * n : 0)) / 100);
+}
+
+function formatPct(value: number) {
+  return String(Math.round(value * 100) / 100);
+}
+
+/** How far `sum` is from `target`, in whole cents (floats like 33.33 * 3 aren't exact). */
+function centsOff(sum: number, target: number) {
+  return Math.abs(Math.round(sum * 100) - Math.round(target * 100));
 }
 
 interface Unresolved {
@@ -135,11 +145,17 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
   const [repeats, setRepeats] = useState<Frequency | "">("");
   const [error, setError] = useState<unknown>(null);
 
-  const group = groups?.find((g) => g.id === groupId);
+  // Members come from the group itself, refetched whenever the form opens:
+  // the cached groups list can predate someone joining, which left new
+  // members out of the split.
+  const { data: groupDetail } = useGroup(groupId || undefined, { refetchOnMount: "always" });
+  const group = groupDetail ?? groups?.find((g) => g.id === groupId);
   const members: GroupMember[] = useMemo(
     () => group?.members.filter((m) => !m.removed_at) ?? [],
     [group],
   );
+  // Members the default selection already accounted for.
+  const seenMembers = useRef<Set<string>>(new Set());
   const currency = currencyOverride ?? group?.default_currency ?? me?.default_currency ?? "INR";
 
   // Default payer and participants once the group's members are known.
@@ -154,16 +170,35 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
       } else {
         setIncluded(new Set(groupId ? members.map((m) => m.user_id) : [me.id]));
       }
+      seenMembers.current = new Set(members.map((m) => m.user_id));
     }
   }, [me, members, groupId, draft, included, paidById]);
+
+  // A new expense splits with everyone by default, so members that show up
+  // after the refetch (someone just joined) are ticked too.
+  useEffect(() => {
+    if (seed.mode !== "create" || !groupId || included === null) return;
+    const fresh = members.filter((m) => !seenMembers.current.has(m.user_id));
+    if (fresh.length === 0) return;
+    for (const m of fresh) seenMembers.current.add(m.user_id);
+    setIncluded((prev) => new Set([...(prev ?? []), ...fresh.map((m) => m.user_id)]));
+  }, [seed.mode, groupId, members, included]);
 
   const changeGroup = (next: string) => {
     setGroupId(next);
     setCurrencyOverride(null);
-    const nextMembers = groups?.find((g) => g.id === next)?.members.filter((m) => !m.removed_at) ?? [];
-    setIncluded(new Set(next ? nextMembers.map((m) => m.user_id) : me ? [me.id] : []));
+    // Picked again by the default-selection effect once the group's members load.
+    setIncluded(next ? null : me ? new Set([me.id]) : null);
+    seenMembers.current = new Set();
     if (me) setPaidById(me.id);
     setUnresolved((u) => u.map((x) => ({ ...x, userId: "" })));
+  };
+
+  const changeSplitType = (next: SplitType) => {
+    setSplitType(next);
+    // Typed values mean amounts for one type and percentages for the other.
+    setValues({});
+    setError(null);
   };
 
   const participantIds = useMemo(() => {
@@ -199,15 +234,15 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
     if (splitType === "EQUAL") {
       splits = participantIds.map((id, i) => ({ user_id: id, amount_owed: shares[i].toFixed(2) }));
     } else if (splitType === "UNEQUAL") {
-      if (Math.abs(typedSum - total) > 0.01)
+      if (centsOff(typedSum, total) > 0)
         return setError(new Error(`Amounts add up to ${typedSum.toFixed(2)}, not ${total.toFixed(2)}`));
       splits = participantIds.map((id) => ({
         user_id: id,
         amount_owed: (Number(values[id]) || 0).toFixed(2),
       }));
     } else {
-      if (Math.abs(typedSum - 100) > 0.01)
-        return setError(new Error(`Percentages add up to ${typedSum}%, not 100%`));
+      if (centsOff(typedSum, 100) > 1)
+        return setError(new Error(`Percentages add up to ${formatPct(typedSum)}%, not 100%`));
       // Cent-exact: last person absorbs the rounding.
       let running = 0;
       splits = participantIds.map((id, i) => {
@@ -421,7 +456,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
             <Field label="Split" className="flex-1">
               <select
                 value={splitType}
-                onChange={(e) => setSplitType(e.target.value as SplitType)}
+                onChange={(e) => changeSplitType(e.target.value as SplitType)}
                 className={controlClass}
               >
                 {(Object.keys(SPLIT_LABELS) as SplitType[]).map((t) => (
@@ -542,13 +577,13 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
               <span
                 className={cn(
                   "text-right text-xs",
-                  Math.abs(typedSum - (splitType === "PERCENTAGE" ? 100 : total)) > 0.01
+                  (splitType === "PERCENTAGE" ? centsOff(typedSum, 100) > 1 : centsOff(typedSum, total) > 0)
                     ? "text-destructive"
                     : "text-muted-foreground",
                 )}
               >
                 {splitType === "PERCENTAGE"
-                  ? `${typedSum}% of 100%`
+                  ? `${formatPct(typedSum)}% of 100%`
                   : `${typedSum.toFixed(2)} of ${total.toFixed(2)}`}
               </span>
             )}

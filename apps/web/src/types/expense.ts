@@ -78,4 +78,6 @@ export interface ListExpensesParams {
   date_to?: string;
   /** "personal" = no group, "group" = any group. */
   scope?: "personal" | "group";
+  /** Also expenses in your groups you're not part of (search). */
+  include_group_expenses?: boolean;
 }

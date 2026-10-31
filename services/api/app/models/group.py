@@ -18,6 +18,9 @@ class Group(UUIDMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     default_currency: Mapped[str] = mapped_column(String(3), default="INR", nullable=False)
     deleted_at: Mapped[datetime | None] = mapped_column(nullable=True, index=True)
+    # Shareable join link (/dashboard/join/<code>). Made on first request; an
+    # admin can reset it, which kills the old link.
+    join_code: Mapped[str | None] = mapped_column(String(32), unique=True, nullable=True)
 
     created_by_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False

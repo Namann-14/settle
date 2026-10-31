@@ -28,14 +28,15 @@ export function AiQuickAdd({
   const fromText = useDraftExpenseFromText();
   const fromVoice = useDraftExpenseFromVoice();
   const [text, setText] = useState("");
-  const [pickedGroup, setPickedGroup] = useState<string | null>(null);
+  // undefined = not picked yet (use the default below); "" = "No group".
+  const [pickedGroup, setPickedGroup] = useState<string | undefined>(undefined);
   const [recording, setRecording] = useState(false);
   const recorder = useRef<MediaRecorder | null>(null);
   const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Names are resolved against a group's members, so default to the most
   // recent group rather than "none".
-  const groupId = fixedGroupId ?? pickedGroup ?? groups?.[0]?.id ?? null;
+  const groupId = fixedGroupId ?? (pickedGroup !== undefined ? pickedGroup || null : groups?.[0]?.id ?? null);
   const busy = fromText.isPending || fromVoice.isPending;
 
   useEffect(
@@ -125,7 +126,7 @@ export function AiQuickAdd({
           <select
             aria-label="Group for this expense"
             value={groupId ?? ""}
-            onChange={(e) => setPickedGroup(e.target.value || null)}
+            onChange={(e) => setPickedGroup(e.target.value)}
             className="h-11 max-w-40 rounded-full border border-border bg-card px-3 text-[13px]"
           >
             {groups.map((g) => (

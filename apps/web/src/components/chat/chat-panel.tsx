@@ -91,14 +91,20 @@ export function ChatPanel({
     onFinish: () => queryClient.invalidateQueries({ queryKey: CHAT_THREADS_KEY }),
   });
 
-  // Prompts handed over from the dashboard's Ask AI card (?q=). The ref
-  // guards against double-sending under StrictMode's double effect run.
+  // Prompts handed over by ?q= (home composer, Ask AI card, search palette).
+  // Sent a tick later and cancelled on cleanup: under StrictMode the first
+  // mount is torn down straight away, and useChat's cleanup calls
+  // chat.stop(), which aborted a send made synchronously here before its
+  // request went out. The ref then stops the remount from sending twice.
   const sentInitial = useRef(false);
   useEffect(() => {
     if (!initialPrompt || sentInitial.current) return;
-    sentInitial.current = true;
-    sendMessage({ text: initialPrompt });
-    clearPromptParam();
+    const timer = setTimeout(() => {
+      sentInitial.current = true;
+      sendMessage({ text: initialPrompt });
+      clearPromptParam();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialPrompt, sendMessage]);
 
   const busy = status === "submitted" || status === "streaming";

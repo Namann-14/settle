@@ -19,6 +19,7 @@ import {
 } from "@/components/settlements/record-settlement-dialog";
 import { SettlePlanCard } from "@/components/settlements/settle-plan-card";
 import { SettlementRow } from "@/components/settlements/settlements-page";
+import { JoinLinkCard } from "@/components/groups/join-link-card";
 import { useCancelInvitation, useInviteMember, useRemoveMember } from "@/hooks/mutations";
 import { useGroupInsight } from "@/hooks/useAi";
 import { useCategories } from "@/hooks/useCategories";
@@ -251,11 +252,11 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
     event.preventDefault();
     if (!email.trim()) return;
     try {
-      const res = await invite.mutateAsync({ email: email.trim() });
-      toast.success(res.status === "added" ? "Added to the group" : "Invite pending until they sign up");
+      await invite.mutateAsync({ email: email.trim() });
+      toast.success("Invite sent. They join once they accept it");
       setEmail("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't add that person");
+      toast.error(err instanceof Error ? err.message : "Couldn't invite that person");
     }
   };
 
@@ -278,7 +279,7 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Add someone by email"
+            placeholder="Invite someone by email"
             className={controlClass}
           />
         </label>
@@ -287,9 +288,11 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
           disabled={invite.isPending}
           className="h-10 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
-          {invite.isPending ? "Adding…" : "Add"}
+          {invite.isPending ? "Inviting…" : "Invite"}
         </button>
       </form>
+
+      <JoinLinkCard groupId={group.id} groupName={group.name} isAdmin={isAdmin} />
 
       <ul className="flex flex-col">
         {active.map((m) => {
@@ -332,14 +335,21 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
               <li key={inv.id} className="flex items-center gap-3 rounded-xl bg-muted/60 px-3 py-2 text-sm">
                 <Mail className="size-4 text-muted-foreground" />
                 <span className="flex-1 truncate">{inv.email}</span>
-                <button
-                  type="button"
-                  onClick={() => cancel.mutate(inv.id)}
-                  aria-label={`Cancel invite for ${inv.email}`}
-                  className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-card hover:text-foreground"
-                >
-                  <X className="size-3.5" />
-                </button>
+                <span className="text-[11px] text-muted-foreground">Waiting to accept</span>
+                {(isAdmin || inv.invited_by_id === meId) && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      cancel.mutate(inv.id, {
+                        onError: (err) => toast.error(err instanceof Error ? err.message : "Couldn't cancel the invite"),
+                      })
+                    }
+                    aria-label={`Cancel invite for ${inv.email}`}
+                    className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-card hover:text-foreground"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
               </li>
             ))}
           </ul>
