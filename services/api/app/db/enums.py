@@ -17,6 +17,7 @@ class InvitationStatus(str, enum.Enum):
     ACCEPTED = "ACCEPTED"
     EXPIRED = "EXPIRED"
     CANCELLED = "CANCELLED"
+    DECLINED = "DECLINED"
 
 
 class AISourceType(str, enum.Enum):

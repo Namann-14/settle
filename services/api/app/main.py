@@ -9,7 +9,19 @@ from app.core.config import settings
 from app.core.timing import TimingMiddleware
 from app.db.migrate import upgrade_to_head
 from app.db.session import engine
-from app.routes import budgets, categories, expenses, groups, incomes, recurring, settlements, spending, telegram, users
+from app.routes import (
+    budgets,
+    categories,
+    expenses,
+    groups,
+    incomes,
+    invitations,
+    recurring,
+    settlements,
+    spending,
+    telegram,
+    users,
+)
 
 # httpx logs every request URL at INFO, and Telegram Bot API URLs carry the bot
 # token (/bot<token>/sendMessage), which would end up in the Vercel logs.
@@ -64,6 +76,7 @@ def health():
 app.include_router(users.router)
 app.include_router(expenses.router)
 app.include_router(groups.router)
+app.include_router(invitations.router)
 app.include_router(settlements.router)
 app.include_router(categories.router)
 app.include_router(budgets.router)

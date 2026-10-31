@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses `forms/field.tsx`, `useCreateGroup`, `inviteMember` from `@/lib/api/groups`, `useCurrentUser`.
 
-**Decisions & caveats:** Invites use `Promise.allSettled` so one bad address does not block others; failures are reported by count after the group exists. Pending text in the email box is included on submit. Defaults currency to the user's default (INR fallback).
+**Decisions & caveats:** Invites use `Promise.allSettled` so one bad address does not block others; failures are reported by count ("couldn't be invited") after the group exists. Every invite is pending until accepted, so the success toast counts pending invites. Pending text in the email box is included on submit. Defaults currency to the user's default (INR fallback).

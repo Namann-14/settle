@@ -8,6 +8,8 @@ import type {
   Invitation,
   InviteMemberPayload,
   InviteMemberResponse,
+  JoinLink,
+  JoinPreview,
 } from "@/types";
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -130,4 +132,37 @@ export async function removeMember(groupId: string, memberId: string): Promise<v
     method: "DELETE",
   });
   return handleResponse<void>(response);
+}
+
+export async function getJoinLink(groupId: string): Promise<JoinLink> {
+  const response = await fetch(`/api/groups/${groupId}/join-link`);
+  return handleResponse<JoinLink>(response);
+}
+
+export async function resetJoinLink(groupId: string): Promise<JoinLink> {
+  const response = await fetch(`/api/groups/${groupId}/join-link`, { method: "POST" });
+  return handleResponse<JoinLink>(response);
+}
+
+export async function previewJoin(code: string): Promise<JoinPreview> {
+  const response = await fetch(`/api/groups/join/${encodeURIComponent(code)}`);
+  return handleResponse<JoinPreview>(response);
+}
+
+export async function joinGroup(code: string): Promise<Group> {
+  const response = await fetch(`/api/groups/join/${encodeURIComponent(code)}`, { method: "POST" });
+  return handleResponse<Group>(response);
+}
+
+export async function listMyInvitations(): Promise<Invitation[]> {
+  const response = await fetch("/api/invitations");
+  return handleResponse<Invitation[]>(response);
+}
+
+export async function respondToInvitation(
+  invitationId: string,
+  action: "accept" | "decline",
+): Promise<Group | undefined> {
+  const response = await fetch(`/api/invitations/${invitationId}/${action}`, { method: "POST" });
+  return handleResponse<Group | undefined>(response);
 }

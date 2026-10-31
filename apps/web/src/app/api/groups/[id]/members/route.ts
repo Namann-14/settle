@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendFetch } from "@/lib/backend";
+import { backendErrorResponse, backendFetch } from "@/lib/backend";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -13,11 +13,6 @@ export async function POST(request: Request, { params }: RouteParams) {
     });
     return NextResponse.json(data);
   } catch (error) {
-    console.error(error);
-    const message = error instanceof Error ? error.message : "Backend request failed";
-    return NextResponse.json(
-      { message },
-      { status: message === "Unauthorized" ? 401 : 500 }
-    );
+    return backendErrorResponse(error);
   }
 }

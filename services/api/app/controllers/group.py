@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from decimal import Decimal
+from html import escape
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -26,6 +28,7 @@ from app.repositories import user as user_repo
 from app.schemas.balances import GroupBalancesResponse, MemberBalance, Transfer
 from app.schemas.group import GroupCreate, GroupUpdate
 from app.schemas.group_member import GroupMemberCreate
+from app.services import telegram as tg
 from app.services.balances import compute_group_nets, simplify_debts
 
 
@@ -183,32 +186,71 @@ def _require_member(db: Session, group_id: UUID, current_user: User) -> tuple[Gr
     return group, membership
 
 
+INVITE_ACCEPT_PREFIX = "inv:y:"
+INVITE_DECLINE_PREFIX = "inv:n:"
+
+
+def _display_name(user: User) -> str:
+    return user.name or user.email or "Someone"
+
+
+def _notify_invitee(invitation: GroupInvitation, group: Group, inviter: User, invitee: User | None) -> None:
+    """Best-effort Telegram ping with Join/Decline buttons; the in-app inbox is the source of truth."""
+    if invitee is None or invitee.telegram_chat_id is None or not tg.is_configured():
+        return
+    tg.send_buttons(
+        invitee.telegram_chat_id,
+        f"👋 <b>{escape(_display_name(inviter))}</b> invited you to join "
+        f"<b>{escape(group.name)}</b> on Settle.",
+        [
+            (f"{INVITE_ACCEPT_PREFIX}{invitation.id}", "✅ Join"),
+            (f"{INVITE_DECLINE_PREFIX}{invitation.id}", "✖️ Decline"),
+        ],
+    )
+
+
+def _notify_inviter(invitation: GroupInvitation, invitee: User, accepted: bool) -> None:
+    inviter = invitation.invited_by
+    if inviter is None or inviter.telegram_chat_id is None or not tg.is_configured():
+        return
+    verb = "joined" if accepted else "declined your invite to"
+    group_name = invitation.group_name or "your group"
+    tg.send_text(
+        inviter.telegram_chat_id,
+        f"{escape(_display_name(invitee))} {verb} <b>{escape(group_name)}</b>.",
+    )
+
+
 def invite_by_email(
     db: Session,
     group_id: UUID,
     current_user: User,
     email: str,
-    role: GroupRole = GroupRole.MEMBER,
-) -> tuple[GroupMember | None, GroupInvitation | None]:
+) -> GroupInvitation:
     """
-    Adds a member by email. Any active member may invite. Users who already
-    have an account are added immediately; anyone else gets a pending
-    invitation that is claimed the first time they sign in with that email.
+    Invites someone by email. Any active member may invite. Nobody is added
+    without consent: the invitee sees the invite in their inbox (and on
+    Telegram, if linked) and accepts or declines it. Invitees always join as
+    MEMBER.
     """
     group, _ = _require_member(db, group_id, current_user)
 
     target = user_repo.get_user_by_email(db, email)
-    if target:
-        if _get_active_membership(group.members, target.id):
-            raise ConflictError("That person is already in this group")
-        member = group_repo.add_group_member(
-            db, GroupMemberCreate(group_id=group_id, user_id=target.id, role=role)
-        )
-        return member, None
+    if target and _get_active_membership(group.members, target.id):
+        raise ConflictError("That person is already in this group")
 
-    if invitation_repo.get_pending_invitation(db, group_id, email):
-        raise ConflictError("An invite for this email is already pending")
-    return None, invitation_repo.create_invitation(db, group_id, email, current_user.id)
+    existing = invitation_repo.get_pending_invitation(db, group_id, email)
+    if existing:
+        if existing.expires_at > datetime.now(timezone.utc):
+            raise ConflictError("An invite for this email is already pending")
+        # An expired invite still holds the one-pending-per-email index.
+        invitation_repo.set_status(db, existing, InvitationStatus.EXPIRED)
+
+    invitation = invitation_repo.create_invitation(
+        db, group_id, email, current_user.id, invited_user_id=target.id if target else None
+    )
+    _notify_invitee(invitation, group, current_user, target)
+    return invitation
 
 
 def list_invitations(db: Session, group_id: UUID, current_user: User) -> list[GroupInvitation]:
@@ -217,22 +259,102 @@ def list_invitations(db: Session, group_id: UUID, current_user: User) -> list[Gr
 
 
 def cancel_invitation(db: Session, group_id: UUID, invitation_id: UUID, current_user: User) -> None:
-    _require_member(db, group_id, current_user)
+    """The inviter or a group admin can withdraw a pending invite."""
+    _, membership = _require_member(db, group_id, current_user)
     invitation = invitation_repo.get_invitation_by_id(db, invitation_id)
     if not invitation or invitation.group_id != group_id or invitation.status != InvitationStatus.PENDING:
         raise GroupNotFoundError("Invitation not found")
+    if invitation.invited_by_id != current_user.id and membership.role != GroupRole.ADMIN:
+        raise PermissionDeniedError("Only the person who sent the invite or an admin can cancel it")
     invitation_repo.set_status(db, invitation, InvitationStatus.CANCELLED)
 
 
-def claim_invitations(db: Session, user: User) -> None:
-    """Turns any pending invitations for the user's email into memberships."""
-    if not user.email:
-        return
-    for invitation in invitation_repo.list_pending_for_email(db, user.email):
+def list_my_invitations(db: Session, current_user: User) -> list[GroupInvitation]:
+    return invitation_repo.list_pending_for_user(db, current_user.id, current_user.email)
+
+
+def _is_addressed_to(invitation: GroupInvitation, user: User) -> bool:
+    if invitation.invited_user_id == user.id:
+        return True
+    return bool(user.email) and invitation.email.lower() == user.email.lower()
+
+
+def respond_to_invitation(db: Session, invitation_id: UUID, current_user: User, accept: bool) -> Group:
+    """
+    Accepts (joins the group as MEMBER) or declines an invite addressed to the
+    current user. Returns the group either way.
+    """
+    invitation = invitation_repo.get_invitation_by_id(db, invitation_id)
+    if not invitation or not _is_addressed_to(invitation, current_user):
+        raise GroupNotFoundError("Invitation not found")
+    if invitation.status != InvitationStatus.PENDING:
+        raise ConflictError("This invite was already answered or withdrawn")
+    if invitation.expires_at <= datetime.now(timezone.utc):
+        invitation_repo.set_status(db, invitation, InvitationStatus.EXPIRED)
+        raise ValidationError("This invite has expired. Ask for a new one")
+
+    group = group_repo.get_group_by_id(db, invitation.group_id)
+    if not group:
+        invitation_repo.set_status(db, invitation, InvitationStatus.CANCELLED)
+        raise GroupNotFoundError("That group no longer exists")
+
+    if accept:
+        if not _get_active_membership(group.members, current_user.id):
+            group_repo.add_group_member(
+                db, GroupMemberCreate(group_id=group.id, user_id=current_user.id, role=GroupRole.MEMBER)
+            )
+        invitation_repo.set_status(db, invitation, InvitationStatus.ACCEPTED, invited_user_id=current_user.id)
+    else:
+        invitation_repo.set_status(db, invitation, InvitationStatus.DECLINED, invited_user_id=current_user.id)
+
+    _notify_inviter(invitation, current_user, accept)
+    return group_repo.get_group_by_id(db, group.id)
+
+
+def get_join_code(db: Session, group_id: UUID, current_user: User) -> str:
+    """Any member can share the join link; it's created on first request."""
+    group, _ = _require_member(db, group_id, current_user)
+    if not group.join_code:
+        group = group_repo.set_join_code(db, group)
+    return group.join_code
+
+
+def reset_join_code(db: Session, group_id: UUID, current_user: User) -> str:
+    """Admins can replace the link, which stops the old one from working."""
+    group, membership = _require_member(db, group_id, current_user)
+    if membership.role != GroupRole.ADMIN:
+        raise PermissionDeniedError("Only group admins can reset the join link")
+    return group_repo.set_join_code(db, group).join_code
+
+
+def _group_for_code(db: Session, code: str) -> Group:
+    group = group_repo.get_group_by_join_code(db, code)
+    if not group:
+        raise GroupNotFoundError("This join link is invalid or has been reset")
+    return group
+
+
+def preview_join(db: Session, code: str, current_user: User) -> tuple[Group, int, bool]:
+    group = _group_for_code(db, code)
+    active = [m for m in group.members if m.removed_at is None]
+    already = any(m.user_id == current_user.id for m in active)
+    return group, len(active), already
+
+
+def join_by_code(db: Session, code: str, current_user: User) -> Group:
+    """Opening the link and pressing Join is the consent, so it adds the user right away."""
+    group = _group_for_code(db, code)
+    if not _get_active_membership(group.members, current_user.id):
         group_repo.add_group_member(
-            db, GroupMemberCreate(group_id=invitation.group_id, user_id=user.id, role=GroupRole.MEMBER)
+            db, GroupMemberCreate(group_id=group.id, user_id=current_user.id, role=GroupRole.MEMBER)
         )
-        invitation_repo.set_status(db, invitation, InvitationStatus.ACCEPTED, invited_user_id=user.id)
+    # Joining answers any pending invite to this group.
+    for invitation in invitation_repo.list_pending_for_user(db, current_user.id, current_user.email):
+        if invitation.group_id == group.id:
+            invitation_repo.set_status(
+                db, invitation, InvitationStatus.ACCEPTED, invited_user_id=current_user.id
+            )
+    return group_repo.get_group_by_id(db, group.id)
 
 
 def get_group_balances(db: Session, group_id: UUID, current_user: User) -> GroupBalancesResponse:

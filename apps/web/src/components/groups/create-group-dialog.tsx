@@ -89,7 +89,7 @@ export function CreateGroupDialog({
         (r) => r.status === "fulfilled" && r.value.status === "invited",
       ).length;
 
-      if (failed) toast.error(`${failed} member${failed === 1 ? "" : "s"} couldn't be added`);
+      if (failed) toast.error(`${failed} member${failed === 1 ? "" : "s"} couldn't be invited`);
       else if (invited) toast.success(`Group created. ${invited} pending invite${invited === 1 ? "" : "s"} sent`);
       else toast.success("Group created");
 

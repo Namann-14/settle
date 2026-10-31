@@ -2,8 +2,8 @@
 
 **Purpose:** ORM model for an expense-sharing group.
 
-**Key contents:** `Group` with name, description, `default_currency`, soft-delete `deleted_at`, creator FK. Relationships to members, expenses, settlements, invitations, recurring expenses.
+**Key contents:** `Group` with name, description, `default_currency`, soft-delete `deleted_at`, nullable unique `join_code` (shareable `/dashboard/join/<code>` link), creator FK. Relationships to members, expenses, settlements, invitations, recurring expenses.
 
 **Depends on / used by:** Used by `repositories/group.py`, `models/group_member.py`, `models/expense.py`, `models/settlement.py`.
 
-**Decisions & caveats:** Soft-deleted via `deleted_at`. Members and invitations cascade with the group, but expenses and settlements have no ORM cascade (DB-level FK cascade only).
+**Decisions & caveats:** Soft-deleted via `deleted_at`. Members and invitations cascade with the group, but expenses and settlements have no ORM cascade (DB-level FK cascade only). `join_code` is created on first request and an admin reset replaces it, killing the old link (migration `e2b7d4c91f05`).

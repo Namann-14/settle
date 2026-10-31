@@ -10,7 +10,6 @@ from app.controllers.exceptions import (
     PermissionDeniedError,
     ValidationError,
 )
-from app.controllers import group as group_controller
 from app.controllers import user as user_controller
 from app.dependencies.auth import get_current_user
 from app.dependencies.database import get_db
@@ -70,6 +69,6 @@ def get_current_db_user(
             return user
 
         email, name = fetch_clerk_profile(clerk_user_id)
-        user = user_controller.sync_user(db, clerk_user_id=clerk_user_id, email=email, name=name)
-        group_controller.claim_invitations(db, user)
-        return user
+        # Invites to this email show up in the user's inbox (matched by email),
+        # so nothing is claimed here: joining always needs the user to accept.
+        return user_controller.sync_user(db, clerk_user_id=clerk_user_id, email=email, name=name)

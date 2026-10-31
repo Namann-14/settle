@@ -3,11 +3,12 @@ from typing import Literal
 from datetime import date, datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import Select, delete, or_, select
+from sqlalchemy import Select, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.expense import Expense
 from app.models.expense_split import ExpenseSplit
+from app.models.group_member import GroupMember
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate
 
 
@@ -57,16 +58,28 @@ def get_user_expenses(
     limit: int = 50,
     include_deleted: bool = False,
     filters: ExpenseFilters | None = None,
+    include_group_expenses: bool = False,
 ) -> list[Expense]:
+    """
+    Expenses the user paid, created or shares in. With include_group_expenses,
+    also every expense in groups they're an active member of (what search
+    should cover: anything the user can see).
+    """
+    involved = (
+        (Expense.paid_by_id == user_id)
+        | (Expense.created_by_id == user_id)
+        | (ExpenseSplit.user_id == user_id)
+    )
+    if include_group_expenses:
+        my_groups = select(GroupMember.group_id).where(
+            GroupMember.user_id == user_id, GroupMember.removed_at.is_(None)
+        )
+        involved = involved | Expense.group_id.in_(my_groups)
     stmt = (
         select(Expense)
         .options(joinedload(Expense.splits))
         .outerjoin(ExpenseSplit, Expense.id == ExpenseSplit.expense_id)
-        .where(
-            (Expense.paid_by_id == user_id)
-            | (Expense.created_by_id == user_id)
-            | (ExpenseSplit.user_id == user_id)
-        )
+        .where(involved)
         .distinct()
     )
     if not include_deleted:
@@ -146,17 +159,21 @@ def update_expense(db: Session, expense: Expense, schema: ExpenseUpdate) -> Expe
         setattr(expense, field, value)
 
     if splits_data is not None:
-        # Delete existing splits and insert new splits
-        db.execute(delete(ExpenseSplit).where(ExpenseSplit.expense_id == expense.id))
+        # Replace through the relationship: a bulk delete() would mark the
+        # eagerly loaded splits deleted, and db.add(expense) then fails
+        # cascading onto them. Flush the removals first because
+        # (expense_id, user_id) is unique.
+        expense.splits.clear()
+        db.flush()
         for split in splits_data:
-            expense_split = ExpenseSplit(
-                expense_id=expense.id,
-                user_id=split["user_id"],
-                amount_owed=split["amount_owed"],
-                percentage=split.get("percentage"),
-                share=split.get("share"),
+            expense.splits.append(
+                ExpenseSplit(
+                    user_id=split["user_id"],
+                    amount_owed=split["amount_owed"],
+                    percentage=split.get("percentage"),
+                    share=split.get("share"),
+                )
             )
-            db.add(expense_split)
 
     db.add(expense)
     db.commit()

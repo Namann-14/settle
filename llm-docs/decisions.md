@@ -31,3 +31,12 @@
 - Reveal no longer animates a blur filter (compositor-only now); the footer reveal stops reading layout after it fires.
 - Left alone on purpose: Clerk on the landing page (needed for the signed-in state and sign-up modal), latin-ext font files (the rupee sign pulls in Inter and Instrument Serif latin-ext), and `content-visibility` on sections (risks anchor jumps and scroll-height shifts).
 
+## 2026-10-31 Group invites, join links and split hardening
+
+- Nobody is added to a group without consent. Inviting by email always creates a pending invite, even for people who already have an account; they accept or decline from the topbar bell (in-app inbox) or from Telegram Join/Decline buttons if their chat is linked. Invites for emails without an account wait until that person signs up; they are matched by email, not claimed automatically on first sign-in.
+- Invitees always join as MEMBER. The invite request no longer takes a role, which closed a hole where any member could invite someone as ADMIN. Only the inviter or an admin can cancel an invite.
+- Each group has a shareable join link (`/dashboard/join/<code>`). Any member can copy it; opening it shows the group and joining needs a click (that click is the consent). Admins can reset the code, which kills the old link. The code is made lazily on first request (`groups.join_code`, nullable).
+- There is still no email delivery: invitees learn about invites in the app, on Telegram, or from the join link someone sends them.
+- The server owns split amounts. EQUAL and PERCENTAGE splits are recomputed with a largest-remainder cent allocation so they always add up to the expense exactly; UNEQUAL amounts must add up to the cent. This replaces the old "correct small drifts silently" tolerance, which let a forged 90/10 pass as EQUAL and leaked cents into balances (leftover cents also blocked removing members, which needs a zero net).
+- Personal expenses (no group) can only involve the current user. Editing an expense re-checks group membership and re-splits the existing people when the amount, split type, group or payer change.
+- Root cause of "members missing in Add expense": the form read members from the cached groups list (5-minute stale time, no refetch on focus), so someone who had joined since was missing and the split silently went to fewer people. The form now reads the group itself and refetches it every time it opens.

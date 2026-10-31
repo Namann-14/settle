@@ -2,7 +2,7 @@
 
 **Purpose:** Primary sidebar navigation.
 
-**Key contents:** `NavMain` renders New chat, Overview, Spending, Groups, Expenses, Settlements, Settings links with active state.
+**Key contents:** `NAV_ITEMS` (exported; the search palette lists them as Pages) and `NavMain`, which renders New chat, Overview, Spending, Groups, Expenses, Settlements, Settings links with active state.
 
 **Depends on / used by:** Uses `@settle/ui` sidebar; rendered by `app-sidebar.tsx`.
 

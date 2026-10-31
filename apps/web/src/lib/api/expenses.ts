@@ -40,6 +40,7 @@ export async function listExpenses(params?: ListExpensesParams): Promise<Expense
   if (params?.date_from) searchParams.set("date_from", params.date_from);
   if (params?.date_to) searchParams.set("date_to", params.date_to);
   if (params?.scope) searchParams.set("scope", params.scope);
+  if (params?.include_group_expenses) searchParams.set("include_group_expenses", "true");
 
   const queryString = searchParams.toString();
   const url = `/api/expenses${queryString ? `?${queryString}` : ""}`;
