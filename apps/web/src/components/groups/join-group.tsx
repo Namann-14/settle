@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Users } from "lucide-react";
 import { toast } from "sonner";
 
-import { Empty, EmptyDescription, EmptyTitle } from "@settle/ui/components/empty";
 import { Skeleton } from "@settle/ui/components/skeleton";
 
+import { PageContainer, Panel, buttonClass } from "@/components/dashboard/panel";
 import { useJoinGroup } from "@/hooks/mutations";
 import { useJoinPreview } from "@/hooks/useGroup";
 import { initials } from "@/lib/people";
@@ -28,61 +27,82 @@ export function JoinGroup({ code }: { code: string }) {
     }
   };
 
-  return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16">
-      {isLoading ? (
-        <Skeleton className="h-64 w-full rounded-2xl" />
-      ) : isError || !preview ? (
-        <Empty className="rounded-2xl border border-border/70 bg-card py-16">
-          <EmptyTitle>Link not valid</EmptyTitle>
-          <EmptyDescription>
-            {error instanceof Error ? error.message : "This join link is invalid or has been reset."}
-          </EmptyDescription>
-          <Link href="/dashboard/groups" className="text-sm font-medium text-primary hover:underline">
-            Go to your groups
-          </Link>
-        </Empty>
-      ) : (
-        <div className="flex flex-col items-center gap-5 rounded-2xl border border-border/70 bg-card p-8 text-center">
-          <span className="flex size-16 items-center justify-center rounded-2xl bg-accent text-xl font-semibold text-primary">
+  let body: React.ReactNode;
+  if (isLoading) {
+    body = (
+      <Panel aria-busy aria-label="Loading invite" className="gap-5 py-6 md:py-6">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-10 rounded-md" />
+          <div className="flex flex-1 flex-col gap-2">
+            <Skeleton className="h-3 w-28 rounded-full" />
+            <Skeleton className="h-5 w-40 rounded-lg" />
+          </div>
+        </div>
+        <Skeleton className="h-3.5 w-3/4 rounded-full" />
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-24 rounded-full" />
+          <Skeleton className="h-9 w-20 rounded-full" />
+        </div>
+      </Panel>
+    );
+  } else if (isError || !preview) {
+    body = (
+      <Panel className="items-start gap-3 py-6 md:py-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-lg font-semibold">This link doesn’t work</h1>
+          <p className="text-sm text-muted-foreground">
+            {error instanceof Error ? error.message : "It’s invalid or has been reset."} Ask the person who shared it
+            for a new one.
+          </p>
+        </div>
+        <Link href="/dashboard/groups" className={buttonClass({ variant: "secondary", size: "sm" })}>
+          Go to your groups
+        </Link>
+      </Panel>
+    );
+  } else {
+    body = (
+      <Panel className="animate-fade-in gap-5 py-6 md:py-6">
+        <div className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-sm font-semibold text-primary"
+          >
             {initials(preview.name)}
           </span>
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs tracking-[0.08em] text-muted-foreground uppercase">You&rsquo;re invited to join</span>
-            <h1 className="font-display text-4xl leading-none tracking-tight">{preview.name}</h1>
-            {preview.description && <p className="text-sm text-muted-foreground">{preview.description}</p>}
-            <p className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-              <Users className="size-3.5" />
-              {preview.member_count} {preview.member_count === 1 ? "member" : "members"}
-            </p>
+          <div className="flex min-w-0 flex-col">
+            <p className="text-meta text-muted-foreground">You’re invited to join</p>
+            <h1 className="truncate text-2xl font-semibold tracking-tight">{preview.name}</h1>
           </div>
-          {preview.already_member ? (
-            <Link
-              href={`/dashboard/groups/${preview.group_id}`}
-              className="flex h-11 items-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
-            >
-              You&rsquo;re already in this group · Open it
-            </Link>
-          ) : (
-            <div className="flex gap-2.5">
-              <Link
-                href="/dashboard/groups"
-                className="flex h-11 items-center rounded-full border border-border px-5 text-sm font-medium hover:bg-muted"
-              >
-                Not now
-              </Link>
-              <button
-                type="button"
-                onClick={submit}
-                disabled={join.isPending}
-                className="h-11 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow-md disabled:opacity-50"
-              >
-                {join.isPending ? "Joining…" : "Join group"}
-              </button>
-            </div>
-          )}
         </div>
-      )}
-    </div>
+        <p className="text-sm text-muted-foreground">
+          {preview.member_count} {preview.member_count === 1 ? "member" : "members"}
+          {preview.description ? ` · ${preview.description}` : ""}
+        </p>
+        {preview.already_member ? (
+          <div className="flex flex-col items-start gap-3">
+            <p className="text-sm">You’re already in this group.</p>
+            <Link href={`/dashboard/groups/${preview.group_id}`} className={buttonClass()}>
+              Open group
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={submit} disabled={join.isPending} className={buttonClass()}>
+              {join.isPending ? "Joining…" : "Join group"}
+            </button>
+            <Link href="/dashboard/groups" className={buttonClass({ variant: "ghost" })}>
+              Not now
+            </Link>
+          </div>
+        )}
+      </Panel>
+    );
+  }
+
+  return (
+    <PageContainer className="max-w-md pt-10 md:pt-16">
+      {body}
+    </PageContainer>
   );
 }

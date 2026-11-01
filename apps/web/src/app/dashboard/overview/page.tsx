@@ -1,48 +1,30 @@
-import { AskAiCard } from "@/components/dashboard/ask-ai-card";
-import { BalanceSummary } from "@/components/dashboard/balance-summary";
-import {
-  CostAnalysisCard,
-  SpendChartCard,
-} from "@/components/dashboard/chart-cards";
-import { GroupsCard } from "@/components/dashboard/groups-card";
-import { OverviewHeader } from "@/components/dashboard/overview-header";
+import { PageContainer } from "@/components/dashboard/panel";
+import { GroupsList, RecentActivity } from "@/components/dashboard/overview-lists";
+import { StandingSection } from "@/components/dashboard/standing";
 import { ThisMonthCard } from "@/components/dashboard/this-month-card";
-import { RecentSettlementsCard } from "@/components/dashboard/recent-settlements-card";
-import { TransactionHistoryCard } from "@/components/dashboard/transaction-history-card";
 import { Prefetch, serverQueries } from "@/lib/server-prefetch";
 
+// Answers "where do I stand?": the net and a two-column ledger first, then
+// groups, recent activity and this month's spending. currentUser and groups
+// are prefetched by the dashboard layout; group balances follow on the client
+// once the group ids are known.
 export default function OverviewPage() {
   return (
     <Prefetch
       queries={[
-        serverQueries.expenses({ limit: 100 }),
-        serverQueries.settlements({ limit: 100 }),
+        serverQueries.expenses({ limit: 8 }),
         serverQueries.settlements({ limit: 8 }),
         serverQueries.spendingSummary(),
       ]}
     >
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-2 py-4 md:px-4 md:py-6">
-        <OverviewHeader />
-        <BalanceSummary />
-        <ThisMonthCard />
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <SpendChartCard />
-          </div>
-          <CostAnalysisCard />
-
-          <GroupsCard />
-          <div className="lg:col-span-2">
-            <TransactionHistoryCard />
-          </div>
-
-          <div className="lg:col-span-2">
-            <AskAiCard />
-          </div>
-          <RecentSettlementsCard />
+      <PageContainer>
+        <StandingSection />
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          <GroupsList />
+          <RecentActivity />
         </div>
-      </div>
+        <ThisMonthCard />
+      </PageContainer>
     </Prefetch>
   );
 }

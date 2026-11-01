@@ -52,7 +52,7 @@ export function NavChats() {
 
   return (
     <SidebarGroup className="min-h-0 flex-1 group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Recents</SidebarGroupLabel>
+      <SidebarGroupLabel>Recent chats</SidebarGroupLabel>
       <SidebarMenu className="min-h-0 overflow-y-auto">
         {isPending &&
           Array.from({ length: 5 }, (_, i) => (
@@ -64,17 +64,22 @@ export function NavChats() {
           <p className="px-2 text-xs text-muted-foreground">Couldn&apos;t load chats.</p>
         )}
         {threads?.length === 0 && (
-          <p className="px-2 text-xs text-muted-foreground">No chats yet.</p>
+          <p className="px-2 text-xs text-muted-foreground">No chats yet. Start one from New chat.</p>
         )}
         {threads?.map((thread) => {
           const href = `/dashboard/chat/${thread.id}` as const;
           return (
             <SidebarMenuItem key={thread.id}>
-              <SidebarMenuButton render={<Link href={href} />} isActive={pathname === href}>
+              <SidebarMenuButton
+                render={<Link href={href} />}
+                isActive={pathname === href}
+                className="transition-colors duration-150"
+              >
                 <span className="truncate">{thread.title}</span>
               </SidebarMenuButton>
               <SidebarMenuAction
                 showOnHover
+                className="text-muted-foreground transition-colors duration-150 hover:text-destructive"
                 aria-label={`Delete chat "${thread.title}"`}
                 onClick={() => setPendingDelete(thread)}
               >

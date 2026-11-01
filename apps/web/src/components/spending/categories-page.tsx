@@ -4,45 +4,52 @@ import { useState } from "react";
 import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Skeleton } from "@settle/ui/components/skeleton";
 import { cn } from "@settle/ui/lib/utils";
 
-import { Eyebrow, Panel, PanelHeader } from "@/components/dashboard/panel";
+import { PageHeader, Panel, PanelHeader, buttonClass, rowClass } from "@/components/dashboard/panel";
 import { FormError, controlClass } from "@/components/forms/field";
-import {
-  CATEGORY_COLORS,
-  CATEGORY_ICONS,
-  CategoryIcon,
-} from "@/components/spending/category-icon";
+import { CATEGORY_COLORS, CATEGORY_ICONS, CategoryIcon } from "@/components/spending/category-icon";
+import { EmptyLine, LoadError, PanelSkeleton } from "@/components/spending/states";
 import { useCreateCategory, useDeleteCategory, useUpdateCategory } from "@/hooks/mutations";
 import { useCategories } from "@/hooks/useCategories";
 import type { Category } from "@/types";
 
 export function CategoriesPage() {
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading, isError, refetch } = useCategories();
   const system = categories?.filter((c) => c.is_system) ?? [];
   const mine = categories?.filter((c) => !c.is_system) ?? [];
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <Eyebrow>{categories?.length ?? 0} categories · the AI picks from these</Eyebrow>
-        <h1 className="font-display text-4xl leading-none tracking-tight md:text-5xl">
-          Your <em className="italic">categories</em>
-        </h1>
-      </div>
+      <PageHeader
+        title="Categories"
+        description={
+          categories
+            ? `${categories.length} categories. Settle AI picks from these when it drafts an expense.`
+            : "Settle AI picks from these when it drafts an expense."
+        }
+      />
 
       {isLoading ? (
-        <Skeleton className="h-80 rounded-2xl" />
+        <div aria-busy aria-label="Loading categories" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <PanelSkeleton rows={3} />
+          <PanelSkeleton rows={3} />
+        </div>
+      ) : isError || !categories ? (
+        <Panel>
+          <LoadError what="your categories" onRetry={() => refetch()} />
+        </Panel>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid animate-fade-in grid-cols-1 items-start gap-4 lg:grid-cols-2">
           <Panel>
             <PanelHeader title="Your own" description="Add categories that fit how you spend." />
             <CategoryEditor key="new" />
-            {mine.length > 0 && (
-              <ul className="flex flex-col divide-y divide-border/50">
+            {mine.length === 0 ? (
+              <EmptyLine>None yet. Add one above for anything the built-in ones miss.</EmptyLine>
+            ) : (
+              <ul className="flex flex-col">
                 {mine.map((c) => (
-                  <li key={c.id} className="py-2.5">
+                  <li key={c.id} className="border-b border-border/50 last:border-b-0">
                     <CustomCategoryRow category={c} />
                   </li>
                 ))}
@@ -51,11 +58,14 @@ export function CategoriesPage() {
           </Panel>
 
           <Panel>
-            <PanelHeader title="Built in" description="Available to everyone. These can't be changed." />
+            <PanelHeader title="Built in" description="Available to everyone. These can’t be changed." />
             <ul className="flex flex-wrap gap-2">
               {system.map((c, i) => (
-                <li key={c.id} className="flex items-center gap-2 rounded-full border border-border/70 py-1 pr-3.5 pl-1 text-sm">
-                  <CategoryIcon icon={c.icon} color={c.color} index={i} className="size-7 rounded-full" />
+                <li
+                  key={c.id}
+                  className="flex items-center gap-2 rounded-full border border-border py-1 pr-3.5 pl-1 text-sm"
+                >
+                  <CategoryIcon icon={c.icon} color={c.color} index={i} className="size-7" />
                   {c.name}
                 </li>
               ))}
@@ -71,19 +81,26 @@ function CustomCategoryRow({ category }: { category: Category }) {
   const [editing, setEditing] = useState(false);
   const deleteCategory = useDeleteCategory();
 
-  if (editing) return <CategoryEditor category={category} onDone={() => setEditing(false)} />;
+  if (editing)
+    return (
+      <div className="py-3">
+        <CategoryEditor category={category} onDone={() => setEditing(false)} />
+      </div>
+    );
+
+  const iconButton = "w-11 px-0 sm:w-8";
 
   return (
-    <div className="flex items-center gap-3">
+    <div className={cn(rowClass, "justify-start gap-3 py-2")}>
       <CategoryIcon icon={category.icon} color={category.color} />
-      <span className="flex-1 truncate text-sm font-medium">{category.name}</span>
+      <span className="flex-1 truncate font-medium">{category.name}</span>
       <button
         type="button"
         aria-label={`Edit ${category.name}`}
         onClick={() => setEditing(true)}
-        className="flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+        className={buttonClass({ variant: "ghost", size: "sm", className: iconButton })}
       >
-        <Pencil className="size-4" />
+        <Pencil />
       </button>
       <button
         type="button"
@@ -99,9 +116,13 @@ function CustomCategoryRow({ category }: { category: Category }) {
             toast.error(err instanceof Error ? err.message : "Couldn't delete");
           }
         }}
-        className="flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        className={buttonClass({
+          variant: "ghost",
+          size: "sm",
+          className: cn(iconButton, "hover:bg-destructive/10 hover:text-destructive"),
+        })}
       >
-        <Trash2 className="size-4" />
+        <Trash2 />
       </button>
     </div>
   );
@@ -136,8 +157,11 @@ function CategoryEditor({ category, onDone }: { category?: Category; onDone?: ()
     }
   };
 
+  const pick =
+    "flex size-10 items-center justify-center rounded-full text-muted-foreground transition-colors duration-150 outline-none hover:bg-card hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 sm:size-8";
+
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3 rounded-xl bg-muted/50 p-3">
+    <form onSubmit={submit} className="flex flex-col gap-3 rounded-xl border border-border bg-muted/40 p-3">
       <div className="flex gap-2">
         <CategoryIcon icon={icon} color={color} className="size-10" />
         <input
@@ -153,12 +177,12 @@ function CategoryEditor({ category, onDone }: { category?: Category; onDone?: ()
           type="submit"
           disabled={busy || !name.trim()}
           aria-label={category ? "Save category" : "Add category"}
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-50"
+          className={buttonClass({ className: "h-10 w-10 px-0 sm:h-10" })}
         >
-          {category ? <Check className="size-4" /> : <Plus className="size-4" />}
+          {category ? <Check /> : <Plus />}
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-1" role="radiogroup" aria-label="Icon">
+      <div className="flex flex-wrap items-center gap-0.5" role="radiogroup" aria-label="Icon">
         {Object.entries(CATEGORY_ICONS).map(([key, Icon]) => (
           <button
             key={key}
@@ -167,16 +191,13 @@ function CategoryEditor({ category, onDone }: { category?: Category; onDone?: ()
             aria-checked={icon === key}
             aria-label={key}
             onClick={() => setIcon(key)}
-            className={cn(
-              "flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground",
-              icon === key && "bg-card text-foreground ring-1 ring-border",
-            )}
+            className={cn(pick, icon === key && "bg-card text-foreground ring-1 ring-border")}
           >
             <Icon className="size-4" />
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-2" role="radiogroup" aria-label="Color">
+      <div className="flex items-center gap-0.5" role="radiogroup" aria-label="Color">
         {CATEGORY_COLORS.map((token) => (
           <button
             key={token}
@@ -185,15 +206,17 @@ function CategoryEditor({ category, onDone }: { category?: Category; onDone?: ()
             aria-checked={color === token}
             aria-label={token}
             onClick={() => setColor(token)}
-            className={cn(
-              "size-6 rounded-full ring-offset-2 ring-offset-background transition-shadow",
-              color === token && "ring-2 ring-foreground/60",
-            )}
-            style={{ backgroundColor: `var(--${token})` }}
-          />
+            className={cn(pick, color === token && "bg-card ring-1 ring-border")}
+          >
+            <span className="size-5 rounded-full" style={{ backgroundColor: `var(--${token})` }} />
+          </button>
         ))}
         {onDone && (
-          <button type="button" onClick={onDone} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
+          <button
+            type="button"
+            onClick={onDone}
+            className={buttonClass({ variant: "ghost", size: "sm", className: "ml-auto" })}
+          >
             Cancel
           </button>
         )}

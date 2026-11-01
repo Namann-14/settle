@@ -1,29 +1,22 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import {
-  ArrowUp,
-  CalendarRange,
-  HandCoins,
-  Receipt,
-  Users,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, ArrowUp } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+
+import { cn } from "@settle/ui/lib/utils";
 
 import { CHAT_SUGGESTIONS } from "@/components/chat/suggestions";
+import { buttonClass } from "@/components/dashboard/panel";
 
 // Starters that prefill the box for the user to finish, unlike the ideas
 // list below, which sends straight away.
-const STARTERS: { label: string; icon: LucideIcon; text: string }[] = [
-  { label: "Balances", icon: Wallet, text: "What's my balance with " },
-  { label: "Spending", icon: CalendarRange, text: "How much did I spend on " },
-  { label: "Groups", icon: Users, text: "Show the expenses in my group " },
+const STARTERS: { label: string; text: string }[] = [
+  { label: "Balances", text: "What's my balance with " },
+  { label: "Spending", text: "How much did I spend on " },
+  { label: "Groups", text: "Show the expenses in my group " },
 ];
-
-const IDEA_ICONS: LucideIcon[] = [HandCoins, CalendarRange, Receipt, Users];
 
 function greetingFor(hour: number) {
   if (hour < 5) return "Up late";
@@ -44,13 +37,9 @@ export function useGreeting() {
   return greeting === "Up late" ? `Up late, ${name}?` : `${greeting}, ${name}`;
 }
 
-function fadeUp(delay: number): CSSProperties {
-  return { "--delay": `${delay}s`, "--y": "8px" } as CSSProperties;
-}
-
-// Dashboard home, laid out like Claude's new-chat screen: greeting, one
-// centered composer, a few ideas underneath. No chat state lives here —
-// submitting hands the prompt to the chat page, which sends it on mount.
+// Dashboard home and the entry point to Settle AI: a greeting, one centred
+// composer, starters and a few ideas. No chat state lives here; submitting
+// hands the prompt to the chat page, which sends it on mount.
 export function HomeComposer() {
   const router = useRouter();
   const greeting = useGreeting();
@@ -79,85 +68,83 @@ export function HomeComposer() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[42rem] flex-1 flex-col justify-center gap-10 pb-[12vh]">
-      <h1
-        className="animate-fade-up flex min-h-12 items-center justify-center gap-3 text-center font-display text-4xl tracking-tight sm:text-5xl"
-        style={fadeUp(0.05)}
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 px-1 pb-[10vh]">
+      <div className="flex flex-col gap-1.5 text-center">
+        {/* Reserve the line so the layout doesn't shift when the greeting arrives. */}
+        <h1 className="min-h-9 text-2xl font-semibold tracking-tight text-balance sm:min-h-10 sm:text-3xl">
+          {greeting ?? " "}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Ask Settle AI about your balances, groups and spending.
+        </p>
+      </div>
+
+      <form
+        className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 transition-colors duration-150 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50 sm:p-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          ask(input);
+        }}
       >
-        <HandCoins className="size-8 shrink-0 text-primary sm:size-9" />
-        <span>{greeting ?? " "}</span>
-      </h1>
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => setInput(e.currentTarget.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask anything, like “who owes me for Goa?”"
+          aria-label="Ask Settle AI"
+          rows={2}
+          autoFocus
+          className="field-sizing-content max-h-60 min-h-12 w-full resize-none bg-transparent px-1 text-sm leading-6 outline-none placeholder:text-muted-foreground"
+        />
 
-      <div className="flex flex-col gap-8">
-        <form
-          className="animate-fade-up relative flex flex-col gap-5 rounded-[26px] border bg-card p-4 pt-5 shadow-lg ring-1 ring-foreground/5 transition-shadow focus-within:ring-foreground/15 sm:px-5"
-          style={fadeUp(0.15)}
-          onSubmit={(e) => {
-            e.preventDefault();
-            ask(input);
-          }}
-        >
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.currentTarget.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="How can I help you today?"
-            aria-label="Ask Settle AI"
-            rows={1}
-            autoFocus
-            className="field-sizing-content max-h-60 min-h-7 w-full resize-none bg-transparent px-1 text-base leading-7 outline-none placeholder:text-muted-foreground"
-          />
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-              {STARTERS.map((starter) => (
-                <button
-                  key={starter.label}
-                  type="button"
-                  onClick={() => prefill(starter.text)}
-                  className="inline-flex h-[30px] items-center gap-1.5 rounded-[9px] border bg-muted/50 px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <starter.icon className="size-3.5" />
-                  {starter.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="ml-auto flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">Settle AI</span>
+        <div className="flex items-end gap-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            {STARTERS.map((starter) => (
               <button
-                type="submit"
-                disabled={!input.trim()}
-                aria-label="Send"
-                className="flex size-[35px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:shadow-none disabled:hover:brightness-100"
+                key={starter.label}
+                type="button"
+                onClick={() => prefill(starter.text)}
+                className={buttonClass({ variant: "secondary", size: "sm" })}
               >
-                <ArrowUp className="size-4" strokeWidth={2.5} />
+                {starter.label}
               </button>
-            </div>
+            ))}
           </div>
-        </form>
 
-        <section className="animate-fade-up flex flex-col gap-1 px-2" style={fadeUp(0.25)}>
-          <p className="px-2 pb-2 text-xs text-muted-foreground">Ideas for you</p>
-          {CHAT_SUGGESTIONS.map((suggestion, i) => {
-            const Icon = IDEA_ICONS[i % IDEA_ICONS.length];
-            return (
+          <button
+            type="submit"
+            disabled={!input.trim()}
+            aria-label="Send"
+            className={buttonClass({ size: "sm", className: "w-11 px-0 sm:w-8" })}
+          >
+            <ArrowUp />
+          </button>
+        </div>
+      </form>
+
+      <section aria-labelledby="home-ideas" className="flex flex-col">
+        <h2 id="home-ideas" className="px-1 pb-1 text-meta text-muted-foreground">
+          Try asking
+        </h2>
+        <ul className="flex flex-col">
+          {CHAT_SUGGESTIONS.map((suggestion) => (
+            <li key={suggestion} className="border-b border-border/50 last:border-b-0">
               <button
-                key={suggestion}
                 type="button"
                 onClick={() => ask(suggestion)}
-                className="flex items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm transition-colors hover:bg-muted"
+                className={cn(
+                  "group flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-1 py-2.5 text-left text-sm",
+                  "transition-colors duration-150 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50",
+                )}
               >
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-card text-muted-foreground">
-                  <Icon className="size-4" />
-                </span>
                 {suggestion}
+                <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-colors duration-150 group-hover:text-primary" />
               </button>
-            );
-          })}
-        </section>
-      </div>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

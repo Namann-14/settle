@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@settle/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +13,7 @@ import {
   DialogTitle,
 } from "@settle/ui/components/dialog";
 
+import { buttonClass } from "@/components/dashboard/panel";
 import { CURRENCIES, Field, FormError, controlClass } from "@/components/forms/field";
 import { useCreateRecurring, useDeleteRecurring, useUpdateRecurring } from "@/hooks/mutations";
 import { useCategories } from "@/hooks/useCategories";
@@ -33,7 +33,7 @@ export function RecurringDialog({
 }) {
   return (
     <Dialog open={seed !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-5 p-7 sm:max-w-[460px]">
+      <DialogContent className="gap-5 p-6 sm:max-w-[460px]">
         {seed && (
           <RecurringForm
             key={seed.mode === "edit" ? seed.rule.id : "create"}
@@ -108,10 +108,10 @@ function RecurringForm({ seed, onDone }: { seed: RecurringSeed; onDone: () => vo
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
       <DialogHeader className="gap-1.5">
-        <DialogTitle className="font-display text-3xl font-normal">
+        <DialogTitle className="text-lg font-semibold tracking-tight">
           {editing ? "Edit recurring" : "New recurring expense"}
         </DialogTitle>
-        <DialogDescription className="text-[13px]">
+        <DialogDescription className="text-meta">
           Rent, subscriptions, bills. Each one is logged automatically when it falls due.
         </DialogDescription>
       </DialogHeader>
@@ -126,8 +126,8 @@ function RecurringForm({ seed, onDone }: { seed: RecurringSeed; onDone: () => vo
           className={controlClass}
         />
       </Field>
-      <div className="flex gap-3">
-        <Field label="Amount" className="flex-1">
+      <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3 sm:grid-cols-[minmax(0,1fr)_6rem_minmax(0,1fr)]">
+        <Field label="Amount">
           <input
             required
             inputMode="decimal"
@@ -137,14 +137,14 @@ function RecurringForm({ seed, onDone }: { seed: RecurringSeed; onDone: () => vo
             className={controlClass}
           />
         </Field>
-        <Field label="Currency" className="w-24">
+        <Field label="Currency">
           <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={controlClass}>
             {[...new Set([currency, ...CURRENCIES])].map((c) => (
               <option key={c}>{c}</option>
             ))}
           </select>
         </Field>
-        <Field label="Category" className="flex-1">
+        <Field label="Category" className="col-span-2 sm:col-span-1">
           <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={controlClass}>
             <option value="">Uncategorized</option>
             {categories?.map((c) => (
@@ -174,10 +174,9 @@ function RecurringForm({ seed, onDone }: { seed: RecurringSeed; onDone: () => vo
           />
         </Field>
       </div>
-      <div className="flex gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field
           label="Starts"
-          className="flex-1"
           hint={editing ? "Fixed once created" : "Past dates back-fill missed entries"}
         >
           <input
@@ -189,7 +188,7 @@ function RecurringForm({ seed, onDone }: { seed: RecurringSeed; onDone: () => vo
             className={controlClass}
           />
         </Field>
-        <Field label="Ends" className="flex-1" hint="Optional">
+        <Field label="Ends" hint="Optional">
           <input
             type="date"
             value={endDate}
@@ -201,19 +200,24 @@ function RecurringForm({ seed, onDone }: { seed: RecurringSeed; onDone: () => vo
       </div>
       <FormError error={error} />
 
-      <DialogFooter className="flex-row items-center gap-2">
+      <DialogFooter className="flex-row flex-wrap items-center gap-2">
         {editing && (
-          <Button type="button" variant="destructive" className="mr-auto h-11 px-4 text-sm" onClick={remove} disabled={busy}>
-            <Trash2 className="size-4" />
+          <button
+            type="button"
+            onClick={remove}
+            disabled={busy}
+            className={buttonClass({ variant: "danger", className: "mr-auto" })}
+          >
+            <Trash2 />
             Delete
-          </Button>
+          </button>
         )}
-        <Button type="button" variant="outline" className="ml-auto h-11 px-5 text-sm" onClick={onDone}>
+        <button type="button" onClick={onDone} className={buttonClass({ variant: "secondary", className: "ml-auto" })}>
           Cancel
-        </Button>
-        <Button type="submit" className="h-11 px-6 text-sm" disabled={busy || !description.trim()}>
+        </button>
+        <button type="submit" disabled={busy || !description.trim()} className={buttonClass()}>
           {busy ? "Saving…" : editing ? "Save changes" : "Create"}
-        </Button>
+        </button>
       </DialogFooter>
     </form>
   );

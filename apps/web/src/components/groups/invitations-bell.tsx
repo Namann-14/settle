@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@settle/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@settle/ui/components/popover";
 
+import { buttonClass } from "@/components/dashboard/panel";
 import { useRespondToInvitation } from "@/hooks/mutations";
 import { useMyInvitations } from "@/hooks/useInvitations";
 import { initials } from "@/lib/people";
@@ -46,7 +47,7 @@ export function InvitationsBell() {
       >
         <Bell />
         {count > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold text-primary-foreground">
             {count}
           </span>
         )}
@@ -54,16 +55,16 @@ export function InvitationsBell() {
       <PopoverContent align="end" className="w-80 p-0">
         <div className="border-b border-border/70 px-4 py-3 text-sm font-medium">Group invites</div>
         {count === 0 ? (
-          <p className="px-4 py-6 text-center text-xs text-muted-foreground">You&rsquo;re all caught up.</p>
+          <p className="px-4 py-5 text-meta text-muted-foreground">No pending invites. When someone adds you to a group, it shows up here.</p>
         ) : (
           <ul className="flex max-h-80 flex-col overflow-y-auto">
             {invitations!.map((inv) => (
               <li key={inv.id} className="flex items-start gap-3 border-b border-border/50 px-4 py-3 last:border-b-0">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-xs font-semibold text-primary">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent text-xs font-semibold text-primary">
                   {initials(inv.group_name)}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <p className="text-[13px] leading-snug">
+                  <p className="text-meta leading-snug">
                     <span className="font-medium">{inv.invited_by_name ?? "Someone"}</span> invited you to{" "}
                     <span className="font-medium">{inv.group_name ?? "a group"}</span>
                   </p>
@@ -72,18 +73,18 @@ export function InvitationsBell() {
                       type="button"
                       disabled={respond.isPending}
                       onClick={() => answer(inv.id, "accept", inv.group_id, inv.group_name)}
-                      className="inline-flex h-8 items-center gap-1 rounded-full bg-primary px-3 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                      className={buttonClass({ size: "sm" })}
                     >
-                      <Check className="size-3.5" />
+                      <Check />
                       Join
                     </button>
                     <button
                       type="button"
                       disabled={respond.isPending}
                       onClick={() => answer(inv.id, "decline", inv.group_id)}
-                      className="inline-flex h-8 items-center gap-1 rounded-full border border-border px-3 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+                      className={buttonClass({ variant: "ghost", size: "sm" })}
                     >
-                      <X className="size-3.5" />
+                      <X />
                       Decline
                     </button>
                   </div>

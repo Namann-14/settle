@@ -5,7 +5,6 @@ import { ArrowUpRight } from "lucide-react";
 
 import { Skeleton } from "@settle/ui/components/skeleton";
 
-import { Eyebrow } from "@/components/dashboard/panel";
 import { BudgetBar } from "@/components/spending/budget-bar";
 import { useSpendingSummary } from "@/hooks/useSpendingSummary";
 import { formatMoney } from "@/lib/balances";
@@ -17,24 +16,25 @@ import { num } from "@/lib/people";
 export function ThisMonthCard() {
   const { data: summary, isLoading } = useSpendingSummary();
 
-  if (isLoading || !summary) return <Skeleton className="h-[104px] rounded-2xl" />;
+  if (isLoading) return <Skeleton className="h-[68px] rounded-2xl" />;
+  // A failed summary just leaves the strip out; Spending has the full view.
+  if (!summary) return null;
 
   const c = summary.currency;
   const total = num(summary.total);
   const budget = summary.overall_budget ? num(summary.overall_budget) : null;
   const previous = num(summary.previous_total);
-  const change = previous > 0 ? ((total - previous) / previous) * 100 : null;
 
   return (
     <Link
       href="/dashboard/spending"
-      className="group flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:gap-8"
+      className="group flex flex-col gap-3 rounded-2xl border border-border bg-card px-5 py-4 transition-colors outline-none hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/50 sm:flex-row sm:items-center sm:gap-8 md:px-6"
     >
-      <div className="flex flex-col gap-1">
-        <Eyebrow>You spent in {monthLabel(summary.month, { short: true })}</Eyebrow>
-        <span className="text-3xl font-semibold tracking-tight tabular-nums">{formatMoney(total, c)}</span>
+      <div className="flex items-baseline gap-3 sm:flex-col sm:gap-0.5">
+        <span className="text-sm font-semibold">{monthLabel(summary.month)} spending</span>
+        <span className="text-lg font-semibold tracking-tight tabular-nums">{formatMoney(total, c)}</span>
       </div>
-      <div className="flex flex-1 flex-col gap-2 text-[13px] text-muted-foreground">
+      <div className="flex flex-1 flex-col gap-2 text-meta text-muted-foreground">
         {budget ? (
           <>
             <BudgetBar spent={total} budget={budget} pace={monthProgress(summary.month)} />
@@ -42,7 +42,7 @@ export function ThisMonthCard() {
               {total > budget
                 ? `${formatMoney(total - budget, c)} over your ${formatMoney(budget, c)} budget`
                 : `${formatMoney(budget - total, c)} left of ${formatMoney(budget, c)}`}
-              {change !== null && ` · ${change > 0 ? "+" : ""}${change.toFixed(0)}% vs last month`}
+              {previous > 0 && ` · ${formatMoney(previous, c)} last month`}
             </span>
           </>
         ) : (

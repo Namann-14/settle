@@ -2,8 +2,8 @@
 
 **Purpose:** Maps stored category icon and colour names to rendered icons and CSS colours.
 
-**Key contents:** Exports `CATEGORY_ICONS` (whitelisted lucide icons), `CATEGORY_COLORS` (chart-1..5), `categoryColor` and `CategoryIcon`.
+**Key contents:** Exports `CATEGORY_ICONS` (whitelisted lucide icons), `CATEGORY_COLORS` (chart-1..5), `categoryColor` and `CategoryIcon` (round 32px badge, icon in the category colour on a 16% wash of it).
 
-**Depends on / used by:** Used by categories, budgets, recurring and overview pages.
+**Depends on / used by:** Used by categories, budgets, recurring and overview pages, and `dashboard/this-month-card.tsx`.
 
-**Decisions & caveats:** Categories store a lucide icon name; unknown names fall back to a tag icon. Adding an icon requires adding it to this whitelist.
+**Decisions & caveats:** Categories store a lucide icon name; unknown names fall back to a tag icon. Adding an icon requires adding it to this whitelist. The badge is a circle to match the app's initials avatars; colours come only from the chart tokens.

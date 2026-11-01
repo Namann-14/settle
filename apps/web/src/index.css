@@ -4,6 +4,18 @@
   --font-display: var(--font-instrument-serif), 'Instrument Serif', serif;
   --font-body: var(--font-inter), 'Inter', sans-serif;
   --shadow-dashboard: 0 25px 80px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+
+  /* App type roles that sit between Tailwind's steps (DESIGN.md "Hierarchy").
+     Small sizes drop the body's negative tracking, which crowds Inter below 14px. */
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1rem;
+  --text-micro--letter-spacing: 0.01em;
+  --text-xs--letter-spacing: 0;
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.25rem;
+  --text-meta--letter-spacing: 0;
+  --text-figure: 1.75rem;
+  --text-figure--line-height: 1;
 }
 
 /* Hide the page scrollbar while keeping scroll */
@@ -78,11 +90,18 @@ body::-webkit-scrollbar {
   animation: shine 4.5s linear infinite;
 }
 
-/* Dashboard: lift cards a touch on hover */
-.lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-@media (hover: hover) {
-  .lift:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.12); }
+/* Dashboard motion: one quiet entrance per route, and a short fade when
+   loaded data replaces its skeleton. Nothing staggers, lifts or loops. */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
 }
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-page-in { animation: page-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-fade-in { animation: fade-in 200ms ease-out both; }
 
 /* Pause the marquee under the pointer */
 @media (hover: hover) {
@@ -128,7 +147,8 @@ body::-webkit-scrollbar {
   .animate-marquee,
   .animate-drift,
   .shiny-text { animation: none; }
-  .btn-shine:hover,
-  .lift:hover { transform: none; }
+  .animate-page-in,
+  .animate-fade-in { animation: none; }
+  .btn-shine:hover { transform: none; }
   .btn-shine:hover::after { transition: none; }
 }

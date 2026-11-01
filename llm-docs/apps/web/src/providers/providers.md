@@ -6,4 +6,4 @@
 
 **Depends on / used by:** `providers/theme-provider.tsx`; used by the root layout.
 
-**Decisions & caveats:** Theme is currently forced to light even though `enableSystem` is set, so dark mode is effectively off. Kept minimal on purpose; dashboard-only providers live in `DashboardProviders`.
+**Decisions & caveats:** Light is forced only outside `/dashboard` (`forcedTheme` keyed off the pathname): the landing art and video are made for light, while the signed-in app follows the user's choice from Settings > Appearance (default system). Enabled 2026-11-01. Kept minimal on purpose; dashboard-only providers live in `DashboardProviders`.

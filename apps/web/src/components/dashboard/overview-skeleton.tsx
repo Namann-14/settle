@@ -1,71 +1,6 @@
 import { Skeleton } from "@settle/ui/components/skeleton";
-import { cn } from "@settle/ui/lib/utils";
 
-import { Panel } from "@/components/dashboard/panel";
-
-// Placeholders shaped like the overview cards, shown while the route loads
-// and while each card's data is still coming back from the API.
-
-export function StatSkeleton({ highlight }: { highlight?: boolean }) {
-  const tone = highlight ? "bg-primary-foreground/20" : undefined;
-  return (
-    <div
-      className={cn(
-        "flex flex-col gap-3 rounded-2xl p-5",
-        highlight ? "bg-primary" : "border border-border/70 bg-card",
-      )}
-    >
-      <Skeleton className={cn("h-3 w-24 rounded-full", tone)} />
-      <Skeleton className={cn("h-10 w-32 rounded-lg", tone)} />
-      <Skeleton className={cn("h-3 w-36 rounded-full", tone)} />
-    </div>
-  );
-}
-
-function HeaderSkeleton({ action }: { action?: boolean }) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-4 w-32 rounded-full" />
-        <Skeleton className="h-3 w-48 rounded-full" />
-      </div>
-      {action && <Skeleton className="h-8 w-32 rounded-full" />}
-    </div>
-  );
-}
-
-export function ChartPanelSkeleton() {
-  return (
-    <Panel className="h-full">
-      <HeaderSkeleton action />
-      <div className="flex h-60 items-end gap-3 border-b border-border/50 pb-2">
-        {[45, 70, 30, 90, 55, 35, 80, 60, 40, 75].map((h, i) => (
-          <Skeleton key={i} className="flex-1 rounded-t-md" style={{ height: `${h}%` }} />
-        ))}
-      </div>
-      <Skeleton className="h-3 w-40 rounded-full" />
-    </Panel>
-  );
-}
-
-export function CategoryPanelSkeleton() {
-  return (
-    <Panel className="h-full">
-      <HeaderSkeleton />
-      <Skeleton className="h-3 w-full rounded-full" />
-      <div className="flex flex-col gap-3">
-        {[60, 48, 40, 52, 36].map((w, i) => (
-          <div key={i} className="flex items-center justify-between">
-            <Skeleton className="h-3.5 rounded-full" style={{ width: `${w}%` }} />
-            <Skeleton className="h-3.5 w-8 rounded-full" />
-          </div>
-        ))}
-      </div>
-    </Panel>
-  );
-}
-
-export function ListRowsSkeleton({ rows = 3, avatar }: { rows?: number; avatar?: boolean }) {
+function ListRowsSkeleton({ rows = 3, avatar }: { rows?: number; avatar?: boolean }) {
   return (
     <div className="flex flex-col">
       {Array.from({ length: rows }, (_, i) => (
@@ -82,69 +17,33 @@ export function ListRowsSkeleton({ rows = 3, avatar }: { rows?: number; avatar?:
   );
 }
 
-export function TableRowsSkeleton({ rows = 5 }: { rows?: number }) {
-  return (
-    <div className="flex flex-col">
-      <div className="flex gap-6 pb-3">
-        {["w-1/4", "w-1/6", "w-1/6", "ml-auto w-1/6"].map((w, i) => (
-          <Skeleton key={i} className={cn("h-3 rounded-full", w)} />
-        ))}
-      </div>
-      {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="flex items-center gap-6 border-t border-border/50 py-3.5">
-          <Skeleton className="h-3.5 w-1/4 rounded-full" />
-          <Skeleton className="h-5 w-20 rounded-full" />
-          <Skeleton className="h-3.5 w-14 rounded-full" />
-          <Skeleton className="ml-auto h-3.5 w-20 rounded-full" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
+// Route-level placeholder in the overview's shape: headline, the two-column
+// ledger, then the groups and activity lists and the month strip.
 export function OverviewSkeleton() {
   return (
     <div
       aria-busy
       aria-label="Loading overview"
-      className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-2 py-4 md:px-4 md:py-6"
+      className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-1 py-4 md:px-4 md:py-8"
     >
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div className="flex flex-col gap-3">
-          <Skeleton className="h-3 w-40 rounded-full" />
-          <Skeleton className="h-12 w-80 max-w-full rounded-xl" />
-          <Skeleton className="h-4 w-60 rounded-full" />
+          <Skeleton className="h-11 w-80 max-w-full rounded-xl" />
+          <Skeleton className="h-4 w-96 max-w-full rounded-full" />
         </div>
-        <Skeleton className="h-10 w-40 rounded-full" />
+        <Skeleton className="h-9 w-64 rounded-full" />
       </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatSkeleton highlight />
-        <StatSkeleton />
-        <StatSkeleton />
-        <StatSkeleton />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <ChartPanelSkeleton />
-        </div>
-        <CategoryPanelSkeleton />
-
-        <Panel>
-          <HeaderSkeleton />
+      <div className="grid h-64 overflow-hidden rounded-2xl border border-border bg-card md:grid-cols-2">
+        <div className="flex flex-col gap-4 px-6 py-5">
           <ListRowsSkeleton avatar />
-        </Panel>
-        <Panel className="lg:col-span-2">
-          <HeaderSkeleton />
-          <TableRowsSkeleton />
-        </Panel>
-
-        <Skeleton className="h-52 rounded-2xl lg:col-span-2" />
-        <Panel>
-          <HeaderSkeleton />
-          <ListRowsSkeleton />
-        </Panel>
+        </div>
+        <div className="hidden flex-col gap-4 border-l border-border px-6 py-5 md:flex">
+          <ListRowsSkeleton avatar />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-48 rounded-2xl" />
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@settle/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +14,7 @@ import {
   DialogTitle,
 } from "@settle/ui/components/dialog";
 
+import { buttonClass } from "@/components/dashboard/panel";
 import { CURRENCIES, Field, FormError, controlClass } from "@/components/forms/field";
 import { useCreateGroup } from "@/hooks/mutations";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -112,9 +112,9 @@ export function CreateGroupDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="gap-5 p-7 sm:max-w-[460px]">
+      <DialogContent className="gap-5 p-6 sm:max-w-[460px]">
         <DialogHeader className="gap-1.5">
-          <DialogTitle className="font-display text-3xl font-normal">New group</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">New group</DialogTitle>
           <DialogDescription className="text-sm">
             Add people by email. Anyone not on Settle yet gets a pending invite and joins when they
             sign up.
@@ -176,14 +176,14 @@ export function CreateGroupDialog({
               {emails.map((email) => (
                 <li
                   key={email}
-                  className="flex items-center gap-1 rounded-full bg-muted py-1 pr-1 pl-3 text-[13px]"
+                  className="flex items-center gap-1 rounded-full bg-muted py-1 pr-1 pl-3 text-meta"
                 >
                   {email}
                   <button
                     type="button"
                     aria-label={`Remove ${email}`}
                     onClick={() => setEmails((prev) => prev.filter((e) => e !== email))}
-                    className="flex size-6 items-center justify-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground"
+                    className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-background hover:text-foreground"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -195,17 +195,16 @@ export function CreateGroupDialog({
           <FormError error={error} />
 
           <DialogFooter className="mt-1 gap-2 border-0 bg-transparent p-0 sm:justify-end">
-            <Button
+            <button
               type="button"
-              variant="outline"
-              className="h-11 px-5 text-sm"
+              className={buttonClass({ variant: "secondary" })}
               onClick={() => onOpenChange(false)}
             >
               Cancel
-            </Button>
-            <Button type="submit" className="h-11 px-6 text-sm" disabled={busy || !name.trim()}>
+            </button>
+            <button type="submit" className={buttonClass()} disabled={busy || !name.trim()}>
               {busy ? "Creating…" : "Create group"}
-            </Button>
+            </button>
           </DialogFooter>
         </form>
       </DialogContent>

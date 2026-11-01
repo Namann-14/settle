@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { HandCoins, Plus, Receipt, Search, Sparkles, UserPlus, Users } from "lucide-react";
+import { HandCoins, MessageSquare, Plus, Receipt, Search, UserPlus, Users } from "lucide-react";
 
 import {
   Command,
@@ -118,7 +118,7 @@ export function SearchPalette() {
   const searchingExpenses = trimmed.length >= 2 && (debounced !== trimmed || expenses.isFetching);
 
   // Rows in display order; the highlight jumps to the top one whenever the
-  // results change, so Enter opens the best match rather than "Ask AI"
+  // results change, so Enter opens the best match rather than "Ask Settle AI"
   // (which was the only row before the expense search came back).
   const rowValues = [
     ...expenseHits.map((e) => `expense-${e.id}`),
@@ -153,11 +153,13 @@ export function SearchPalette() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-9 w-full items-center gap-2 rounded-full border border-border bg-card pl-3.5 pr-2 text-[13px] text-muted-foreground shadow-xs transition-colors hover:text-foreground"
+        className="flex h-10 w-full items-center gap-2 rounded-full border border-border bg-card pl-3.5 pr-2 text-meta text-muted-foreground transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 sm:h-9"
       >
         <Search className="size-4 shrink-0" />
-        <span className="flex-1 truncate text-left">Search expenses, groups, people</span>
-        <kbd className="hidden rounded-md border border-border bg-muted px-1.5 py-0.5 font-sans text-[11px] sm:inline">
+        <span className="flex-1 truncate text-left">
+          Search<span className="hidden sm:inline"> expenses, groups, people</span>
+        </span>
+        <kbd className="hidden rounded-md border border-border bg-muted px-1.5 py-0.5 font-sans text-micro sm:inline">
           Ctrl K
         </kbd>
       </button>
@@ -194,7 +196,7 @@ export function SearchPalette() {
                     <Receipt />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate">{e.description}</span>
-                      <span className="truncate text-[11px] text-muted-foreground">
+                      <span className="truncate text-micro text-muted-foreground">
                         {formatDay(e.date)} · {groupName(e.group_id) ?? "Personal"}
                         {e.merchant ? ` · ${e.merchant}` : ""}
                       </span>
@@ -209,11 +211,11 @@ export function SearchPalette() {
               <CommandGroup heading="Groups">
                 {groupHits.map((g) => (
                   <CommandItem key={g.id} value={`group-${g.id}`} onSelect={() => go(`/dashboard/groups/${g.id}`)}>
-                    <span className="flex size-5 items-center justify-center rounded-md bg-accent text-[9px] font-semibold text-primary">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-accent text-micro font-semibold text-accent-foreground">
                       {initials(g.name)}
                     </span>
                     <span className="flex-1 truncate">{g.name}</span>
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-micro text-muted-foreground">
                       {g.members.filter((m) => !m.removed_at).length} members
                     </span>
                   </CommandItem>
@@ -232,9 +234,9 @@ export function SearchPalette() {
                     <Users />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate">{p.name}</span>
-                      {p.email && <span className="truncate text-[11px] text-muted-foreground">{p.email}</span>}
+                      {p.email && <span className="truncate text-micro text-muted-foreground">{p.email}</span>}
                     </span>
-                    <span className="max-w-32 truncate text-[11px] text-muted-foreground">
+                    <span className="max-w-32 truncate text-micro text-muted-foreground">
                       {p.groups.map((g) => g.name).join(", ")}
                     </span>
                   </CommandItem>
@@ -270,8 +272,8 @@ export function SearchPalette() {
                   value="ask-ai"
                   onSelect={() => go(`/dashboard/chat?q=${encodeURIComponent(trimmed)}`)}
                 >
-                  <Sparkles />
-                  <span className="truncate">Ask AI: “{trimmed}”</span>
+                  <MessageSquare />
+                  <span className="truncate">Ask Settle AI: “{trimmed}”</span>
                   <CommandShortcut>↵</CommandShortcut>
                 </CommandItem>
               </CommandGroup>

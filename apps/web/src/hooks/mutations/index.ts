@@ -22,3 +22,4 @@ export * from "./useIncomeMutations";
 export * from "./useRecurringMutations";
 
 export * from "./useTelegramLink";
+export * from "./useUpdateCurrentUser";

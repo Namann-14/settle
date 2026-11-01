@@ -1,16 +1,20 @@
+import { PageContainer, PageHeader } from "@/components/dashboard/panel";
+import { AccountPanel } from "@/components/settings/account-panel";
+import { AppearancePanel } from "@/components/settings/appearance-panel";
 import { TelegramCard } from "@/components/settings/telegram-card";
-import { Eyebrow } from "@/components/dashboard/panel";
 
 export default function SettingsPage() {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-2 py-4 md:px-4 md:py-6">
-      <div className="flex flex-col gap-2">
-        <Eyebrow>Account</Eyebrow>
-        <h1 className="font-display text-4xl leading-none tracking-tight md:text-5xl">
-          <em className="italic">Settings</em>
-        </h1>
-      </div>
-      <TelegramCard />
-    </div>
+    <PageContainer narrow>
+      <PageHeader title="Settings" description="Your account, how Settle looks, and connected apps." />
+      <AccountPanel />
+      <AppearancePanel />
+      <section aria-labelledby="settings-connections" className="flex flex-col gap-3">
+        <h2 id="settings-connections" className="px-1 text-meta text-muted-foreground">
+          Connections
+        </h2>
+        <TelegramCard />
+      </section>
+    </PageContainer>
   );
 }

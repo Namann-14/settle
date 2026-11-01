@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@settle/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +13,7 @@ import {
   DialogTitle,
 } from "@settle/ui/components/dialog";
 
+import { buttonClass } from "@/components/dashboard/panel";
 import { CURRENCIES, Field, FormError, controlClass } from "@/components/forms/field";
 import { useCreateIncome, useDeleteIncome, useUpdateIncome } from "@/hooks/mutations";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -32,7 +32,7 @@ export function IncomeDialog({
 }) {
   return (
     <Dialog open={seed !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-5 p-7 sm:max-w-[440px]">
+      <DialogContent className="gap-5 p-6 sm:max-w-[440px]">
         {seed && (
           <IncomeForm
             key={seed.mode === "edit" ? seed.income.id : "create"}
@@ -90,10 +90,10 @@ function IncomeForm({ seed, onDone }: { seed: IncomeSeed; onDone: () => void }) 
   return (
     <form onSubmit={submit} className="flex flex-col gap-5">
       <DialogHeader className="gap-1.5">
-        <DialogTitle className="font-display text-3xl font-normal">
+        <DialogTitle className="text-lg font-semibold tracking-tight">
           {editing ? "Edit income" : "Add income"}
         </DialogTitle>
-        <DialogDescription className="text-[13px]">
+        <DialogDescription className="text-meta">
           Salary, freelance work, refunds. It counts toward what you saved this month.
         </DialogDescription>
       </DialogHeader>
@@ -108,8 +108,8 @@ function IncomeForm({ seed, onDone }: { seed: IncomeSeed; onDone: () => void }) 
           className={controlClass}
         />
       </Field>
-      <div className="flex gap-3">
-        <Field label="Amount" className="flex-1">
+      <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3 sm:grid-cols-[minmax(0,1fr)_6rem_10rem]">
+        <Field label="Amount">
           <input
             required
             inputMode="decimal"
@@ -119,32 +119,37 @@ function IncomeForm({ seed, onDone }: { seed: IncomeSeed; onDone: () => void }) 
             className={controlClass}
           />
         </Field>
-        <Field label="Currency" className="w-24">
+        <Field label="Currency">
           <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={controlClass}>
             {[...new Set([currency, ...CURRENCIES])].map((c) => (
               <option key={c}>{c}</option>
             ))}
           </select>
         </Field>
-        <Field label="Date" className="w-40">
+        <Field label="Date" className="col-span-2 sm:col-span-1">
           <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={controlClass} />
         </Field>
       </div>
       <FormError error={error} />
 
-      <DialogFooter className="flex-row items-center gap-2">
+      <DialogFooter className="flex-row flex-wrap items-center gap-2">
         {editing && (
-          <Button type="button" variant="destructive" className="mr-auto h-11 px-4 text-sm" onClick={remove} disabled={busy}>
-            <Trash2 className="size-4" />
+          <button
+            type="button"
+            onClick={remove}
+            disabled={busy}
+            className={buttonClass({ variant: "danger", className: "mr-auto" })}
+          >
+            <Trash2 />
             Delete
-          </Button>
+          </button>
         )}
-        <Button type="button" variant="outline" className="ml-auto h-11 px-5 text-sm" onClick={onDone}>
+        <button type="button" onClick={onDone} className={buttonClass({ variant: "secondary", className: "ml-auto" })}>
           Cancel
-        </Button>
-        <Button type="submit" className="h-11 px-6 text-sm" disabled={busy || !source.trim()}>
+        </button>
+        <button type="submit" disabled={busy || !source.trim()} className={buttonClass()}>
           {busy ? "Saving…" : editing ? "Save changes" : "Add income"}
-        </Button>
+        </button>
       </DialogFooter>
     </form>
   );

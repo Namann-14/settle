@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
-import { SquarePen, Sparkles } from "lucide-react";
+import { SquarePen } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -27,7 +27,6 @@ import {
 import {
   PromptInput,
   PromptInputBody,
-  PromptInputButton,
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
@@ -39,13 +38,14 @@ import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { AssistantMessage } from "@/components/chat/assistant-message";
 import { CHAT_SUGGESTIONS } from "@/components/chat/suggestions";
 import { useChatShortcuts } from "@/components/chat/use-chat-shortcuts";
-import { CHAT_THREADS_KEY } from "@/hooks/useChatThreads";
+import { buttonClass } from "@/components/dashboard/panel";
+import { CHAT_THREADS_KEY, useChatThreads } from "@/hooks/useChatThreads";
 import type { ChatMessage } from "@/lib/chat-types";
 import { cn } from "@settle/ui/lib/utils";
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded border bg-muted px-1 font-sans text-[0.7rem]">{children}</kbd>
+    <kbd className="rounded-md border border-border bg-muted px-1 font-sans text-micro">{children}</kbd>
   );
 }
 
@@ -83,7 +83,9 @@ export function ChatPanel({
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { messages, setMessages, sendMessage, status, stop, error } = useChat<ChatMessage>({
+  const { data: threads } = useChatThreads();
+  const title = threads?.find((t) => t.id === chatId)?.title ?? "New chat";
+  const { messages, setMessages, sendMessage, regenerate, status, stop, error } = useChat<ChatMessage>({
     id: chatId,
     messages: initialMessages,
     transport: new DefaultChatTransport({ api: "/api/chat" }),
@@ -91,7 +93,7 @@ export function ChatPanel({
     onFinish: () => queryClient.invalidateQueries({ queryKey: CHAT_THREADS_KEY }),
   });
 
-  // Prompts handed over by ?q= (home composer, Ask AI card, search palette).
+  // Prompts handed over by ?q= (home composer, search palette).
   // Sent a tick later and cancelled on cleanup: under StrictMode the first
   // mount is torn down straight away, and useChat's cleanup calls
   // chat.stop(), which aborted a send made synchronously here before its
@@ -169,22 +171,39 @@ export function ChatPanel({
       : [];
 
   return (
-    <div className={cn("flex min-h-0 flex-col gap-4", className)}>
+    <div className={cn("flex min-h-0 flex-col", className)}>
+      <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 border-b border-border pb-3">
+        <div className="flex min-w-0 flex-col">
+          <h1 className="truncate text-sm font-semibold">{title}</h1>
+          <p className="text-xs text-muted-foreground">Settle AI</p>
+        </div>
+        <button
+          type="button"
+          onClick={newChat}
+          disabled={messages.length === 0}
+          title={`New chat (${modKey}+Shift+O)`}
+          className={buttonClass({ variant: "secondary", size: "sm" })}
+        >
+          <SquarePen />
+          New chat
+        </button>
+      </header>
+
       <Conversation className="min-h-0 flex-1">
-        <ConversationContent className="mx-auto w-full max-w-3xl">
+        <ConversationContent className="mx-auto w-full max-w-3xl gap-6 px-1 py-6">
           {messages.length === 0 ? (
             <ConversationEmptyState
-              icon={<Sparkles className="size-10 text-primary" />}
               title="Ask Settle AI"
-              description="Questions about your balances, groups, expenses and settlements."
+              description="Questions about your balances, groups, expenses and settlements. Pick one below or type your own."
+              className="[&_h3]:text-sm [&_h3]:font-semibold [&_p]:max-w-sm [&_p]:text-meta"
             />
           ) : (
             messages.map((message, index) => {
               const isLast = index === messages.length - 1;
               return (
-                <div key={message.id} className="flex flex-col gap-4">
-                  <Message from={message.role}>
-                    <MessageContent>
+                <div key={message.id} className="flex flex-col gap-3">
+                  <Message from={message.role} className="max-w-full sm:max-w-[85%]">
+                    <MessageContent className="text-sm leading-6 group-[.is-user]:rounded-2xl group-[.is-user]:bg-muted group-[.is-user]:px-4 group-[.is-user]:py-2.5">
                       {message.role === "assistant" ? (
                         <AssistantMessage
                           message={message}
@@ -200,8 +219,8 @@ export function ChatPanel({
                     </MessageContent>
                   </Message>
                   {message.role === "assistant" && message.metadata?.checkpointId && !isLast && (
-                    <Checkpoint>
-                      <CheckpointIcon />
+                    <Checkpoint className="text-xs">
+                      <CheckpointIcon className="size-3.5" />
                       <CheckpointTrigger
                         tooltip="Remove everything after this reply and continue from here"
                         onClick={() => restoreTo(index)}
@@ -217,23 +236,42 @@ export function ChatPanel({
           )}
           {status === "submitted" && <Shimmer className="text-sm">Thinking…</Shimmer>}
           {error && (
-            <p className="text-sm text-destructive">
-              Something went wrong. Please try again.
-            </p>
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border px-4 py-3 text-sm"
+            >
+              <span className="text-destructive">That didn&apos;t go through. Please try again.</span>
+              <button
+                type="button"
+                onClick={() => regenerate()}
+                disabled={busy}
+                className={buttonClass({ variant: "secondary", size: "sm" })}
+              >
+                Try again
+              </button>
+            </div>
           )}
         </ConversationContent>
-        <ConversationScrollButton />
+        <ConversationScrollButton className="border-border bg-card shadow-none hover:bg-muted" />
       </Conversation>
 
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 pt-2">
         {(messages.length === 0 || followUps.length > 0) && (
-          <Suggestions>
+          <Suggestions className="px-0.5">
             {(messages.length === 0 ? CHAT_SUGGESTIONS : followUps).map((suggestion) => (
-              <Suggestion key={suggestion} suggestion={suggestion} onClick={send} />
+              <Suggestion
+                key={suggestion}
+                suggestion={suggestion}
+                onClick={send}
+                className="h-11 border-border bg-card px-3.5 text-xs font-normal text-foreground shadow-none transition-colors duration-150 hover:bg-muted sm:h-8"
+              />
             ))}
           </Suggestions>
         )}
-        <PromptInput onSubmit={handleSubmit}>
+        <PromptInput
+          onSubmit={handleSubmit}
+          className="[&_[data-slot=input-group]]:rounded-2xl [&_[data-slot=input-group]]:border-border [&_[data-slot=input-group]]:bg-card [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:transition-colors [&_[data-slot=input-group]]:duration-150"
+        >
           <PromptInputBody>
             <PromptInputTextarea
               ref={textareaRef}
@@ -241,23 +279,17 @@ export function ChatPanel({
               onChange={(e) => setInput(e.currentTarget.value)}
               onKeyDown={handleTextareaKeyDown}
               placeholder="Ask about your balances, spending, groups…"
+              className="min-h-14 text-sm leading-6"
               autoFocus
             />
           </PromptInputBody>
           <PromptInputFooter>
-            <PromptInputTools>
-              <PromptInputButton
-                onClick={newChat}
-                disabled={messages.length === 0}
-                tooltip={{ content: "New chat", shortcut: `${modKey}+Shift+O` }}
-              >
-                <SquarePen className="size-4" />
-              </PromptInputButton>
-            </PromptInputTools>
+            <PromptInputTools />
             <PromptInputSubmit
               status={status}
               onStop={stop}
               disabled={!busy && !input.trim()}
+              className="rounded-full shadow-none"
             />
           </PromptInputFooter>
         </PromptInput>

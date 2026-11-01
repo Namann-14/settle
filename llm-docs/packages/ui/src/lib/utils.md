@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Imported by essentially all of packages/ui/src/components. Depends on clsx and tailwind-merge.
 
-**Decisions & caveats:** Nothing notable.
+**Decisions & caveats:** Nothing notable. `cn` uses `extendTailwindMerge` to register the app's custom font-size names (`micro`, `meta`, `figure`); without it tailwind-merge treated `text-meta` as a colour and silently dropped it next to `text-muted-foreground`. Add any new `--text-*` role here too.

@@ -1,9 +1,11 @@
 import { cn } from "@settle/ui/lib/utils";
 
 // Form controls for the groups/expenses/settlements dialogs. Plain native
-// elements, sized up from the compact shadcn defaults to match the design.
+// elements styled like DESIGN.md's inputs (8px corners, hairline stroke,
+// Banknote Green focus ring), one size up from the shadcn default so text is
+// 14px and phones get a 40px tap target.
 export const controlClass =
-  "h-10 w-full rounded-xl border border-border bg-card px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 disabled:opacity-50 aria-invalid:border-destructive";
+  "h-10 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 sm:h-9 dark:bg-input/30";
 
 export function Field({
   label,
@@ -17,7 +19,7 @@ export function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className={cn("flex min-w-0 flex-col gap-1.5 text-[13px] font-medium", className)}>
+    <label className={cn("flex min-w-0 flex-col gap-1.5 text-meta font-medium", className)}>
       {label}
       {children}
       {hint && <span className="text-xs font-normal text-muted-foreground">{hint}</span>}
@@ -28,7 +30,7 @@ export function Field({
 export function FormError({ error }: { error: unknown }) {
   if (!error) return null;
   return (
-    <p role="alert" className="rounded-xl bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
+    <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-meta text-destructive">
       {error instanceof Error ? error.message : String(error)}
     </p>
   );

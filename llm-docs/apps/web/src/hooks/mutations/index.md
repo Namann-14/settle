@@ -2,7 +2,7 @@
 
 **Purpose:** Barrel file for mutation hooks.
 
-**Key contents:** Re-exports every mutation hook module (expense, group, settlement, category, members, draft, budget, income, recurring, Telegram).
+**Key contents:** Re-exports every mutation hook module (expense, group, settlement, category, members, draft, budget, income, recurring, Telegram, current-user profile).
 
 **Depends on / used by:** Imported by components as `@/hooks/mutations`.
 
