@@ -17,9 +17,11 @@ import { num } from "@/lib/people";
 import type { SpendingSummary } from "@/types";
 
 const dailyConfig: ChartConfig = { amount: { label: "Spent", color: "var(--chart-1)" } };
-const trendConfig: ChartConfig = { amount: { label: "Spent", color: "var(--chart-2)" } };
+const trendConfig: ChartConfig = { amount: { label: "Spent", color: "var(--chart-1)" } };
 
 // recharts is heavy, so this file is only reached through next/dynamic.
+// Quiet charts: one token colour, faint horizontal grid, no y axis, no
+// gradient, no grow-in animation (bars render at their value).
 export function DailySpendChart({ summary }: { summary: SpendingSummary }) {
   const data = useMemo(() => {
     const byDay = new Map(summary.daily.map((d) => [d.date.slice(0, 10), num(d.amount)]));
@@ -35,7 +37,7 @@ export function DailySpendChart({ summary }: { summary: SpendingSummary }) {
   const busiest = data.reduce((best, d) => (d.amount > best.amount ? d : best), data[0]);
 
   return (
-    <Panel className="h-full">
+    <Panel className="h-full animate-fade-in">
       <PanelHeader
         title="Daily spend"
         description={
@@ -48,15 +50,16 @@ export function DailySpendChart({ summary }: { summary: SpendingSummary }) {
               </span>
             </>
           ) : (
-            "Nothing spent this month yet."
+            "Nothing spent this month yet. Bars appear as you add expenses."
           )
         }
       />
       <ChartContainer config={dailyConfig} className="aspect-auto h-56 w-full">
         <BarChart data={data}>
-          <CartesianGrid vertical={false} />
+          <CartesianGrid vertical={false} strokeOpacity={0.5} />
           <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval="preserveStartEnd" />
           <ChartTooltip
+            cursor={{ fill: "var(--muted)", opacity: 0.6 }}
             content={
               <ChartTooltipContent
                 labelFormatter={(_, payload) => {
@@ -68,7 +71,7 @@ export function DailySpendChart({ summary }: { summary: SpendingSummary }) {
               />
             }
           />
-          <Bar dataKey="amount" fill="var(--color-amount)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="amount" fill="var(--color-amount)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
         </BarChart>
       </ChartContainer>
     </Panel>
@@ -85,7 +88,7 @@ export function TrendChart({ summary }: { summary: SpendingSummary }) {
   const average = months.length ? months.reduce((s, d) => s + d.amount, 0) / months.length : 0;
 
   return (
-    <Panel className="h-full">
+    <Panel className="h-full animate-fade-in">
       <PanelHeader
         title="Last 6 months"
         description={
@@ -95,16 +98,16 @@ export function TrendChart({ summary }: { summary: SpendingSummary }) {
               <span className="font-medium text-foreground">{formatMoney(average, summary.currency)}</span> a month
             </>
           ) : (
-            "No history yet."
+            "History builds up month by month as you add expenses."
           )
         }
       />
       <ChartContainer config={trendConfig} className="aspect-auto h-56 w-full">
         <BarChart data={data}>
-          <CartesianGrid vertical={false} />
+          <CartesianGrid vertical={false} strokeOpacity={0.5} />
           <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Bar dataKey="amount" fill="var(--color-amount)" radius={[4, 4, 0, 0]} />
+          <ChartTooltip cursor={{ fill: "var(--muted)", opacity: 0.6 }} content={<ChartTooltipContent />} />
+          <Bar dataKey="amount" fill="var(--color-amount)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
         </BarChart>
       </ChartContainer>
     </Panel>

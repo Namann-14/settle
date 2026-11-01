@@ -1,9 +1,9 @@
 # apps/web/src/components/spending/spending-nav.tsx
 
-**Purpose:** Tab navigation for the Spending section.
+**Purpose:** Sub-page navigation for the Spending section.
 
-**Key contents:** Client component rendering links for Overview, Budgets, Recurring and Categories, highlighting the active one via `usePathname`.
+**Key contents:** Client component that renders the shared `SegmentedNav` pill track with Overview, Budgets, Recurring and Categories, marking the active one from `usePathname`.
 
-**Depends on / used by:** Uses `next/link`; used by the spending layout/pages.
+**Depends on / used by:** Uses `SegmentedNav` from `components/dashboard/panel`; rendered by `app/dashboard/spending/layout.tsx`.
 
-**Decisions & caveats:** Nothing notable.
+**Decisions & caveats:** Overview stays active for `?month=` URLs because `usePathname` ignores the query.

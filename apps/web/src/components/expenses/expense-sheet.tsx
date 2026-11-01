@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@settle/ui/components/button";
 import {
   Sheet,
   SheetContent,
@@ -15,6 +14,7 @@ import {
 } from "@settle/ui/components/sheet";
 import { cn } from "@settle/ui/lib/utils";
 
+import { buttonClass } from "@/components/dashboard/panel";
 import { CURRENCIES, Field, FormError, controlClass } from "@/components/forms/field";
 import { useCreateExpense, useCreateRecurring, useDeleteExpense, useUpdateExpense } from "@/hooks/mutations";
 import { useCategories } from "@/hooks/useCategories";
@@ -317,20 +317,19 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
     <form onSubmit={submit} className="flex min-h-full flex-col">
       <SheetHeader className="gap-1.5 p-6 pb-2">
         {draft && (
-          <span className="flex items-center gap-1.5 text-xs tracking-[0.08em] text-primary uppercase">
-            <Sparkles className="size-3.5" />
-            AI draft · {Math.round(draft.confidence * 100)}% confident
+          <span className="text-xs font-medium text-primary">
+            Drafted by Settle AI · {Math.round(draft.confidence * 100)}% confident
           </span>
         )}
-        <SheetTitle className="font-display text-3xl font-normal">
+        <SheetTitle className="text-lg font-semibold tracking-tight">
           {editing ? "Edit expense" : draft ? "Review expense" : "Add expense"}
         </SheetTitle>
         {draft?.raw_text || draft?.transcript ? (
-          <SheetDescription className="text-[13px]">
+          <SheetDescription className="text-meta">
             “{draft.transcript ?? draft.raw_text}”
           </SheetDescription>
         ) : (
-          <SheetDescription className="text-[13px]">
+          <SheetDescription className="text-meta">
             {!groupId
               ? "Track a personal expense."
               : editing
@@ -342,7 +341,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
 
       <fieldset disabled={!canEdit} className="flex flex-1 flex-col gap-4 px-6 py-4">
         {draft && draft.warnings.length > 0 && (
-          <ul className="flex flex-col gap-1 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
+          <ul className="flex flex-col gap-1 rounded-lg border border-border bg-muted px-3 py-2 text-meta text-foreground">
             {draft.warnings.map((w) => (
               <li key={w}>{w}</li>
             ))}
@@ -359,18 +358,18 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
             className={controlClass}
           />
         </Field>
-        <div className="flex gap-3">
-          <Field label="Amount" className="flex-1">
+        <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3 sm:grid-cols-[minmax(0,1fr)_6rem_10rem]">
+          <Field label="Amount">
             <input
               required
               inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
               placeholder="0.00"
-              className={controlClass}
+              className={cn(controlClass, "tabular-nums")}
             />
           </Field>
-          <Field label="Currency" className="w-24">
+          <Field label="Currency">
             <select
               value={currency}
               onChange={(e) => setCurrencyOverride(e.target.value)}
@@ -381,7 +380,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
               ))}
             </select>
           </Field>
-          <Field label="Date" className="w-40">
+          <Field label="Date" className="col-span-2 sm:col-span-1">
             <input
               type="date"
               required
@@ -391,8 +390,8 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
             />
           </Field>
         </div>
-        <div className="flex gap-3">
-          <Field label="Group" className="flex-1">
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
+          <Field label="Group">
             <select value={groupId} onChange={(e) => changeGroup(e.target.value)} className={controlClass}>
               <option value="">No group (just me)</option>
               {groups?.map((g) => (
@@ -404,7 +403,6 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
           </Field>
           <Field
             label="Category"
-            className="flex-1"
             hint={
               draft?.category && !draft.category.category_id
                 ? `AI suggested “${draft.category.category_name}”`
@@ -443,8 +441,8 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
         )}
 
         {groupId && (
-          <div className="flex gap-3">
-            <Field label="Paid by" className="flex-1">
+          <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
+            <Field label="Paid by">
               <select value={paidById} onChange={(e) => setPaidById(e.target.value)} className={controlClass}>
                 {members.map((m) => (
                   <option key={m.user_id} value={m.user_id}>
@@ -453,7 +451,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
                 ))}
               </select>
             </Field>
-            <Field label="Split" className="flex-1">
+            <Field label="Split">
               <select
                 value={splitType}
                 onChange={(e) => changeSplitType(e.target.value as SplitType)}
@@ -471,13 +469,13 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
 
         {unresolved.length > 0 && (
           <div className="flex flex-col gap-2">
-            <span className="text-[13px] font-medium">Who did you mean?</span>
+            <span className="text-meta font-medium">Who did you mean?</span>
             {unresolved.map((u, i) => (
               <div
                 key={u.rawName}
-                className="flex items-center gap-3 rounded-xl border border-amber-300/70 bg-amber-50 px-3 py-2 text-sm"
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-muted px-3 py-2 text-sm"
               >
-                <span className="flex-1 truncate">
+                <span className="min-w-0 flex-1 truncate">
                   “{u.rawName}”
                   {u.candidates.length > 0 && (
                     <span className="text-xs text-muted-foreground"> · maybe {u.candidates.join(" or ")}</span>
@@ -492,7 +490,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
                         prev.map((x, j) => (j === i ? { ...x, userId: e.target.value } : x)),
                       )
                     }
-                    className="h-8 rounded-lg border border-border bg-card px-2 text-[13px]"
+                    className={cn(controlClass, "w-auto bg-card")}
                   >
                     <option value="">Pick member</option>
                     {members.map((m) => (
@@ -507,7 +505,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
                 <button
                   type="button"
                   onClick={() => setUnresolved((prev) => prev.filter((_, j) => j !== i))}
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className={buttonClass({ variant: "ghost", size: "sm" })}
                 >
                   Remove
                 </button>
@@ -518,7 +516,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
 
         {groupId && (
           <div className="flex flex-col gap-2">
-            <span className="text-[13px] font-medium">
+            <span className="text-meta font-medium">
               {splitType === "EQUAL" ? "Split equally between" : "Split between"}
             </span>
             <ul className="flex flex-col gap-1.5">
@@ -529,11 +527,11 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
                   <li
                     key={m.user_id}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
+                      "flex min-h-11 items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-colors duration-150",
                       on ? "bg-muted" : "bg-transparent text-muted-foreground",
                     )}
                   >
-                    <label className="flex flex-1 items-center gap-2.5">
+                    <label className="flex min-w-0 flex-1 items-center gap-2.5">
                       <input
                         type="checkbox"
                         checked={on}
@@ -553,7 +551,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
                       </span>
                     </label>
                     {on && splitType === "EQUAL" && (
-                      <span className="tabular-nums">{shares[idx]?.toFixed(2)}</span>
+                      <span className="text-foreground tabular-nums">{shares[idx]?.toFixed(2)}</span>
                     )}
                     {on && splitType !== "EQUAL" && (
                       <span className="flex items-center gap-1">
@@ -564,7 +562,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
                           onChange={(e) =>
                             setValues((v) => ({ ...v, [m.user_id]: e.target.value.replace(/[^\d.]/g, "") }))
                           }
-                          className="h-8 w-24 rounded-lg border border-border bg-card px-2 text-right text-[13px] tabular-nums"
+                          className={cn(controlClass, "w-24 bg-card text-right tabular-nums")}
                         />
                         {splitType === "PERCENTAGE" && <span className="text-xs text-muted-foreground">%</span>}
                       </span>
@@ -576,7 +574,7 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
             {splitType !== "EQUAL" && (
               <span
                 className={cn(
-                  "text-right text-xs",
+                  "text-right text-xs tabular-nums",
                   (splitType === "PERCENTAGE" ? centsOff(typedSum, 100) > 1 : centsOff(typedSum, total) > 0)
                     ? "text-destructive"
                     : "text-muted-foreground",
@@ -591,31 +589,38 @@ function ExpenseForm({ seed, onDone }: { seed: ExpenseSheetSeed; onDone: () => v
         )}
 
         {!canEdit && (
-          <p className="text-[13px] text-muted-foreground">Only the person who added this expense can edit it.</p>
+          <p className="text-meta text-muted-foreground">Only the person who added this expense can edit it.</p>
         )}
         <FormError error={error} />
       </fieldset>
 
-      <SheetFooter className="flex-row items-center gap-2 border-t border-border/60 p-6">
+      <SheetFooter className="flex-row items-center gap-2 border-t border-border p-6">
         {editing && canEdit && (
-          <Button
+          <button
             type="button"
-            variant="destructive"
-            className="mr-auto h-11 px-4 text-sm"
+            className={buttonClass({ variant: "danger", className: "mr-auto h-11 sm:h-9" })}
             onClick={remove}
             disabled={busy}
           >
-            <Trash2 className="size-4" />
+            <Trash2 />
             Delete
-          </Button>
+          </button>
         )}
-        <Button type="button" variant="outline" className="ml-auto h-11 px-5 text-sm" onClick={onDone}>
+        <button
+          type="button"
+          className={buttonClass({ variant: "secondary", className: "ml-auto h-11 sm:h-9" })}
+          onClick={onDone}
+        >
           {draft ? "Discard" : "Cancel"}
-        </Button>
+        </button>
         {canEdit && (
-          <Button type="submit" className="h-11 px-6 text-sm" disabled={busy || !description.trim()}>
+          <button
+            type="submit"
+            className={buttonClass({ className: "h-11 sm:h-9" })}
+            disabled={busy || !description.trim()}
+          >
             {busy ? "Saving…" : editing ? "Save changes" : "Save expense"}
-          </Button>
+          </button>
         )}
       </SheetFooter>
     </form>

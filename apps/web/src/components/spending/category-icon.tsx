@@ -74,8 +74,8 @@ export function CategoryIcon({
   const fill = categoryColor(color, index);
   return (
     <span
-      className={cn("flex size-8 shrink-0 items-center justify-center rounded-xl", className)}
-      style={{ backgroundColor: `color-mix(in oklab, ${fill} 18%, transparent)`, color: fill }}
+      className={cn("flex size-8 shrink-0 items-center justify-center rounded-full", className)}
+      style={{ backgroundColor: `color-mix(in oklab, ${fill} 16%, transparent)`, color: fill }}
       aria-hidden
     >
       <Icon className="size-4" />

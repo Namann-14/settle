@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mic, Sparkles, Square } from "lucide-react";
+import { Mic, Square } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@settle/ui/lib/utils";
 
+import { buttonClass } from "@/components/dashboard/panel";
 import { useDraftExpenseFromText, useDraftExpenseFromVoice } from "@/hooks/mutations";
 import { useGroups } from "@/hooks/useGroups";
 import type { ExpenseDraft } from "@/types";
@@ -100,34 +101,33 @@ export function AiQuickAdd({
   return (
     <form
       onSubmit={submit}
+      aria-label="Settle AI quick add"
       className={cn(
-        "flex flex-col gap-2 rounded-[20px] border border-border/70 bg-card p-2 shadow-dashboard sm:flex-row sm:items-center sm:pl-5",
+        "flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 transition-colors duration-150 focus-within:border-ring sm:flex-row sm:items-center sm:pl-4",
         className,
       )}
     >
-      <div className="flex flex-1 items-center gap-3 px-3 sm:px-0">
-        <Sparkles className="size-5 shrink-0 text-primary" />
-        <label className="flex flex-1">
-          <span className="sr-only">Describe an expense</span>
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            disabled={busy || recording}
-            maxLength={2000}
-            placeholder={
-              recording ? "Listening… tap stop when you’re done" : "Dinner 2400 at Toit with Riya and Aman, I paid"
-            }
-            className="h-11 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground"
-          />
-        </label>
-      </div>
+      <label className="flex min-w-0 flex-1 items-center gap-3 px-2 sm:px-0">
+        <span className="shrink-0 text-meta font-medium text-primary">Settle AI</span>
+        <span className="sr-only">Describe an expense</span>
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          disabled={busy || recording}
+          maxLength={2000}
+          placeholder={
+            recording ? "Listening… tap stop when you’re done" : "Dinner 2400 at Toit with Riya and Aman, I paid"
+          }
+          className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground sm:h-9"
+        />
+      </label>
       <div className="flex items-center gap-2">
         {!fixedGroupId && groups && groups.length > 0 && (
           <select
             aria-label="Group for this expense"
             value={groupId ?? ""}
             onChange={(e) => setPickedGroup(e.target.value)}
-            className="h-11 max-w-40 rounded-full border border-border bg-card px-3 text-[13px]"
+            className="h-11 min-w-0 max-w-40 flex-1 truncate rounded-full border border-border bg-card px-3 text-xs text-foreground outline-none transition-colors duration-150 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 sm:h-8 sm:flex-none"
           >
             {groups.map((g) => (
               <option key={g.id} value={g.id}>
@@ -142,21 +142,20 @@ export function AiQuickAdd({
           onClick={toggleRecording}
           disabled={busy}
           aria-label={recording ? "Stop recording" : "Record voice"}
-          className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-full border transition-colors disabled:opacity-50",
-            recording
-              ? "animate-pulse border-destructive bg-destructive/10 text-destructive"
-              : "border-border bg-card text-primary hover:bg-muted",
-          )}
+          aria-pressed={recording}
+          className={buttonClass({
+            variant: recording ? "danger" : "secondary",
+            size: "sm",
+            className: "w-11 px-0 sm:w-8",
+          })}
         >
-          {recording ? <Square className="size-4 fill-current" /> : <Mic className="size-[18px]" />}
+          {recording ? <Square className="fill-current" /> : <Mic />}
         </button>
         <button
           type="submit"
           disabled={busy || recording || !text.trim()}
-          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 sm:flex-none"
+          className={buttonClass({ size: "sm", className: "flex-1 sm:flex-none" })}
         >
-          {busy && <Loader2 className="size-4 animate-spin" />}
           {busy ? "Drafting…" : "Draft with AI"}
         </button>
       </div>

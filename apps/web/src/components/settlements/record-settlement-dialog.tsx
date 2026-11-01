@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@settle/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,7 @@ import {
   DialogTitle,
 } from "@settle/ui/components/dialog";
 
+import { buttonClass } from "@/components/dashboard/panel";
 import { Field, FormError, controlClass } from "@/components/forms/field";
 import { useCreateSettlement } from "@/hooks/mutations";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -36,7 +36,7 @@ export function RecordSettlementDialog({
 }) {
   return (
     <Dialog open={preset !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-5 p-7 sm:max-w-[440px]">
+      <DialogContent className="gap-5 p-6 sm:max-w-md">
         {preset && (
           <SettlementForm
             key={JSON.stringify(preset)}
@@ -98,8 +98,8 @@ function SettlementForm({ preset, onDone }: { preset: SettlementPreset; onDone: 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
       <DialogHeader className="gap-1.5">
-        <DialogTitle className="font-display text-3xl font-normal">Record a payment</DialogTitle>
-        <DialogDescription className="text-sm">
+        <DialogTitle className="text-lg font-semibold tracking-tight">Record a payment</DialogTitle>
+        <DialogDescription className="text-meta">
           Log money that changed hands outside Settle, like cash or UPI.
         </DialogDescription>
       </DialogHeader>
@@ -120,8 +120,8 @@ function SettlementForm({ preset, onDone }: { preset: SettlementPreset; onDone: 
           ))}
         </select>
       </Field>
-      <div className="flex gap-3">
-        <Field label="Who paid" className="flex-1">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
+        <Field label="Who paid">
           <select value={paidById} onChange={(e) => setPaidById(e.target.value)} className={controlClass}>
             <option value="" disabled>
               Pick member
@@ -133,7 +133,7 @@ function SettlementForm({ preset, onDone }: { preset: SettlementPreset; onDone: 
             ))}
           </select>
         </Field>
-        <Field label="Paid to" className="flex-1">
+        <Field label="Paid to">
           <select value={receivedById} onChange={(e) => setReceivedById(e.target.value)} className={controlClass}>
             <option value="" disabled>
               Pick member
@@ -148,18 +148,18 @@ function SettlementForm({ preset, onDone }: { preset: SettlementPreset; onDone: 
           </select>
         </Field>
       </div>
-      <div className="flex gap-3">
-        <Field label={`Amount (${group?.default_currency ?? "INR"})`} className="flex-1">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-3">
+        <Field label={`Amount (${group?.default_currency ?? "INR"})`}>
           <input
             required
             inputMode="decimal"
             value={amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
             placeholder="0.00"
-            className={controlClass}
+            className={`${controlClass} tabular-nums`}
           />
         </Field>
-        <Field label="Date" className="w-40">
+        <Field label="Date">
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={controlClass} />
         </Field>
       </div>
@@ -170,12 +170,16 @@ function SettlementForm({ preset, onDone }: { preset: SettlementPreset; onDone: 
       <FormError error={error} />
 
       <DialogFooter className="mt-1 gap-2">
-        <Button type="button" variant="outline" className="h-11 px-5 text-sm" onClick={onDone}>
+        <button type="button" className={buttonClass({ variant: "secondary", className: "h-11 sm:h-9" })} onClick={onDone}>
           Cancel
-        </Button>
-        <Button type="submit" className="h-11 px-6 text-sm" disabled={createSettlement.isPending}>
+        </button>
+        <button
+          type="submit"
+          className={buttonClass({ className: "h-11 sm:h-9" })}
+          disabled={createSettlement.isPending}
+        >
           {createSettlement.isPending ? "Saving…" : "Record payment"}
-        </Button>
+        </button>
       </DialogFooter>
     </form>
   );

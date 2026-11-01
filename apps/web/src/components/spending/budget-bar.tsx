@@ -12,6 +12,8 @@ export function budgetState(spent: number, budget: number | null) {
 /**
  * A spent-vs-budget bar. The tick marks how much of the budget "should" be
  * used by today, so being ahead of pace is visible before going over.
+ * Colour by meaning only: the category colour while on track, an Oxblood
+ * wash once it nears the limit, solid Oxblood when over.
  */
 export function BudgetBar({
   spent,
@@ -39,9 +41,9 @@ export function BudgetBar({
     >
       <span
         className={cn(
-          "absolute inset-y-0 left-0 rounded-full transition-[width]",
+          "absolute inset-y-0 left-0 rounded-full",
           level === "over" && "bg-destructive",
-          level === "warn" && "bg-amber-500",
+          level === "warn" && "bg-destructive/60",
         )}
         style={{
           width: `${Math.min(ratio, 1) * 100}%`,

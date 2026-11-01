@@ -1,15 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, HandCoins, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@settle/ui/components/empty";
 import { Skeleton } from "@settle/ui/components/skeleton";
 import { cn } from "@settle/ui/lib/utils";
 
-import { StatSkeleton } from "@/components/dashboard/overview-skeleton";
-import { Eyebrow } from "@/components/dashboard/panel";
+import {
+  FigureStrip,
+  FigureStripSkeleton,
+  PageContainer,
+  PageHeader,
+  Panel,
+  PanelHeader,
+  buttonClass,
+  rowClass,
+} from "@/components/dashboard/panel";
 import {
   RecordSettlementDialog,
   type SettlementPreset,
@@ -17,129 +24,177 @@ import {
 import { SettlePlanCard } from "@/components/settlements/settle-plan-card";
 import { useDeleteSettlement } from "@/hooks/mutations";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useExpenses } from "@/hooks/useExpenses";
-import { useGroups } from "@/hooks/useGroups";
 import { useSettlements } from "@/hooks/useSettlements";
-import { computeBalances, formatMoney } from "@/lib/balances";
+import { useStanding } from "@/hooks/useStanding";
+import { formatMoney, formatTotals } from "@/lib/balances";
 import { buildNameMap, displayName, formatDay, num } from "@/lib/people";
 import type { Settlement } from "@/types";
 
+const SETTLEMENT_PARAMS = { limit: 100 };
+
+const people = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
+
+const selectClass =
+  "h-11 max-w-44 truncate rounded-full border border-border bg-card px-3 text-xs text-foreground outline-none transition-colors duration-150 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 sm:h-8";
+
+function InlineError({ what, onRetry }: { what: string; onRetry: () => void }) {
+  return (
+    <p className="py-3 text-sm text-muted-foreground">
+      Couldn’t load {what}.{" "}
+      <button
+        type="button"
+        onClick={onRetry}
+        className="rounded-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+      >
+        Try again
+      </button>
+    </p>
+  );
+}
+
+function HistorySkeleton() {
+  return (
+    <div aria-busy aria-label="Loading payments" className="flex flex-col">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className={rowClass}>
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-3.5 w-36 rounded-full" />
+            <Skeleton className="h-3 w-24 rounded-full" />
+          </div>
+          <Skeleton className="h-3.5 w-16 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function SettlementsPage() {
   const { data: me } = useCurrentUser();
-  const { data: groups } = useGroups();
-  const { data: expenses } = useExpenses({ limit: 100 });
-  const { data: settlements, isLoading, isError } = useSettlements({ limit: 100 });
+  // What's left to settle comes from the api's per-group balances (the same
+  // numbers as Overview), not from the latest 100 expenses on the client.
+  const { standing, groups, currency, isLoading: standingLoading, isError: standingError, retry } = useStanding();
+  const settlements = useSettlements(SETTLEMENT_PARAMS);
   const [preset, setPreset] = useState<SettlementPreset | null>(null);
   const [groupFilter, setGroupFilter] = useState("");
 
   const names = useMemo(() => buildNameMap(groups), [groups]);
   const groupName = useMemo(() => new Map(groups?.map((g) => [g.id, g.name])), [groups]);
-  const currency = me?.default_currency ?? "INR";
+  const groupCount = groups?.length ?? 0;
 
-  const stats = useMemo(() => {
-    if (!me || !settlements) return null;
-    const b = computeBalances(expenses ?? [], settlements, me.id);
+  const recent = useMemo(() => {
+    if (!settlements.data) return null;
     const monthAgo = new Date();
     monthAgo.setDate(monthAgo.getDate() - 30);
-    const recent = settlements.filter((s) => new Date(s.date) >= monthAgo);
-    return { ...b, settledTotal: recent.reduce((s, x) => s + num(x.amount), 0), settledCount: recent.length };
-  }, [me, expenses, settlements]);
+    const list = settlements.data.filter((s) => new Date(s.date) >= monthAgo);
+    return { total: list.reduce((sum, s) => sum + num(s.amount), 0), count: list.length };
+  }, [settlements.data]);
 
-  const history = (settlements ?? []).filter((s) => !groupFilter || s.group_id === groupFilter);
-  const people = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
+  const history = (settlements.data ?? []).filter((s) => !groupFilter || s.group_id === groupFilter);
+
+  let figures: React.ReactNode;
+  if (standingLoading || settlements.isLoading) figures = <FigureStripSkeleton count={3} />;
+  else if (standingError || !standing || !recent)
+    figures = (
+      <InlineError
+        what="your balances"
+        onRetry={() => {
+          retry();
+          if (settlements.isError) settlements.refetch();
+        }}
+      />
+    );
+  else {
+    const owedBy = standing.owedToMe.length;
+    const owesTo = standing.iOwe.length;
+    figures = (
+      <FigureStrip
+        className="animate-fade-in"
+        figures={[
+          {
+            label: "Owed to you",
+            value: formatTotals(standing.owedTotals, currency),
+            hint: owedBy ? `From ${people(owedBy)}` : "Nobody owes you",
+            money: true,
+            tone: owedBy ? "positive" : "muted",
+          },
+          {
+            label: "You owe",
+            value: formatTotals(standing.oweTotals, currency),
+            hint: owesTo ? `To ${people(owesTo)}` : "You don’t owe anyone",
+            money: true,
+            tone: owesTo ? "negative" : "muted",
+          },
+          {
+            label: "Settled in the last 30 days",
+            value: formatMoney(recent.total, currency),
+            hint: `${recent.count} ${recent.count === 1 ? "payment" : "payments"} recorded`,
+            money: true,
+          },
+        ]}
+      />
+    );
+  }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-2 py-4 md:px-4 md:py-6">
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div className="flex flex-col gap-2">
-          <Eyebrow>
-            Across {groups?.length ?? 0} {groups?.length === 1 ? "group" : "groups"}
-          </Eyebrow>
-          <h1 className="font-display text-4xl leading-none tracking-tight md:text-5xl">
-            Settle <em className="italic">up</em>
-          </h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => setPreset({})}
-          disabled={!groups?.length}
-          className="inline-flex h-11 items-center gap-2 self-start rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg active:scale-[0.98] disabled:opacity-50 sm:self-auto"
-        >
-          <HandCoins className="size-4" />
-          Record a payment
-        </button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Settle up"
+        description={
+          groupCount
+            ? `Who pays whom across your ${groupCount === 1 ? "group" : `${groupCount} groups`}, and every payment so far.`
+            : "Join or start a group to settle up with people."
+        }
+        actions={
+          <button
+            type="button"
+            onClick={() => setPreset({})}
+            disabled={!groupCount}
+            className={buttonClass()}
+          >
+            <Plus />
+            Record a payment
+          </button>
+        }
+      />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {!stats ? (
-          <>
-            <StatSkeleton />
-            <StatSkeleton />
-            <StatSkeleton highlight />
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col gap-2.5 rounded-2xl border border-border/70 bg-card p-5">
-              <Eyebrow>Owed to you</Eyebrow>
-              <span className="font-display text-4xl leading-none tracking-tight text-primary lg:text-[44px]">
-                {formatMoney(stats.owed, currency)}
-              </span>
-              <span className="text-[13px] text-muted-foreground">From {people(stats.owedByCount)}</span>
-            </div>
-            <div className="flex flex-col gap-2.5 rounded-2xl border border-border/70 bg-card p-5">
-              <Eyebrow>You owe</Eyebrow>
-              <span className="font-display text-4xl leading-none tracking-tight text-destructive lg:text-[44px]">
-                {formatMoney(stats.owe, currency)}
-              </span>
-              <span className="text-[13px] text-muted-foreground">To {people(stats.owesToCount)}</span>
-            </div>
-            <div className="flex flex-col gap-2.5 rounded-2xl bg-primary p-5 text-primary-foreground shadow-[0_25px_80px_-12px_rgba(46,89,70,0.35)]">
-              <Eyebrow className="text-primary-foreground/70">Settled in 30 days</Eyebrow>
-              <span className="font-display text-4xl leading-none tracking-tight lg:text-[44px]">
-                {formatMoney(stats.settledTotal, currency)}
-              </span>
-              <span className="text-[13px] text-primary-foreground/80">
-                {stats.settledCount} {stats.settledCount === 1 ? "payment" : "payments"} recorded
-              </span>
-            </div>
-          </>
-        )}
-      </div>
+      {figures}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <SettlePlanCard className="lg:col-span-3" onRecord={setPreset} />
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <SettlePlanCard onRecord={setPreset} />
 
-        <section className="flex flex-col gap-1.5 rounded-2xl border border-border/70 bg-card p-5.5 lg:col-span-2">
-          <div className="flex items-center justify-between gap-3 pb-2">
-            <h2 className="text-base font-semibold">History</h2>
-            <select
-              aria-label="Filter by group"
-              value={groupFilter}
-              onChange={(e) => setGroupFilter(e.target.value)}
-              className="h-8 rounded-lg border border-border bg-card px-2 text-xs"
-            >
-              <option value="">All groups</option>
-              {groups?.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          {isLoading ? (
-            [0, 1, 2, 3].map((i) => <Skeleton key={i} className="my-1.5 h-11 rounded-lg" />)
-          ) : isError ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Couldn’t load settlements.</p>
+        <Panel className="gap-1">
+          <PanelHeader
+            title="Payment history"
+            action={
+              groupCount > 1 ? (
+                <select
+                  aria-label="Filter by group"
+                  value={groupFilter}
+                  onChange={(e) => setGroupFilter(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">All groups</option>
+                  {groups?.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+              ) : undefined
+            }
+          />
+          {settlements.isLoading ? (
+            <HistorySkeleton />
+          ) : settlements.isError ? (
+            <InlineError what="payments" onRetry={() => settlements.refetch()} />
           ) : history.length === 0 ? (
-            <Empty className="py-10">
-              <EmptyMedia variant="icon">
-                <HandCoins />
-              </EmptyMedia>
-              <EmptyTitle>No payments yet</EmptyTitle>
-              <EmptyDescription>Recorded payments show up here.</EmptyDescription>
-            </Empty>
+            <p className="py-3 text-sm text-muted-foreground">
+              {groupFilter
+                ? "No payments in this group yet."
+                : "No payments yet. Record one when someone pays you back, or you pay them."}
+            </p>
           ) : (
-            <ul className="flex flex-col">
+            <ul className="flex animate-fade-in flex-col">
               {history.map((s) => (
                 <SettlementRow
                   key={s.id}
@@ -151,14 +206,15 @@ export function SettlementsPage() {
               ))}
             </ul>
           )}
-        </section>
+        </Panel>
       </div>
 
       <RecordSettlementDialog preset={preset} onOpenChange={(open) => !open && setPreset(null)} />
-    </div>
+    </PageContainer>
   );
 }
 
+/** One recorded payment. Also used on the group detail page. */
 export function SettlementRow({
   settlement: s,
   meId,
@@ -187,17 +243,9 @@ export function SettlementRow({
   };
 
   return (
-    <li className="group flex items-center gap-3 border-b border-border/50 py-3 last:border-b-0">
-      <span
-        className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-xl",
-          outgoing ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary",
-        )}
-      >
-        {outgoing ? <ArrowUp className="size-4" /> : <ArrowDown className="size-4" />}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-sm font-medium">
+    <li className={cn(rowClass, "gap-3")}>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate font-medium">
           {payer} paid {payee}
         </span>
         <span className="truncate text-xs text-muted-foreground">
@@ -206,8 +254,9 @@ export function SettlementRow({
       </div>
       <span
         className={cn(
-          "text-sm font-semibold tabular-nums",
+          "shrink-0 text-right font-semibold tabular-nums",
           incoming && "text-primary",
+          outgoing && "text-muted-foreground",
         )}
       >
         {incoming ? "+" : outgoing ? "−" : ""}
@@ -218,10 +267,14 @@ export function SettlementRow({
           type="button"
           onClick={remove}
           disabled={deleteSettlement.isPending}
-          aria-label="Remove payment"
-          className="flex size-8 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-destructive focus-visible:opacity-100"
+          aria-label={`Remove payment: ${payer} paid ${payee}`}
+          className={buttonClass({
+            variant: "ghost",
+            size: "sm",
+            className: "-mr-2 w-11 px-0 hover:text-destructive sm:w-8",
+          })}
         >
-          <Trash2 className="size-3.5" />
+          <Trash2 />
         </button>
       )}
     </li>

@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { Button, buttonVariants } from "@settle/ui/components/button";
 import { Skeleton } from "@settle/ui/components/skeleton";
 
-import { Panel, PanelHeader } from "@/components/dashboard/panel";
+import { Panel, PanelHeader, buttonClass } from "@/components/dashboard/panel";
 import { useCreateTelegramLinkCode, useUnlinkTelegram } from "@/hooks/mutations";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { TelegramLinkCode } from "@/types";
@@ -69,43 +68,56 @@ export function TelegramCard() {
       onError: (err) => toast.error(err.message),
     });
 
+  const countdown = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`;
+
   return (
     <Panel>
       <PanelHeader
         title="Telegram"
-        description="Log expenses by messaging the Settle bot — type “lunch 250” or send a voice note."
+        description="Log expenses by messaging the Settle bot. Type “lunch 250” or send a voice note."
       />
 
       {isLoading ? (
-        <Skeleton className="h-16 w-full rounded-xl" />
+        <div aria-busy className="flex items-center justify-between gap-4 py-1">
+          <Skeleton className="h-3.5 w-48 rounded-full" />
+          <Skeleton className="h-8 w-24 rounded-full" />
+        </div>
       ) : linked ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 p-4">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">
-              Linked{me?.telegram_username ? ` to @${me.telegram_username}` : ""}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-primary" />
+              <span className="truncate">
+                Linked{me?.telegram_username ? ` to @${me.telegram_username}` : ""}
+              </span>
             </span>
-            <span className="text-[13px] text-muted-foreground">
-              Send <b>/help</b> to the bot to see what it can do.
+            <span className="text-meta text-muted-foreground">
+              Send <b className="font-medium text-foreground">/help</b> to the bot to see what it can do.
             </span>
           </div>
-          <Button variant="destructive" size="sm" onClick={disconnect} disabled={unlink.isPending}>
+          <button
+            type="button"
+            onClick={disconnect}
+            disabled={unlink.isPending}
+            className={buttonClass({ variant: "danger", size: "sm", className: "self-start sm:self-auto" })}
+          >
             {unlink.isPending ? "Unlinking…" : "Unlink"}
-          </Button>
+          </button>
         </div>
       ) : waiting && link ? (
-        <div className="flex flex-col gap-3 rounded-xl border border-border/70 p-4">
-          <p className="text-[13px] text-muted-foreground">
-            Tap <b>Start</b> in Telegram to finish linking.
+        <div className="flex flex-col gap-3">
+          <p className="text-sm">
+            Tap <b className="font-medium">Start</b> in Telegram to finish linking.
           </p>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {appLink(link) && (
-              <a className={buttonVariants({ size: "sm" })} href={appLink(link)!}>
+              <a className={buttonClass({ size: "sm" })} href={appLink(link)!}>
                 Open Telegram app
               </a>
             )}
             {link.deep_link && (
               <a
-                className={buttonVariants({ size: "sm", variant: "outline" })}
+                className={buttonClass({ variant: "secondary", size: "sm" })}
                 href={link.deep_link}
                 target="_blank"
                 rel="noreferrer"
@@ -113,23 +125,28 @@ export function TelegramCard() {
                 Open in browser
               </a>
             )}
-            <span className="text-[13px] text-muted-foreground">
-              Expires in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} · waiting…
+            <span className="text-xs text-muted-foreground tabular-nums">
+              Expires in {countdown} · waiting…
             </span>
           </div>
-          <p className="text-[13px] text-muted-foreground">
-            Nothing opened? In Telegram, search <b>@{link.bot_username ?? "the Settle bot"}</b> and send{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">/start {link.code}</code>
+          <p className="border-t border-border/50 pt-3 text-meta text-muted-foreground">
+            Nothing opened? In Telegram, search <b className="font-medium text-foreground">@{link.bot_username ?? "the Settle bot"}</b> and send{" "}
+            <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">/start {link.code}</code>
           </p>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border p-4">
-          <span className="text-[13px] text-muted-foreground">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span className="text-meta text-muted-foreground">
             {link ? "That link expired. Try again." : "Not linked yet."}
           </span>
-          <Button size="sm" onClick={connect} disabled={createCode.isPending}>
+          <button
+            type="button"
+            onClick={connect}
+            disabled={createCode.isPending}
+            className={buttonClass({ size: "sm", className: "self-start sm:self-auto" })}
+          >
             {createCode.isPending ? "Opening…" : "Connect Telegram"}
-          </Button>
+          </button>
         </div>
       )}
     </Panel>

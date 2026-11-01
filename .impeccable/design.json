@@ -1,0 +1,538 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-01T14:09:37.748Z",
+  "title": "Design System: Settle",
+  "extensions": {
+    "colorMeta": {
+      "banknote-green": {
+        "role": "primary",
+        "displayName": "Banknote Green",
+        "canonical": "oklch(0.4269 0.0647 162.034)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0289 162.034)",
+          "oklch(26.4% 0.0464 162.034)",
+          "oklch(37.9% 0.0581 162.034)",
+          "oklch(49.3% 0.0640 162.034)",
+          "oklch(60.7% 0.0640 162.034)",
+          "oklch(72.1% 0.0581 162.034)",
+          "oklch(83.6% 0.0464 162.034)",
+          "oklch(95.0% 0.0289 162.034)"
+        ]
+      },
+      "banknote-green-dark": {
+        "role": "primary",
+        "displayName": "Banknote Green (dark theme)",
+        "canonical": "oklch(0.7369 0.083 157.0308)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0371 157.0308)",
+          "oklch(26.4% 0.0596 157.0308)",
+          "oklch(37.9% 0.0746 157.0308)",
+          "oklch(49.3% 0.0821 157.0308)",
+          "oklch(60.7% 0.0821 157.0308)",
+          "oklch(72.1% 0.0746 157.0308)",
+          "oklch(83.6% 0.0596 157.0308)",
+          "oklch(95.0% 0.0371 157.0308)"
+        ]
+      },
+      "sage": {
+        "role": "secondary",
+        "displayName": "Sage",
+        "canonical": "oklch(0.6528 0.0707 153.5098)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0316 153.5098)",
+          "oklch(26.4% 0.0507 153.5098)",
+          "oklch(37.9% 0.0635 153.5098)",
+          "oklch(49.3% 0.0699 153.5098)",
+          "oklch(60.7% 0.0699 153.5098)",
+          "oklch(72.1% 0.0635 153.5098)",
+          "oklch(83.6% 0.0507 153.5098)",
+          "oklch(95.0% 0.0316 153.5098)"
+        ]
+      },
+      "sage-dark": {
+        "role": "secondary",
+        "displayName": "Sage (dark theme)",
+        "canonical": "oklch(0.4592 0.0521 160.3874)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0233 160.3874)",
+          "oklch(26.4% 0.0374 160.3874)",
+          "oklch(37.9% 0.0468 160.3874)",
+          "oklch(49.3% 0.0515 160.3874)",
+          "oklch(60.7% 0.0515 160.3874)",
+          "oklch(72.1% 0.0468 160.3874)",
+          "oklch(83.6% 0.0374 160.3874)",
+          "oklch(95.0% 0.0233 160.3874)"
+        ]
+      },
+      "mint-paper": {
+        "role": "neutral",
+        "displayName": "Mint Paper",
+        "canonical": "oklch(0.9823 0.0041 157.1794)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0054 157.1794)",
+          "oklch(26.4% 0.0086 157.1794)",
+          "oklch(37.9% 0.0108 157.1794)",
+          "oklch(49.3% 0.0119 157.1794)",
+          "oklch(60.7% 0.0119 157.1794)",
+          "oklch(72.1% 0.0108 157.1794)",
+          "oklch(83.6% 0.0086 157.1794)",
+          "oklch(95.0% 0.0054 157.1794)"
+        ]
+      },
+      "ledger-white": {
+        "role": "neutral",
+        "displayName": "Ledger White",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0000 0)",
+          "oklch(26.4% 0.0000 0)",
+          "oklch(37.9% 0.0000 0)",
+          "oklch(49.3% 0.0000 0)",
+          "oklch(60.7% 0.0000 0)",
+          "oklch(72.1% 0.0000 0)",
+          "oklch(83.6% 0.0000 0)",
+          "oklch(95.0% 0.0000 0)"
+        ]
+      },
+      "pale-mint": {
+        "role": "neutral",
+        "displayName": "Pale Mint",
+        "canonical": "oklch(0.9376 0.0125 156.9926)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0056 156.9926)",
+          "oklch(26.4% 0.0090 156.9926)",
+          "oklch(37.9% 0.0112 156.9926)",
+          "oklch(49.3% 0.0124 156.9926)",
+          "oklch(60.7% 0.0124 156.9926)",
+          "oklch(72.1% 0.0112 156.9926)",
+          "oklch(83.6% 0.0090 156.9926)",
+          "oklch(95.0% 0.0056 156.9926)"
+        ]
+      },
+      "mint-wash": {
+        "role": "neutral",
+        "displayName": "Mint Wash",
+        "canonical": "oklch(0.8911 0.0227 160.1763)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0101 160.1763)",
+          "oklch(26.4% 0.0163 160.1763)",
+          "oklch(37.9% 0.0204 160.1763)",
+          "oklch(49.3% 0.0224 160.1763)",
+          "oklch(60.7% 0.0224 160.1763)",
+          "oklch(72.1% 0.0204 160.1763)",
+          "oklch(83.6% 0.0163 160.1763)",
+          "oklch(95.0% 0.0101 160.1763)"
+        ]
+      },
+      "hairline-sage": {
+        "role": "neutral",
+        "displayName": "Hairline Sage",
+        "canonical": "oklch(0.8793 0.0177 159.071)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0079 159.071)",
+          "oklch(26.4% 0.0127 159.071)",
+          "oklch(37.9% 0.0159 159.071)",
+          "oklch(49.3% 0.0175 159.071)",
+          "oklch(60.7% 0.0175 159.071)",
+          "oklch(72.1% 0.0159 159.071)",
+          "oklch(83.6% 0.0127 159.071)",
+          "oklch(95.0% 0.0079 159.071)"
+        ]
+      },
+      "moss-gray": {
+        "role": "neutral",
+        "displayName": "Moss Gray",
+        "canonical": "oklch(0.4977 0.0461 160.9283)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0206 160.9283)",
+          "oklch(26.4% 0.0331 160.9283)",
+          "oklch(37.9% 0.0414 160.9283)",
+          "oklch(49.3% 0.0456 160.9283)",
+          "oklch(60.7% 0.0456 160.9283)",
+          "oklch(72.1% 0.0414 160.9283)",
+          "oklch(83.6% 0.0331 160.9283)",
+          "oklch(95.0% 0.0206 160.9283)"
+        ]
+      },
+      "forest-ink": {
+        "role": "neutral",
+        "displayName": "Forest Ink",
+        "canonical": "oklch(0.2307 0.0195 160.5314)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0087 160.5314)",
+          "oklch(26.4% 0.0140 160.5314)",
+          "oklch(37.9% 0.0175 160.5314)",
+          "oklch(49.3% 0.0193 160.5314)",
+          "oklch(60.7% 0.0193 160.5314)",
+          "oklch(72.1% 0.0175 160.5314)",
+          "oklch(83.6% 0.0140 160.5314)",
+          "oklch(95.0% 0.0087 160.5314)"
+        ]
+      },
+      "deep-forest": {
+        "role": "neutral",
+        "displayName": "Deep Forest",
+        "canonical": "oklch(0.2969 0.0374 164.1126)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0167 164.1126)",
+          "oklch(26.4% 0.0268 164.1126)",
+          "oklch(37.9% 0.0336 164.1126)",
+          "oklch(49.3% 0.0370 164.1126)",
+          "oklch(60.7% 0.0370 164.1126)",
+          "oklch(72.1% 0.0336 164.1126)",
+          "oklch(83.6% 0.0268 164.1126)",
+          "oklch(95.0% 0.0167 164.1126)"
+        ]
+      },
+      "night-forest": {
+        "role": "neutral",
+        "displayName": "Night Forest",
+        "canonical": "oklch(0.1806 0.0158 165.393)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0071 165.393)",
+          "oklch(26.4% 0.0113 165.393)",
+          "oklch(37.9% 0.0142 165.393)",
+          "oklch(49.3% 0.0156 165.393)",
+          "oklch(60.7% 0.0156 165.393)",
+          "oklch(72.1% 0.0142 165.393)",
+          "oklch(83.6% 0.0113 165.393)",
+          "oklch(95.0% 0.0071 165.393)"
+        ]
+      },
+      "night-card": {
+        "role": "neutral",
+        "displayName": "Night Card",
+        "canonical": "oklch(0.2284 0.0227 165.7869)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0101 165.7869)",
+          "oklch(26.4% 0.0163 165.7869)",
+          "oklch(37.9% 0.0204 165.7869)",
+          "oklch(49.3% 0.0224 165.7869)",
+          "oklch(60.7% 0.0224 165.7869)",
+          "oklch(72.1% 0.0204 165.7869)",
+          "oklch(83.6% 0.0163 165.7869)",
+          "oklch(95.0% 0.0101 165.7869)"
+        ]
+      },
+      "night-line": {
+        "role": "neutral",
+        "displayName": "Night Line",
+        "canonical": "oklch(0.2808 0.031 164.2455)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0139 164.2455)",
+          "oklch(26.4% 0.0223 164.2455)",
+          "oklch(37.9% 0.0279 164.2455)",
+          "oklch(49.3% 0.0307 164.2455)",
+          "oklch(60.7% 0.0307 164.2455)",
+          "oklch(72.1% 0.0279 164.2455)",
+          "oklch(83.6% 0.0223 164.2455)",
+          "oklch(95.0% 0.0139 164.2455)"
+        ]
+      },
+      "night-mist": {
+        "role": "neutral",
+        "displayName": "Night Mist",
+        "canonical": "oklch(0.9419 0.01 164.8617)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0054 164.8617)",
+          "oklch(26.4% 0.0086 164.8617)",
+          "oklch(37.9% 0.0108 164.8617)",
+          "oklch(49.3% 0.0119 164.8617)",
+          "oklch(60.7% 0.0119 164.8617)",
+          "oklch(72.1% 0.0108 164.8617)",
+          "oklch(83.6% 0.0086 164.8617)",
+          "oklch(95.0% 0.0054 164.8617)"
+        ]
+      },
+      "oxblood": {
+        "role": "tertiary",
+        "displayName": "Oxblood",
+        "canonical": "oklch(0.4451 0.0916 21.4396)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0409 21.4396)",
+          "oklch(26.4% 0.0658 21.4396)",
+          "oklch(37.9% 0.0823 21.4396)",
+          "oklch(49.3% 0.0906 21.4396)",
+          "oklch(60.7% 0.0906 21.4396)",
+          "oklch(72.1% 0.0823 21.4396)",
+          "oklch(83.6% 0.0658 21.4396)",
+          "oklch(95.0% 0.0409 21.4396)"
+        ]
+      },
+      "oxblood-dark": {
+        "role": "tertiary",
+        "displayName": "Oxblood (dark theme)",
+        "canonical": "oklch(0.69 0.13 22.5)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0568 22.8778)",
+          "oklch(26.4% 0.0913 22.8778)",
+          "oklch(37.9% 0.1143 22.8778)",
+          "oklch(49.3% 0.1258 22.8778)",
+          "oklch(60.7% 0.1258 22.8778)",
+          "oklch(72.1% 0.1143 22.8778)",
+          "oklch(83.6% 0.0913 22.8778)",
+          "oklch(95.0% 0.0568 22.8778)"
+        ]
+      },
+      "slate-blue": {
+        "role": "tertiary",
+        "displayName": "Slate Blue (chart only)",
+        "canonical": "oklch(0.8071 0.0438 236.3926)",
+        "tonalRamp": [
+          "oklch(15.0% 0.0196 236.3926)",
+          "oklch(26.4% 0.0314 236.3926)",
+          "oklch(37.9% 0.0394 236.3926)",
+          "oklch(49.3% 0.0433 236.3926)",
+          "oklch(60.7% 0.0433 236.3926)",
+          "oklch(72.1% 0.0394 236.3926)",
+          "oklch(83.6% 0.0314 236.3926)",
+          "oklch(95.0% 0.0196 236.3926)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Landing hero only; one italic word allowed."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Landing section headings; 36/48/60px across breakpoints."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Bento card titles; serif money figures in the app at ~20px."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Landing paragraphs, max ~36rem."
+      },
+      "body-app": {
+        "displayName": "Body (app)",
+        "purpose": "Default dashboard, button and input text."
+      },
+      "panel-title": {
+        "displayName": "Panel title",
+        "purpose": "Dashboard panel headings."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase eyebrows above titles and stat tiles."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ambient-xs",
+        "value": "0px 2px 10px 0px hsl(0 0% 0% / 0.03)",
+        "purpose": "Section badges and small pills."
+      },
+      {
+        "name": "ambient-sm",
+        "value": "0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05)",
+        "purpose": "Default shadcn surfaces."
+      },
+      {
+        "name": "hover-lift",
+        "value": "0 10px 30px -12px rgba(0, 0, 0, 0.12)",
+        "purpose": "Dashboard panels on hover with translateY(-2px); pointer devices only."
+      },
+      {
+        "name": "dashboard-showcase",
+        "value": "0 25px 80px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06)",
+        "purpose": "Hero dashboard preview only."
+      },
+      {
+        "name": "dark-ambient-sm",
+        "value": "0px 4px 15px 0px hsl(0 0% 0% / 0.30), 0px 1px 2px -1px hsl(0 0% 0% / 0.30)",
+        "purpose": "Dark theme equivalent of ambient-sm."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "150ms ease",
+        "purpose": "Button, input and link color/background changes."
+      },
+      {
+        "name": "lift",
+        "value": "250ms ease",
+        "purpose": "Panel hover lift (transform + shadow)."
+      },
+      {
+        "name": "fade-up",
+        "value": "500ms ease-out, translateY(10px) to 0",
+        "purpose": "Scroll reveals on landing; compositor-only, no blur."
+      },
+      {
+        "name": "sheen",
+        "value": "750ms ease",
+        "purpose": "White sheen sweep across landing CTAs on hover."
+      },
+      {
+        "name": "faq-open",
+        "value": "300ms ease",
+        "purpose": "FAQ height/opacity where interpolate-size is supported."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "none",
+        "purpose": "prefers-reduced-motion disables marquee, caret, drift, sheen and lifts."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action. Small Banknote Green pill.",
+      "html": "<button class=\"ds-btn-primary\">Add expense</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 9999px; border: 1px solid transparent; background: var(--primary); color: var(--primary-foreground); font: 500 12px/1 Inter, sans-serif; letter-spacing: -0.01em; cursor: pointer; transition: all 0.15s ease; } .ds-btn-primary:hover { background: color-mix(in oklch, var(--primary) 80%, transparent); } .ds-btn-primary:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 1px color-mix(in oklch, var(--ring) 50%, transparent); } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action on paper.",
+      "html": "<button class=\"ds-btn-outline\">See how it works</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border-radius: 9999px; border: 1px solid var(--border); background: var(--background); color: var(--foreground); font: 500 12px/1 Inter, sans-serif; cursor: pointer; transition: all 0.15s ease; } .ds-btn-outline:hover { background: var(--muted); } .ds-btn-outline:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 1px color-mix(in oklch, var(--ring) 50%, transparent); } .ds-btn-outline:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Oxblood wash, never a solid red fill.",
+      "html": "<button class=\"ds-btn-destructive\">Delete expense</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border-radius: 9999px; border: 1px solid transparent; background: color-mix(in oklch, var(--destructive) 10%, transparent); color: var(--destructive); font: 500 12px/1 Inter, sans-serif; cursor: pointer; transition: all 0.15s ease; } .ds-btn-destructive:hover { background: color-mix(in oklch, var(--destructive) 20%, transparent); } .ds-btn-destructive:focus-visible { outline: none; border-color: color-mix(in oklch, var(--destructive) 40%, transparent); box-shadow: 0 0 0 1px color-mix(in oklch, var(--destructive) 20%, transparent); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Compact 32px app field.",
+      "html": "<input class=\"ds-input\" placeholder=\"Dinner at Toit, 2400, split with Riya\" />",
+      "css": ".ds-input { height: 32px; width: 280px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--input); background: transparent; color: var(--foreground); font: 400 12px/1.6 Inter, sans-serif; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input::placeholder { color: var(--muted-foreground); } .ds-input:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 1px color-mix(in oklch, var(--ring) 50%, transparent); }"
+    },
+    {
+      "name": "Section Badge",
+      "kind": "chip",
+      "refersTo": "section-badge",
+      "description": "Pill label above every landing section headline.",
+      "html": "<span class=\"ds-badge\">How it works</span>",
+      "css": ".ds-badge { display: inline-flex; padding: 4px 14px; border-radius: 9999px; border: 1px solid var(--border); background: var(--background); color: var(--primary); font: 400 13px/1.4 Inter, sans-serif; box-shadow: 0px 2px 10px 0px hsl(0 0% 0% / 0.03); }"
+    },
+    {
+      "name": "Landing Nav",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Floating frosted pill; Moss Gray links with a soft highlight.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link\" href=\"#\">Features</a><a class=\"ds-nav-link\" href=\"#\">How it works</a><a class=\"ds-nav-link\" href=\"#\">Pricing</a><a class=\"ds-nav-link\" href=\"#\">FAQ</a></nav>",
+      "css": ".ds-nav { display: inline-flex; gap: 2px; padding: 6px; border-radius: 9999px; border: 1px solid color-mix(in oklch, var(--border) 70%, transparent); background: color-mix(in oklch, var(--background) 80%, transparent); backdrop-filter: blur(12px); } .ds-nav-link { padding: 6px 14px; border-radius: 8px; color: var(--muted-foreground); font: 400 14px/1.4 Inter, sans-serif; text-decoration: none; transition: color 0.15s, background 0.15s; } .ds-nav-link:hover, .ds-nav-link:focus-visible { color: var(--foreground); background: color-mix(in oklch, var(--foreground) 6%, transparent); outline: none; }"
+    },
+    {
+      "name": "Dashboard Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat white panel that lifts on hover.",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-panel-title\">Your groups</h2><p class=\"ds-panel-desc\">Balances across every group</p><div class=\"ds-row\"><span>Goa trip</span><span class=\"ds-pos\">+₹6,240</span></div><div class=\"ds-row\"><span>Flat 4B</span><span class=\"ds-neg\">−₹1,420</span></div></section>",
+      "css": ".ds-panel { display: flex; flex-direction: column; gap: 12px; width: 320px; padding: 24px; border-radius: 16px; border: 1px solid color-mix(in oklch, var(--border) 70%, transparent); background: var(--card); color: var(--card-foreground); font: 400 12px/1.6 Inter, sans-serif; transition: transform 0.25s ease, box-shadow 0.25s ease; } .ds-panel:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -12px rgba(0,0,0,0.12); } .ds-panel-title { margin: 0; font: 600 16px/1.5 Inter, sans-serif; } .ds-panel-desc { margin: -10px 0 0; font-size: 13px; color: var(--muted-foreground); } .ds-row { display: flex; justify-content: space-between; } .ds-pos { color: var(--primary); font-weight: 500; } .ds-neg { color: var(--destructive); font-weight: 500; }"
+    },
+    {
+      "name": "Bento Card (dark tone)",
+      "kind": "custom",
+      "refersTo": "bento-card-dark",
+      "description": "Signature landing card: serif title, demo, one line of copy.",
+      "html": "<article class=\"ds-bento\"><span class=\"ds-bento-eyebrow\">AI expense capture</span><h3 class=\"ds-bento-title\">Type it like a text message</h3><div class=\"ds-bento-demo\">Dinner at Toit ₹2,400, split with Riya and Aman</div><p class=\"ds-bento-copy\">Settle reads plain language and turns it into a structured, split expense.</p></article>",
+      "css": ".ds-bento { display: flex; flex-direction: column; gap: 16px; width: 320px; min-height: 360px; padding: 24px; border-radius: 22px; overflow: hidden; background: var(--accent-foreground); color: var(--primary-foreground); } .ds-bento-eyebrow { font: 400 12px/1 Inter, sans-serif; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6; } .ds-bento-title { margin: 0; font: 400 34px/1.05 'Instrument Serif', Georgia, serif; } .ds-bento-demo { flex: 1; display: flex; align-items: center; font: 400 13px/1.5 Inter, sans-serif; } .ds-bento-copy { margin: 0; font: 400 15px/1.6 Inter, sans-serif; opacity: 0.7; }"
+    },
+    {
+      "name": "Money Tiles",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "Stat tiles: uppercase eyebrow over a serif amount; owed in green, owing in oxblood.",
+      "html": "<div class=\"ds-tiles\"><div class=\"ds-tile ds-tile-owed\"><span class=\"ds-tile-label\">You&#39;re owed</span><span class=\"ds-tile-amt\">₹7,760</span></div><div class=\"ds-tile\"><span class=\"ds-tile-label\">You owe</span><span class=\"ds-tile-amt ds-tile-neg\">₹2,940</span></div></div>",
+      "css": ".ds-tiles { display: flex; gap: 12px; } .ds-tile { display: flex; flex-direction: column; gap: 4px; width: 150px; padding: 12px; border-radius: 12px; border: 1px solid color-mix(in oklch, var(--border) 70%, transparent); background: var(--card); color: var(--foreground); } .ds-tile-owed { background: var(--primary); color: var(--primary-foreground); border-color: transparent; } .ds-tile-label { font: 400 10px/1 Inter, sans-serif; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; } .ds-tile-amt { font: 400 22px/1.15 'Instrument Serif', Georgia, serif; } .ds-tile-neg { color: var(--destructive); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Calm Ledger",
+    "overview": "Settle looks like a well-kept money book shared between friends: green ink on mint paper, an editorial serif for the moments that matter, and exact numbers set quietly in Inter. Money between friends is a tense subject; the system's job is to lower the temperature. Nothing flashes, nothing competes, and every number reads as settled fact.\n\nThe mood is calm and trustworthy, but warm rather than bank-like. Warmth comes from the serif's softness, the single italic word in a headline (\"Split bills, *not* friendships\"), the rounded pill controls, and small self-playing demos, never from extra color. The whole palette sits in one green hue family (hue 153 to 165) with a single oxblood for debts and errors, so the interface reads as one material.\n\nDensity splits by surface. Marketing pages are airy and editorial: large serif display, wide margins, bento cards. The signed-in app is compact and precise: 12px Inter body, 32px controls, hairline rings. Both share the same tokens; the app simply turns the volume down. The confirmed anti-reference is fintech-neon: no crypto or neobank gradients, no neon on black, no loud dashboard chrome.",
+    "keyCharacteristics": [
+      "One hue family: forest and mint greens, plus oxblood for \"you owe\" and errors.",
+      "Instrument Serif for display and money moments; Inter for everything else.",
+      "Flat at rest; depth from paper tones and hairlines, shadows only ambient or on hover.",
+      "Pill-shaped buttons and badges; softly rounded cards (16px app, 22px landing bento).",
+      "Light and dark themes are both first-class; dark is a deep night-forest, not neutral black."
+    ],
+    "rules": [
+      {
+        "name": "The One Hue Rule",
+        "body": "Every neutral carries the green tint (chroma 0.004 to 0.04 at hue ~160). No pure grays, no pure black, no off-family accents in UI chrome.",
+        "section": "colors"
+      },
+      {
+        "name": "The Owed Is Green, Owing Is Oxblood Rule",
+        "body": "Money in your favor uses Banknote Green or plain Forest Ink; money you owe uses Oxblood. No other color carries balance meaning.",
+        "section": "colors"
+      },
+      {
+        "name": "The Themed Selection Rule",
+        "body": "Text selection uses Banknote Green with Mint Paper text (the theme's `primary` / `primary-foreground`, so it flips correctly in dark mode). Browser surfaces like selection, focus rings and carets take palette colors, never browser or off-family defaults.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serif Is for Voice and Money Rule",
+        "body": "Instrument Serif appears only on display/headline/title moments and on money figures that headline a tile. Never on buttons, form labels, tables or body copy.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Italic Rule",
+        "body": "A headline may italicize at most one word, and it is the word that carries the point.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are flat at rest and stay flat on hover; hover changes a fill, never elevation. A shadow stronger than Ambient sm belongs only to floating layers (menus, dialogs) and the landing hero showcase.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep every neutral green-tinted (hue ~160); take colors from the tokens, never from raw Tailwind palettes.",
+      "Do use Instrument Serif for headlines, card titles and headline money figures, with at most one italic word.",
+      "Do build every app page from the shared anatomy: `PageHeader`, optional `FigureStrip`, filters, then panels of rows.",
+      "Do keep app page text at 14px Inter with 13px descriptions and 12px metadata; amounts in tabular figures.",
+      "Do keep surfaces flat at rest and on hover; separate them with paper tones and hairlines.",
+      "Do use pills for buttons, badges and chips, 16px corners for app panels, 22px for landing bento cards.",
+      "Do design and check both light and dark themes in the app; dark is night-forest, never neutral black. Public pages (landing, privacy) stay light.",
+      "Do honor `prefers-reduced-motion`: marquee, caret, drift, sheen and the app's route entrance all switch off."
+    ],
+    "donts": [
+      "Don't go fintech-neon: no crypto or neobank gradients, neon on black, glowing charts or loud dashboard chrome.",
+      "Don't use solid red fills; debts and destructive actions use Oxblood text on a light Oxblood wash.",
+      "Don't add hues outside the green family to UI chrome, including browser surfaces like text selection.",
+      "Don't set buttons, form labels, tables or body copy in the serif.",
+      "Don't parallax, scale or tilt whole blocks on scroll; it was tried and removed as jittery.",
+      "Don't reuse the split-coin logo geometry as decoration.",
+      "Don't put uppercase eyebrows, italic title words, stat tiles with a highlighted or glowing tile, or sparkle icons in the app.",
+      "Don't animate app content on its own: no staggered entrances, hover lifts, icon scaling or count-ups."
+    ]
+  }
+}

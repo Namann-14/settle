@@ -2,13 +2,24 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ChevronLeft, Mail, MessageCircle, Receipt, Sparkles, UserMinus, X } from "lucide-react";
+import { ChevronLeft, Mail, UserMinus, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@settle/ui/components/empty";
 import { Skeleton } from "@settle/ui/components/skeleton";
 import { cn } from "@settle/ui/lib/utils";
 
+import {
+  FigureStrip,
+  FigureStripSkeleton,
+  PageContainer,
+  PageHeader,
+  Panel,
+  PanelHeader,
+  Segmented,
+  buttonClass,
+  rowClass,
+  type Figure,
+} from "@/components/dashboard/panel";
 import { AiQuickAdd } from "@/components/expenses/ai-quick-add";
 import { ExpenseSheet, type ExpenseSheetSeed } from "@/components/expenses/expense-sheet";
 import { myImpact } from "@/components/expenses/expenses-page";
@@ -32,9 +43,42 @@ import { buildNameMap, displayName, formatDay, initials, num } from "@/lib/peopl
 import type { Expense, Group } from "@/types";
 
 type Tab = "expenses" | "settlements" | "members";
+const TABS: { id: Tab; label: string }[] = [
+  { id: "expenses", label: "Expenses" },
+  { id: "settlements", label: "Settlements" },
+  { id: "members", label: "Members" },
+];
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+const linkButton =
+  "rounded-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50";
+
+function Retry({ what, onRetry }: { what: string; onRetry: () => void }) {
+  return (
+    <p className="py-3 text-sm text-muted-foreground">
+      Couldn’t load {what}.{" "}
+      <button type="button" onClick={onRetry} className={linkButton}>
+        Try again
+      </button>
+    </p>
+  );
+}
+
+function BackLink() {
+  return (
+    <Link
+      href="/dashboard/groups"
+      className="-mb-4 inline-flex h-8 items-center gap-1 self-start rounded-md text-meta text-muted-foreground transition-colors duration-150 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+    >
+      <ChevronLeft className="size-3.5" />
+      All groups
+    </Link>
+  );
+}
 
 export function GroupDetail({ groupId }: { groupId: string }) {
-  const { data: group, isLoading, isError, error } = useGroup(groupId);
+  const { data: group, isLoading, isError, error, refetch } = useGroup(groupId);
   const { data: me } = useCurrentUser();
   const [tab, setTab] = useState<Tab>("expenses");
   const [seed, setSeed] = useState<ExpenseSheetSeed | null>(null);
@@ -43,17 +87,23 @@ export function GroupDetail({ groupId }: { groupId: string }) {
   if (isLoading) return <GroupDetailSkeleton />;
   if (isError || !group) {
     return (
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-2 py-10 md:px-4">
-        <Empty className="rounded-2xl border border-border/70 bg-card py-16">
-          <EmptyTitle>Group not found</EmptyTitle>
-          <EmptyDescription>
-            {error instanceof Error ? error.message : "It may have been deleted, or you’re not a member."}
-          </EmptyDescription>
-          <Link href="/dashboard/groups" className="text-sm font-medium text-primary hover:underline">
-            Back to groups
-          </Link>
-        </Empty>
-      </div>
+      <PageContainer narrow>
+        <BackLink />
+        <Panel className="items-start">
+          <PanelHeader
+            title="Group not found"
+            description={error instanceof Error ? error.message : "It may have been deleted, or you’re not a member."}
+          />
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => refetch()} className={buttonClass({ variant: "secondary", size: "sm" })}>
+              Try again
+            </button>
+            <Link href="/dashboard/groups" className={buttonClass({ variant: "ghost", size: "sm" })}>
+              Back to groups
+            </Link>
+          </div>
+        </Panel>
+      </PageContainer>
     );
   }
 
@@ -61,71 +111,40 @@ export function GroupDetail({ groupId }: { groupId: string }) {
   const isAdmin = active.some((m) => m.user_id === me?.id && m.role === "ADMIN");
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-2 py-4 md:px-4 md:py-6">
-      <Link
-        href="/dashboard/groups"
-        className="flex items-center gap-1 self-start text-[13px] text-muted-foreground hover:text-foreground"
-      >
-        <ChevronLeft className="size-3.5" />
-        All groups
-      </Link>
+    <PageContainer>
+      <BackLink />
+      <PageHeader
+        title={group.name}
+        description={[plural(active.length, "member"), group.default_currency, group.description]
+          .filter(Boolean)
+          .join(" · ")}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setPreset({ groupId: group.id })}
+              className={buttonClass({ variant: "secondary" })}
+            >
+              Settle up
+            </button>
+            <button
+              type="button"
+              onClick={() => setSeed({ mode: "create", groupId: group.id })}
+              className={buttonClass()}
+            >
+              Add expense
+            </button>
+          </>
+        }
+      />
 
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div className="flex items-center gap-4">
-          <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-accent text-xl font-semibold text-primary">
-            {initials(group.name)}
-          </span>
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <h1 className="truncate font-display text-4xl leading-none tracking-tight md:text-5xl">
-              {group.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {active.length} {active.length === 1 ? "member" : "members"} · {group.default_currency}
-              {group.description ? ` · ${group.description}` : ""}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2.5">
-          <button
-            type="button"
-            onClick={() => setPreset({ groupId: group.id })}
-            className="h-11 rounded-full border border-border bg-card px-5 text-sm font-medium transition-colors hover:bg-muted"
-          >
-            Settle up
-          </button>
-          <button
-            type="button"
-            onClick={() => setSeed({ mode: "create", groupId: group.id })}
-            className="h-11 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow-md transition-all hover:bg-primary/90"
-          >
-            Add expense
-          </button>
-        </div>
-      </div>
+      <GroupFigures group={group} meId={me?.id} />
 
       <AiQuickAdd groupId={group.id} onDraft={(draft) => setSeed({ mode: "draft", draft })} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="flex flex-col gap-4 lg:col-span-2">
-          <div role="tablist" className="flex gap-1 self-start rounded-xl bg-muted p-1">
-            {(["expenses", "settlements", "members"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                role="tab"
-                aria-selected={tab === t}
-                onClick={() => setTab(t)}
-                className={cn(
-                  "h-9 rounded-[9px] px-4 text-[13px] capitalize transition-colors",
-                  tab === t
-                    ? "bg-card font-medium text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-2">
+          <Segmented options={TABS} value={tab} onChange={setTab} label="Show" className="self-start" />
           {tab === "expenses" && (
             <GroupExpenses group={group} meId={me?.id} onOpen={(e) => setSeed({ mode: "edit", expense: e })} />
           )}
@@ -133,16 +152,63 @@ export function GroupDetail({ groupId }: { groupId: string }) {
           {tab === "members" && <GroupMembers group={group} meId={me?.id} isAdmin={isAdmin} />}
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           <BalancesPanel group={group} meId={me?.id} />
-          <GroupInsightCard groupId={group.id} />
+          <SettlePlanCard groupId={group.id} onRecord={setPreset} />
+          <GroupInsightPanel groupId={group.id} />
         </div>
       </div>
 
-      <SettlePlanCard groupId={group.id} onRecord={setPreset} />
-
       <ExpenseSheet seed={seed} onOpenChange={(open) => !open && setSeed(null)} />
       <RecordSettlementDialog preset={preset} onOpenChange={(open) => !open && setPreset(null)} />
+    </PageContainer>
+  );
+}
+
+/** The user's balance here and how many payments would clear the group. */
+function GroupFigures({ group, meId }: { group: Group; meId?: string }) {
+  const { data: balances, isLoading, isError, refetch } = useGroupBalances(group.id);
+
+  if (isLoading) return <FigureStripSkeleton count={3} />;
+  if (isError || !balances) return <Retry what="this group’s balances" onRetry={() => refetch()} />;
+
+  const mine = num(balances.members.find((m) => m.user_id === meId)?.net);
+  const payments = balances.transfers.length;
+  const members = group.members.filter((m) => !m.removed_at).length;
+  const figures: Figure[] = [
+    {
+      label: "Your balance",
+      value: Math.abs(mine) < 0.005 ? "Settled" : formatMoney(mine, balances.currency, { signed: true }),
+      hint: mine > 0.005 ? "The group owes you" : mine < -0.005 ? "You owe the group" : "Nothing to pay or collect",
+      money: true,
+      tone: mine > 0.005 ? "positive" : mine < -0.005 ? "negative" : "muted",
+    },
+    {
+      label: "Payments to settle up",
+      value: payments,
+      hint: payments === 0 ? "Everyone’s square" : "The fewest that clear the group",
+    },
+    {
+      label: "Members",
+      value: members,
+      hint: `Shared in ${balances.currency}`,
+    },
+  ];
+  return <FigureStrip figures={figures} className="animate-fade-in" />;
+}
+
+function RowsSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <div aria-busy className="flex flex-col">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className={rowClass}>
+          <div className="flex flex-1 flex-col gap-1.5">
+            <Skeleton className="h-3.5 w-2/5 rounded-full" />
+            <Skeleton className="h-3 w-1/4 rounded-full" />
+          </div>
+          <Skeleton className="h-3.5 w-16 rounded-full" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -156,87 +222,97 @@ function GroupExpenses({
   meId?: string;
   onOpen: (e: Expense) => void;
 }) {
-  const { data: expenses, isLoading } = useExpenses({ group_id: group.id, limit: 100 });
+  const { data: expenses, isLoading, isError, refetch } = useExpenses({ group_id: group.id, limit: 100 });
   const { data: categories } = useCategories();
   const names = useMemo(() => buildNameMap([group]), [group]);
   const categoryName = useMemo(() => new Map(categories?.map((c) => [c.id, c.name])), [categories]);
 
-  if (isLoading) return <ListSkeleton />;
-  if (!expenses?.length) {
-    return (
-      <Empty className="rounded-2xl border border-border/70 bg-card py-14">
-        <EmptyMedia variant="icon">
-          <Receipt />
-        </EmptyMedia>
-        <EmptyTitle>No expenses yet</EmptyTitle>
-        <EmptyDescription>Describe one above, or use Add expense.</EmptyDescription>
-      </Empty>
+  let body: React.ReactNode;
+  if (isLoading) body = <RowsSkeleton />;
+  else if (isError) body = <Retry what="expenses" onRetry={() => refetch()} />;
+  else if (!expenses?.length) {
+    body = (
+      <p className="py-3 text-sm text-muted-foreground">
+        No expenses yet. Describe one above, or use Add expense.
+      </p>
+    );
+  } else {
+    body = (
+      <ul className="flex animate-fade-in flex-col">
+        {expenses.map((e) => {
+          const impact = myImpact(e, meId);
+          return (
+            <li key={e.id} className="border-b border-border/50 last:border-b-0">
+              <button
+                type="button"
+                onClick={() => onOpen(e)}
+                className={cn(
+                  rowClass,
+                  "-mx-2 w-[calc(100%+1rem)] rounded-lg border-b-0 px-2 text-left outline-none transition-colors duration-150 hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/50",
+                )}
+              >
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate font-medium">{e.description}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {displayName(names, e.paid_by_id, meId)} paid ·{" "}
+                    {(e.category_id && categoryName.get(e.category_id)) || "Uncategorized"} · {formatDay(e.date)}
+                  </span>
+                </span>
+                <span className="flex shrink-0 flex-col items-end">
+                  <span className="font-medium tabular-nums">{formatMoney(num(e.amount), e.currency)}</span>
+                  <span
+                    className={cn(
+                      "text-xs tabular-nums",
+                      impact > 0.005 ? "text-primary" : impact < -0.005 ? "text-destructive" : "text-muted-foreground",
+                    )}
+                  >
+                    {impact > 0.005
+                      ? `you lent ${formatMoney(impact, e.currency)}`
+                      : impact < -0.005
+                        ? `you owe ${formatMoney(-impact, e.currency)}`
+                        : "not involved"}
+                  </span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     );
   }
 
   return (
-    <ul className="rounded-2xl border border-border/70 bg-card px-5 py-1.5">
-      {expenses.map((e) => {
-        const impact = myImpact(e, meId);
-        return (
-          <li key={e.id} className="border-b border-border/50 last:border-b-0">
-            <button
-              type="button"
-              onClick={() => onOpen(e)}
-              className="flex w-full items-center gap-3.5 py-3.5 text-left"
-            >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-primary">
-                <Receipt className="size-[18px]" />
-              </span>
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="truncate text-sm font-medium">{e.description}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {displayName(names, e.paid_by_id, meId)} paid ·{" "}
-                  {(e.category_id && categoryName.get(e.category_id)) || "Uncategorized"} · {formatDay(e.date)}
-                </span>
-              </span>
-              <span className="flex flex-col items-end gap-0.5">
-                <span className="text-sm font-semibold tabular-nums">{formatMoney(num(e.amount), e.currency)}</span>
-                <span
-                  className={cn(
-                    "text-xs tabular-nums",
-                    impact > 0.005 ? "text-primary" : impact < -0.005 ? "text-destructive" : "text-muted-foreground",
-                  )}
-                >
-                  {impact > 0.005
-                    ? `you lent ${formatMoney(impact, e.currency)}`
-                    : impact < -0.005
-                      ? `you owe ${formatMoney(-impact, e.currency)}`
-                      : "not involved"}
-                </span>
-              </span>
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+    <Panel className="gap-1">
+      <PanelHeader title="Expenses" description={expenses?.length ? plural(expenses.length, "expense") : undefined} />
+      {body}
+    </Panel>
   );
 }
 
 function GroupSettlements({ group, meId }: { group: Group; meId?: string }) {
-  const { data: settlements, isLoading } = useSettlements({ group_id: group.id, limit: 100 });
+  const { data: settlements, isLoading, isError, refetch } = useSettlements({ group_id: group.id, limit: 100 });
   const names = useMemo(() => buildNameMap([group]), [group]);
 
-  if (isLoading) return <ListSkeleton />;
-  if (!settlements?.length) {
-    return (
-      <Empty className="rounded-2xl border border-border/70 bg-card py-14">
-        <EmptyTitle>No payments yet</EmptyTitle>
-        <EmptyDescription>Use Settle up to record one.</EmptyDescription>
-      </Empty>
+  let body: React.ReactNode;
+  if (isLoading) body = <RowsSkeleton />;
+  else if (isError) body = <Retry what="settlements" onRetry={() => refetch()} />;
+  else if (!settlements?.length) {
+    body = <p className="py-3 text-sm text-muted-foreground">No payments yet. Use Settle up to record one.</p>;
+  } else {
+    body = (
+      <ul className="flex animate-fade-in flex-col">
+        {settlements.map((s) => (
+          <SettlementRow key={s.id} settlement={s} meId={meId} names={names} />
+        ))}
+      </ul>
     );
   }
+
   return (
-    <ul className="rounded-2xl border border-border/70 bg-card px-5 py-1">
-      {settlements.map((s) => (
-        <SettlementRow key={s.id} settlement={s} meId={meId} names={names} />
-      ))}
-    </ul>
+    <Panel className="gap-1">
+      <PanelHeader title="Settlements" description="Payments recorded between members" />
+      {body}
+    </Panel>
   );
 }
 
@@ -270,9 +346,11 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5">
+    <Panel>
+      <PanelHeader title="Members" description={plural(active.length, "member")} />
+
       <form onSubmit={submit} className="flex gap-2">
-        <label className="flex-1">
+        <label className="min-w-0 flex-1">
           <span className="sr-only">Email to invite</span>
           <input
             type="email"
@@ -283,11 +361,7 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
             className={controlClass}
           />
         </label>
-        <button
-          type="submit"
-          disabled={invite.isPending}
-          className="h-10 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
+        <button type="submit" disabled={invite.isPending} className={buttonClass()}>
           {invite.isPending ? "Inviting…" : "Invite"}
         </button>
       </form>
@@ -298,27 +372,34 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
         {active.map((m) => {
           const self = m.user_id === meId;
           return (
-            <li key={m.id} className="flex items-center gap-3 border-b border-border/50 py-3 last:border-b-0">
-              <span className="flex size-9 items-center justify-center rounded-full bg-accent text-xs font-medium text-primary">
-                {initials(m.user_name ?? m.user_email)}
-              </span>
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-sm font-medium">
-                  {self ? "You" : m.user_name || m.user_email || "Member"}
+            <li key={m.id} className={rowClass}>
+              <span className="flex min-w-0 flex-1 items-center gap-3">
+                <span
+                  aria-hidden
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-micro font-semibold text-primary"
+                >
+                  {initials(m.user_name ?? m.user_email)}
                 </span>
-                {m.user_email && <span className="truncate text-xs text-muted-foreground">{m.user_email}</span>}
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate font-medium">
+                    {self ? "You" : m.user_name || m.user_email || "Member"}
+                    {m.role === "ADMIN" && <span className="font-normal text-muted-foreground"> · Admin</span>}
+                  </span>
+                  {m.user_email && <span className="truncate text-xs text-muted-foreground">{m.user_email}</span>}
+                </span>
               </span>
-              {m.role === "ADMIN" && (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">Admin</span>
-              )}
               {(isAdmin || self) && (
                 <button
                   type="button"
                   onClick={() => removeMember(m.id, self)}
                   disabled={remove.isPending}
-                  className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  className={buttonClass({
+                    variant: "ghost",
+                    size: "sm",
+                    className: "hover:bg-destructive/10 hover:text-destructive",
+                  })}
                 >
-                  <UserMinus className="size-3.5" />
+                  <UserMinus />
                   {self ? "Leave" : "Remove"}
                 </button>
               )}
@@ -328,14 +409,18 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
       </ul>
 
       {invitations && invitations.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs tracking-[0.08em] text-muted-foreground uppercase">Pending invites</span>
-          <ul className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1 border-t border-border pt-3">
+          <h3 className="text-meta font-medium">Pending invites</h3>
+          <ul className="flex flex-col">
             {invitations.map((inv) => (
-              <li key={inv.id} className="flex items-center gap-3 rounded-xl bg-muted/60 px-3 py-2 text-sm">
-                <Mail className="size-4 text-muted-foreground" />
-                <span className="flex-1 truncate">{inv.email}</span>
-                <span className="text-[11px] text-muted-foreground">Waiting to accept</span>
+              <li key={inv.id} className={rowClass}>
+                <span className="flex min-w-0 items-center gap-3">
+                  <Mail className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate">{inv.email}</span>
+                    <span className="text-xs text-muted-foreground">Waiting to accept</span>
+                  </span>
+                </span>
                 {(isAdmin || inv.invited_by_id === meId) && (
                   <button
                     type="button"
@@ -345,9 +430,10 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
                       })
                     }
                     aria-label={`Cancel invite for ${inv.email}`}
-                    className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-card hover:text-foreground"
+                    className={buttonClass({ variant: "ghost", size: "sm" })}
                   >
-                    <X className="size-3.5" />
+                    <X />
+                    Cancel
                   </button>
                 )}
               </li>
@@ -355,12 +441,12 @@ function GroupMembers({ group, meId, isAdmin }: { group: Group; meId?: string; i
           </ul>
         </div>
       )}
-    </div>
+    </Panel>
   );
 }
 
 function BalancesPanel({ group, meId }: { group: Group; meId?: string }) {
-  const { data: balances, isLoading, isError } = useGroupBalances(group.id);
+  const { data: balances, isLoading, isError, refetch } = useGroupBalances(group.id);
   const label = (userId: string) => {
     if (userId === meId) return "You";
     const m = balances?.members.find((x) => x.user_id === userId);
@@ -368,30 +454,32 @@ function BalancesPanel({ group, meId }: { group: Group; meId?: string }) {
   };
 
   return (
-    <section className="flex flex-col gap-3.5 rounded-2xl border border-border/70 bg-card p-5.5">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold">Balances</h2>
-        <span className="text-[13px] text-muted-foreground">Net position of each member</span>
-      </div>
+    <Panel className="gap-1">
+      <PanelHeader title="Balances" description="Each member’s net position" />
       {isLoading ? (
-        [0, 1, 2].map((i) => <Skeleton key={i} className="h-8 rounded-lg" />)
+        <RowsSkeleton rows={3} />
       ) : isError || !balances ? (
-        <p className="text-sm text-muted-foreground">Couldn’t load balances.</p>
+        <Retry what="balances" onRetry={() => refetch()} />
       ) : (
-        <>
-          <ul className="flex flex-col gap-3">
+        <div className="flex animate-fade-in flex-col">
+          <ul className="flex flex-col">
             {balances.members.map((m) => {
               const net = num(m.net);
               return (
-                <li key={m.user_id} className="flex items-center gap-2.5">
-                  <span className="flex size-8 items-center justify-center rounded-full bg-accent text-[11px] font-medium text-primary">
-                    {initials(m.user_name ?? m.user_email)}
+                <li key={m.user_id} className={rowClass}>
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span
+                      aria-hidden
+                      className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-micro font-semibold text-primary"
+                    >
+                      {initials(m.user_name ?? m.user_email)}
+                    </span>
+                    <span className="truncate">{label(m.user_id)}</span>
                   </span>
-                  <span className="flex-1 truncate text-sm">{label(m.user_id)}</span>
                   <span
                     className={cn(
-                      "text-sm font-semibold tabular-nums",
-                      net > 0.005 ? "text-primary" : net < -0.005 ? "text-destructive" : "text-muted-foreground",
+                      "shrink-0 font-medium tabular-nums",
+                      net > 0.005 ? "text-primary" : net < -0.005 ? "text-destructive" : "font-normal text-muted-foreground",
                     )}
                   >
                     {Math.abs(net) < 0.005 ? "Settled" : formatMoney(net, balances.currency, { signed: true })}
@@ -400,93 +488,83 @@ function BalancesPanel({ group, meId }: { group: Group; meId?: string }) {
               );
             })}
           </ul>
-          <div className="flex flex-col gap-2.5 border-t border-border/50 pt-3.5">
-            <span className="text-xs tracking-[0.08em] text-muted-foreground uppercase">
-              {balances.transfers.length === 0
-                ? "Everyone’s square"
-                : `Simplest way to settle · ${balances.transfers.length} ${balances.transfers.length === 1 ? "payment" : "payments"}`}
-            </span>
-            {balances.transfers.map((t) => (
-              <div key={`${t.from_user_id}-${t.to_user_id}`} className="flex items-center gap-2 text-[13px]">
-                <span className="font-medium">{label(t.from_user_id)}</span>
-                <span className="text-muted-foreground">{t.from_user_id === meId ? "pay" : "pays"}</span>
-                <span className="font-medium">{label(t.to_user_id)}</span>
-                <span className="ml-auto font-semibold tabular-nums">
-                  {formatMoney(num(t.amount), balances.currency)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </>
+        </div>
       )}
-    </section>
+    </Panel>
   );
 }
 
-function GroupInsightCard({ groupId }: { groupId: string }) {
-  const { data: insight, isLoading, isError } = useGroupInsight(groupId);
+function GroupInsightPanel({ groupId }: { groupId: string }) {
+  const { data: insight, isLoading, isError, refetch } = useGroupInsight(groupId);
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl bg-[oklch(0.32_0.045_162)] p-5.5 text-[oklch(0.95_0.012_160)]">
-      <span className="flex items-center gap-2 text-xs tracking-[0.08em] text-[oklch(0.8_0.04_158)] uppercase">
-        <Sparkles className="size-3.5" />
-        Settle AI · group insight
-      </span>
+    <Panel className="gap-3">
+      <PanelHeader
+        title="Group insight"
+        description="From Settle AI"
+        action={
+          <Link
+            href="/dashboard"
+            className="shrink-0 rounded-md text-xs text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+          >
+            Ask about this group
+          </Link>
+        }
+      />
       {isLoading ? (
-        <>
-          <Skeleton className="h-6 w-full rounded-lg bg-white/10" />
-          <Skeleton className="h-6 w-3/4 rounded-lg bg-white/10" />
-        </>
+        <div aria-busy className="flex flex-col gap-2">
+          <Skeleton className="h-3.5 w-full rounded-full" />
+          <Skeleton className="h-3.5 w-4/5 rounded-full" />
+          <Skeleton className="h-3 w-1/2 rounded-full" />
+        </div>
       ) : isError || !insight ? (
-        <p className="text-sm text-[oklch(0.85_0.03_158)]">Insights aren’t available right now.</p>
+        <p className="text-sm text-muted-foreground">
+          Insights aren’t available right now.{" "}
+          <button type="button" onClick={() => refetch()} className={linkButton}>
+            Try again
+          </button>
+        </p>
       ) : (
-        <>
-          <p className="font-display text-xl leading-snug">{insight.narrative}</p>
+        <div className="flex animate-fade-in flex-col gap-1.5">
+          <p className="text-sm leading-relaxed">{insight.narrative}</p>
           {insight.expense_count > 0 && (
-            <p className="text-[13px] text-[oklch(0.84_0.03_158)]">
-              {formatMoney(insight.total_spent, insight.currency)} across {insight.expense_count}{" "}
-              {insight.expense_count === 1 ? "expense" : "expenses"} in the last {insight.period_days} days
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {formatMoney(insight.total_spent, insight.currency)} across {plural(insight.expense_count, "expense")} in
+              the last {insight.period_days} days
             </p>
           )}
-        </>
+        </div>
       )}
-      <Link
-        href="/dashboard"
-        className="inline-flex h-10 items-center gap-2 self-start rounded-full border border-white/25 px-4 text-[13px] transition-colors hover:bg-white/10"
-      >
-        <MessageCircle className="size-3.5" />
-        Ask about this group
-      </Link>
-    </section>
-  );
-}
-
-function ListSkeleton() {
-  return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-5">
-      {[0, 1, 2, 3].map((i) => (
-        <Skeleton key={i} className="h-12 rounded-lg" />
-      ))}
-    </div>
+    </Panel>
   );
 }
 
 export function GroupDetailSkeleton() {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-2 py-4 md:px-4 md:py-6">
-      <Skeleton className="h-4 w-24 rounded-full" />
-      <div className="flex items-center gap-4">
-        <Skeleton className="size-16 rounded-2xl" />
+    <PageContainer aria-busy aria-label="Loading group">
+      <Skeleton className="-mb-4 h-4 w-20 rounded-full" />
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-10 w-64 rounded-xl" />
-          <Skeleton className="h-3 w-40 rounded-full" />
+          <Skeleton className="h-7 w-56 max-w-full rounded-lg" />
+          <Skeleton className="h-4 w-72 max-w-full rounded-full" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-24 rounded-full" />
+          <Skeleton className="h-9 w-28 rounded-full" />
         </div>
       </div>
-      <Skeleton className="h-16 rounded-[20px]" />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Skeleton className="h-80 rounded-2xl lg:col-span-2" />
-        <Skeleton className="h-80 rounded-2xl" />
+      <FigureStripSkeleton count={3} />
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+        <div className="flex flex-col gap-4 lg:col-span-2">
+          <Skeleton className="h-9 w-64 rounded-full" />
+          <div className="rounded-2xl border border-border bg-card px-5 py-4 md:px-6">
+            <RowsSkeleton rows={5} />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card px-5 py-4 md:px-6">
+          <RowsSkeleton rows={3} />
+        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

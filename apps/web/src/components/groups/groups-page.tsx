@@ -2,21 +2,29 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Plus, Search, Users } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
-import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@settle/ui/components/empty";
 import { Skeleton } from "@settle/ui/components/skeleton";
 import { cn } from "@settle/ui/lib/utils";
 
-import { Eyebrow } from "@/components/dashboard/panel";
-import { StatSkeleton } from "@/components/dashboard/overview-skeleton";
+import {
+  FigureStrip,
+  FigureStripSkeleton,
+  PageContainer,
+  PageHeader,
+  Panel,
+  SearchField,
+  Segmented,
+  buttonClass,
+  type Figure,
+} from "@/components/dashboard/panel";
 import { CreateGroupDialog } from "@/components/groups/create-group-dialog";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useExpenses } from "@/hooks/useExpenses";
-import { useGroups } from "@/hooks/useGroups";
 import { useSettlements } from "@/hooks/useSettlements";
-import { computeBalances, formatMoney } from "@/lib/balances";
-import { initials } from "@/lib/people";
+import { useStanding } from "@/hooks/useStanding";
+import { formatMoney } from "@/lib/balances";
+import { formatDay, initials } from "@/lib/people";
 import type { Group } from "@/types";
 
 type Filter = "all" | "owed" | "owe" | "settled";
@@ -30,278 +38,270 @@ const FILTERS: { id: Filter; label: string }[] = [
 const status = (balance: number): Exclude<Filter, "all"> =>
   balance > 0.005 ? "owed" : balance < -0.005 ? "owe" : "settled";
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+// Grid shared by the column header and each row so the columns line up.
+// Below sm a row is just the name (with members and activity underneath)
+// and the balance.
+const rowGrid =
+  "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 sm:grid-cols-[minmax(0,1fr)_6rem_7rem_8rem]";
+
 export function GroupsPage() {
-  const { data: groups, isLoading, isError } = useGroups();
   const { data: me } = useCurrentUser();
+  const { standing, groups, currency, isLoading, isError, retry } = useStanding();
+  // Only for "last activity" and "most active"; balances come from the api.
   const { data: expenses } = useExpenses({ limit: 100 });
   const { data: settlements } = useSettlements({ limit: 100 });
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [creating, setCreating] = useState(false);
 
-  const byGroup = useMemo(
-    () => (me ? computeBalances(expenses ?? [], settlements ?? [], me.id).byGroup : new Map()),
-    [expenses, settlements, me],
-  );
+  const balanceOf = (g: Group) => standing?.groupNet.get(g.id)?.net ?? 0;
 
-  const stats = useMemo(() => {
-    if (!groups) return null;
+  // Latest expense or settlement date per group, from the recent items loaded.
+  const lastActivity = useMemo(() => {
+    const latest = new Map<string, string>();
+    const bump = (groupId: string | null | undefined, date: string) => {
+      if (!groupId) return;
+      const current = latest.get(groupId);
+      if (!current || date > current) latest.set(groupId, date);
+    };
+    for (const e of expenses ?? []) if (!e.deleted_at) bump(e.group_id, e.date);
+    for (const s of settlements ?? []) bump(s.group_id, s.date);
+    return latest;
+  }, [expenses, settlements]);
+
+  const figures = useMemo((): Figure[] | null => {
+    if (!groups || !standing) return null;
     const people = new Set<string>();
-    let net = 0;
+    const net = new Map<string, number>();
     let ahead = 0;
     for (const g of groups) {
       for (const m of g.members) if (!m.removed_at && m.user_id !== me?.id) people.add(m.user_id);
-      const b = byGroup.get(g.id) ?? 0;
-      net += b;
-      if (b > 0.005) ahead++;
+      const entry = standing.groupNet.get(g.id);
+      if (!entry) continue;
+      net.set(entry.currency, (net.get(entry.currency) ?? 0) + entry.net);
+      if (entry.net > 0.005) ahead++;
     }
+
     const monthAgo = new Date();
     monthAgo.setDate(monthAgo.getDate() - 30);
     const counts = new Map<string, number>();
     for (const e of expenses ?? []) {
-      if (e.group_id && new Date(e.date) >= monthAgo) {
+      if (e.group_id && !e.deleted_at && new Date(e.date) >= monthAgo) {
         counts.set(e.group_id, (counts.get(e.group_id) ?? 0) + 1);
       }
     }
     const [activeId, activeCount] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] ?? [];
-    return {
-      people: people.size,
-      net,
-      ahead,
-      active: groups.find((g) => g.id === activeId),
-      activeCount: activeCount ?? 0,
-    };
-  }, [groups, byGroup, expenses, me]);
+    const active = groups.find((g) => g.id === activeId);
+
+    const netValues = [...net];
+    const single = netValues.length === 1 ? netValues[0][1] : null;
+    return [
+      {
+        label: "Net across groups",
+        value:
+          netValues.length === 0
+            ? formatMoney(0, currency)
+            : netValues.map(([c, amount]) => formatMoney(amount, c, { signed: true })).join(" + "),
+        hint: `You’re ahead in ${ahead} of ${plural(groups.length, "group")}`,
+        money: true,
+        tone: single === null ? undefined : single > 0.005 ? "positive" : single < -0.005 ? "negative" : "muted",
+      },
+      {
+        label: "Most active",
+        value: active?.name ?? "None yet",
+        hint: active ? `${plural(activeCount ?? 0, "expense")} in the last 30 days` : "No expenses in the last 30 days",
+      },
+      {
+        label: "People you split with",
+        value: people.size,
+        hint: "Across all your groups",
+      },
+    ];
+  }, [groups, standing, expenses, me, currency]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return (groups ?? []).filter(
       (g) =>
         (!q || g.name.toLowerCase().includes(q) || g.description?.toLowerCase().includes(q)) &&
-        (filter === "all" || status(byGroup.get(g.id) ?? 0) === filter),
+        (filter === "all" || status(standing?.groupNet.get(g.id)?.net ?? 0) === filter),
     );
-  }, [groups, query, filter, byGroup]);
+  }, [groups, standing, query, filter]);
 
-  const currency = me?.default_currency ?? "INR";
+  const hasGroups = (groups ?? []).length > 0;
 
-  return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-7 px-2 py-4 md:px-4 md:py-6">
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div className="flex flex-col gap-2">
-          <Eyebrow>
-            {groups
-              ? `${groups.length} ${groups.length === 1 ? "group" : "groups"} · ${stats?.people ?? 0} people`
-              : "Groups"}
-          </Eyebrow>
-          <h1 className="font-display text-4xl leading-none tracking-tight md:text-5xl">
-            Your <em className="italic">groups</em>
-          </h1>
-          <p className="text-[15px] text-muted-foreground">
-            Everyone you split with, and where each group stands.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          className="inline-flex h-11 items-center gap-2 self-start rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg active:scale-[0.98] sm:self-auto"
-        >
-          <Plus className="size-4" />
+  let body: React.ReactNode;
+  if (isLoading) body = <GroupsListSkeleton />;
+  else if (isError || !standing) {
+    body = (
+      <Panel>
+        <p className="text-sm text-muted-foreground">
+          Couldn’t load your groups.{" "}
+          <button
+            type="button"
+            onClick={retry}
+            className="rounded-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+          >
+            Try again
+          </button>
+        </p>
+      </Panel>
+    );
+  } else if (!hasGroups) {
+    body = (
+      <Panel className="items-start">
+        <p className="text-sm text-muted-foreground">
+          No groups yet. Start one for a trip, a flat or anything you share.
+        </p>
+        <button type="button" onClick={() => setCreating(true)} className={buttonClass({ size: "sm" })}>
+          <Plus />
           New group
         </button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {!stats ? (
-          <>
-            <StatSkeleton highlight />
-            <StatSkeleton />
-            <StatSkeleton />
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col gap-2.5 rounded-2xl bg-primary p-5 text-primary-foreground shadow-[0_25px_80px_-12px_rgba(46,89,70,0.35)]">
-              <Eyebrow className="text-primary-foreground/70">Net across groups</Eyebrow>
-              <span className="font-display text-4xl leading-none tracking-tight lg:text-[44px]">
-                {formatMoney(stats.net, currency, { signed: true })}
-              </span>
-              <span className="text-[13px] text-primary-foreground/80">
-                You’re ahead in {stats.ahead} of {groups?.length ?? 0}
-              </span>
-            </div>
-            <div className="flex flex-col gap-2.5 rounded-2xl border border-border/70 bg-card p-5">
-              <Eyebrow>Most active</Eyebrow>
-              <span className="truncate font-display text-4xl leading-none tracking-tight lg:text-[44px]">
-                {stats.active?.name ?? "None yet"}
-              </span>
-              <span className="text-[13px] text-muted-foreground">
-                {stats.activeCount} {stats.activeCount === 1 ? "expense" : "expenses"} in the last
-                30 days
-              </span>
-            </div>
-            <div className="flex flex-col gap-2.5 rounded-2xl border border-border/70 bg-card p-5">
-              <Eyebrow>People you split with</Eyebrow>
-              <span className="font-display text-4xl leading-none tracking-tight lg:text-[44px]">
-                {stats.people}
-              </span>
-              <span className="text-[13px] text-muted-foreground">Across all your groups</span>
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="flex h-11 flex-1 items-center gap-2.5 rounded-xl border border-border bg-card px-3.5 text-sm text-muted-foreground focus-within:border-ring">
-          <Search className="size-4" />
-          <span className="sr-only">Search groups</span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search groups"
-            className="flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-          />
-        </label>
-        <div role="tablist" className="flex gap-1 overflow-x-auto rounded-xl bg-muted p-1">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              role="tab"
-              aria-selected={filter === f.id}
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                "h-9 shrink-0 rounded-[9px] px-3.5 text-[13px] transition-colors",
-                filter === f.id
-                  ? "bg-card font-medium text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+      </Panel>
+    );
+  } else {
+    body = (
+      <Panel className="animate-fade-in gap-0 py-2 md:py-2">
+        <div
+          aria-hidden
+          className={cn(rowGrid, "hidden border-b border-border py-2.5 text-xs text-muted-foreground sm:grid")}
+        >
+          <span>Group</span>
+          <span>Members</span>
+          <span>Last activity</span>
+          <span className="text-right">Your balance</span>
         </div>
-      </div>
+        {visible.length === 0 ? (
+          <p className="py-4 text-sm text-muted-foreground">No groups match. Try another search or filter.</p>
+        ) : (
+          <ul className="flex flex-col">
+            {visible.map((group) => (
+              <GroupRow
+                key={group.id}
+                group={group}
+                balance={balanceOf(group)}
+                currency={standing.groupNet.get(group.id)?.currency ?? group.default_currency}
+                lastActivity={lastActivity.get(group.id)}
+              />
+            ))}
+          </ul>
+        )}
+      </Panel>
+    );
+  }
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Groups"
+        description="Everyone you split with, and where each group stands."
+        actions={
+          <button type="button" onClick={() => setCreating(true)} className={buttonClass()}>
+            <Plus />
+            New group
+          </button>
+        }
+      />
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-[214px] rounded-2xl" />
-          ))}
-        </div>
-      ) : isError ? (
-        <Empty className="rounded-2xl border border-border/70 bg-card py-14">
-          <EmptyMedia variant="icon">
-            <Users />
-          </EmptyMedia>
-          <EmptyTitle>Couldn&apos;t load groups</EmptyTitle>
-          <EmptyDescription>Try refreshing the page.</EmptyDescription>
-        </Empty>
+        <FigureStripSkeleton count={3} />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visible.map((group) => (
-            <GroupCard
-              key={group.id}
-              group={group}
-              meId={me?.id}
-              balance={byGroup.get(group.id) ?? 0}
-            />
-          ))}
-          {filter === "all" && !query && (
-            <button
-              type="button"
-              onClick={() => setCreating(true)}
-              className="flex min-h-[214px] flex-col items-center justify-center gap-2.5 rounded-2xl border-[1.5px] border-dashed border-border p-6 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-card"
-            >
-              <span className="flex size-11 items-center justify-center rounded-full bg-muted text-primary">
-                <Plus className="size-5" />
-              </span>
-              <span className="font-medium text-foreground">Create a group</span>
-              <span>Trips, flats, dinners: anything you share</span>
-            </button>
-          )}
-          {visible.length === 0 && (filter !== "all" || query) && (
-            <p className="col-span-full py-10 text-center text-sm text-muted-foreground">
-              No groups match.
-            </p>
-          )}
+        figures && hasGroups && <FigureStrip figures={figures} className="animate-fade-in" />
+      )}
+
+      {hasGroups && !isError && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <SearchField
+            value={query}
+            onChange={setQuery}
+            placeholder="Search groups"
+            icon={<Search className="size-4" />}
+            className="sm:flex-1"
+          />
+          <Segmented options={FILTERS} value={filter} onChange={setFilter} label="Filter groups by balance" />
         </div>
       )}
 
+      {body}
+
       <CreateGroupDialog open={creating} onOpenChange={setCreating} />
-    </div>
+    </PageContainer>
   );
 }
 
-const AVATAR_TONES = ["bg-primary text-primary-foreground", "bg-secondary", "bg-accent"];
-
-function GroupCard({ group, meId, balance }: { group: Group; meId?: string; balance: number }) {
-  const members = group.members.filter((m) => !m.removed_at);
-  // Current user first, so the stack always starts with "you".
-  members.sort((a, b) => Number(b.user_id === meId) - Number(a.user_id === meId));
+function GroupRow({
+  group,
+  balance,
+  currency,
+  lastActivity,
+}: {
+  group: Group;
+  balance: number;
+  currency: string;
+  lastActivity?: string;
+}) {
+  const members = group.members.filter((m) => !m.removed_at).length;
   const state = status(balance);
+  const activity = lastActivity ? formatDay(lastActivity) : "No recent activity";
 
   return (
-    <Link
-      href={`/dashboard/groups/${group.id}`}
-      className="group flex flex-col gap-5 rounded-2xl border border-border/70 bg-card p-5.5 transition-all hover:-translate-y-0.5 hover:shadow-dashboard"
-    >
-      <div className="flex items-start justify-between">
-        <span className="flex size-11 items-center justify-center rounded-xl bg-accent text-sm font-semibold text-primary">
-          {initials(group.name)}
+    <li className="border-b border-border/50 last:border-b-0">
+      <Link
+        href={`/dashboard/groups/${group.id}`}
+        className={cn(
+          rowGrid,
+          "-mx-2 min-h-14 rounded-lg px-2 py-3 text-sm outline-none transition-colors duration-150 hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/50",
+        )}
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span
+            aria-hidden
+            className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-micro font-semibold text-primary"
+          >
+            {initials(group.name)}
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate font-medium">{group.name}</span>
+            <span className="truncate text-xs text-muted-foreground sm:hidden">
+              {plural(members, "member")} · {activity}
+            </span>
+            {group.description && (
+              <span className="hidden truncate text-xs text-muted-foreground sm:block">{group.description}</span>
+            )}
+          </span>
         </span>
+        <span className="hidden text-muted-foreground tabular-nums sm:block">{members}</span>
+        <span className="hidden text-muted-foreground sm:block">{activity}</span>
         <span
           className={cn(
-            "rounded-full px-2.5 py-1 text-xs font-medium",
-            state === "owed" && "bg-primary/10 text-primary",
-            state === "owe" && "bg-destructive/10 text-destructive",
-            state === "settled" && "bg-muted text-muted-foreground",
+            "text-right font-medium tabular-nums",
+            state === "owed" && "text-primary",
+            state === "owe" && "text-destructive",
+            state === "settled" && "font-normal text-muted-foreground",
           )}
         >
-          {state === "owed" ? "You’re owed" : state === "owe" ? "You owe" : "Settled"}
+          {state === "settled" ? "Settled" : formatMoney(balance, currency, { signed: true })}
         </span>
-      </div>
-      <div className="flex min-w-0 flex-col gap-1">
-        <span className="truncate text-[17px] font-semibold">{group.name}</span>
-        <span className="line-clamp-1 text-[13px] text-muted-foreground">
-          {group.description || `${members.length} ${members.length === 1 ? "member" : "members"}`}
-        </span>
-      </div>
-      <div className="mt-auto flex items-end justify-between border-t border-border/50 pt-3.5">
-        <div className="flex">
-          {members.slice(0, 3).map((m, i) => (
-            <span
-              key={m.id}
-              title={m.user_name ?? m.user_email ?? undefined}
-              className={cn(
-                "flex size-7 items-center justify-center rounded-full border-2 border-card text-[11px] font-medium",
-                AVATAR_TONES[i % AVATAR_TONES.length],
-                i > 0 && "-ml-2",
-              )}
-            >
-              {initials(m.user_name ?? m.user_email)}
-            </span>
-          ))}
-          {members.length > 3 && (
-            <span className="-ml-2 flex size-7 items-center justify-center rounded-full border-2 border-card bg-muted text-[11px] text-muted-foreground">
-              +{members.length - 3}
-            </span>
-          )}
+      </Link>
+    </li>
+  );
+}
+
+function GroupsListSkeleton() {
+  return (
+    <div aria-busy aria-label="Loading groups" className="flex flex-col rounded-2xl border border-border bg-card px-5 py-2 md:px-6">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="flex items-center gap-3 border-b border-border/50 py-3 last:border-b-0">
+          <Skeleton className="size-8 rounded-md" />
+          <div className="flex flex-1 flex-col gap-1.5">
+            <Skeleton className="h-3.5 w-1/3 rounded-full" />
+            <Skeleton className="h-3 w-1/5 rounded-full" />
+          </div>
+          <Skeleton className="h-3.5 w-16 rounded-full" />
         </div>
-        <div className="flex flex-col items-end gap-0.5">
-          <span className="text-xs text-muted-foreground">Your balance</span>
-          <span
-            className={cn(
-              "text-lg font-semibold",
-              state === "owed" && "text-primary",
-              state === "owe" && "text-destructive",
-              state === "settled" && "text-muted-foreground",
-            )}
-          >
-            {state === "settled"
-              ? "Settled up"
-              : formatMoney(balance, group.default_currency, { signed: true })}
-          </span>
-        </div>
-      </div>
-    </Link>
+      ))}
+    </div>
   );
 }

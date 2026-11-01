@@ -11,14 +11,14 @@ export function Topbar() {
   const { user } = useUser();
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b border-border/70 bg-background/80 px-4 backdrop-blur-md md:px-6">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4 md:px-6">
       <SidebarTrigger className="rounded-full" />
-      <div className="max-w-sm flex-1">
+      <div className="min-w-0 max-w-sm flex-1">
         <SearchPalette />
       </div>
-      <div className="ml-auto flex items-center gap-3">
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
         <InvitationsBell />
-        <span className="hidden text-[13px] text-muted-foreground sm:inline">
+        <span className="hidden text-meta text-muted-foreground sm:inline">
           {user?.fullName ?? user?.primaryEmailAddress?.emailAddress}
         </span>
         <UserButton />

@@ -1,10 +1,14 @@
+import { PageContainer } from "@/components/dashboard/panel";
 import { SpendingNav } from "@/components/spending/spending-nav";
 
+// One page column for the whole Spending section. The sub-page nav sits above
+// each sub-page's own PageHeader, so the four pages read as tabs of one section
+// while each still names what it is (Spending, Budgets, Recurring, Categories).
 export default function SpendingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-2 py-4 md:px-4 md:py-6">
+    <PageContainer className="gap-6 md:gap-8">
       <SpendingNav />
       {children}
-    </div>
+    </PageContainer>
   );
 }

@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${instrumentSerif.variable} ${inter.variable}`}>
-      <body className="min-h-screen bg-background font-body text-foreground antialiased selection:bg-[#6366f1] selection:text-white">
+      <body className="min-h-screen bg-background font-body text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
         <Providers>
           {children}
         </Providers>
