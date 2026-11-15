@@ -3,6 +3,7 @@ import {
   HandCoins,
   PieChart,
   Receipt,
+  ReceiptText,
   Tags,
   UserRound,
   Users,
@@ -22,6 +23,7 @@ const TOOL_STEPS: Record<string, { icon: LucideIcon; active: string; done: strin
   list_my_groups: { icon: Users, active: "Fetching your groups", done: "Fetched your groups" },
   get_group_members: { icon: UserRound, active: "Looking up group members", done: "Looked up group members" },
   list_my_settlements: { icon: HandCoins, active: "Fetching your settlements", done: "Fetched your settlements" },
+  add_expense: { icon: ReceiptText, active: "Adding the expense", done: "Added the expense" },
 };
 
 export function toolStep(name: string) {

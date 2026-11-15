@@ -1,5 +1,6 @@
 from app.tools.analytics import get_budget_status, get_my_balances, get_spending_summary
 from app.tools.categories import list_my_categories
+from app.tools.expense_actions import add_expense
 from app.tools.expenses import get_expense_details, list_my_expenses
 from app.tools.groups import get_group_members, list_my_groups
 from app.tools.settlements import list_my_settlements
@@ -14,6 +15,8 @@ CHAT_TOOLS = [
     get_my_balances,
     get_spending_summary,
     get_budget_status,
+    # Writes: pauses for the user's approval first (see expense_actions.py).
+    add_expense,
 ]
 
 __all__ = ["CHAT_TOOLS"]

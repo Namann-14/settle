@@ -2,7 +2,7 @@
 
 **Purpose:** Client for chat thread listing and deletion.
 
-**Key contents:** `listChatThreads`, `deleteChatThread` (URL-encodes the id). Local `handleResponse` handles 204.
+**Key contents:** `listChatThreads`, `deleteChatThread` (URL-encodes the id), `restoreChatCheckpoint` (returns `removed_expenses`). Local `handleResponse` handles 204.
 
 **Depends on / used by:** `lib/chat-types.ts`; `hooks/useChatThreads.ts`. Streaming chat itself goes through `/api/chat`, not here.
 

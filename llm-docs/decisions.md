@@ -2,7 +2,7 @@
 
 **Purpose:** Running log of product and architecture decisions for Settle with reasoning.
 
-**Key contents:** Entries: personal expense tracker (spending is the user's share, default currency only, standing budgets, idempotent recurring sync with no cron, 12 seeded system categories, minimal incomes); dashboard performance without Redis (move Vercel region to sin1, fewer queries, pool tuning, request timing logs); faster first load (server prefetch, lighter landing page, deferred hero video); split-coin logo and where its icon files live.
+**Key contents:** Entries: personal expense tracker (spending is the user's share, default currency only, standing budgets, idempotent recurring sync with no cron, 12 seeded system categories, minimal incomes); dashboard performance without Redis (move Vercel region to sin1, fewer queries, pool tuning, request timing logs); faster first load (server prefetch, lighter landing page, deferred hero video); split-coin logo and where its icon files live; evals on LangSmith with free judge models.
 
 **Depends on / used by:** Referenced by most docs here; code in `services/api`, `services/ai` and `apps/web`.
 
@@ -30,6 +30,25 @@
 - Video: not loaded under 768px, with data saver or on 2g/3g; paused when off screen or the tab is hidden. Phones get the plain hero background and save ~18MB.
 - Reveal no longer animates a blur filter (compositor-only now); the footer reveal stops reading layout after it fires.
 - Left alone on purpose: Clerk on the landing page (needed for the signed-in state and sign-up modal), latin-ext font files (the rupee sign pulls in Inter and Instrument Serif latin-ext), and `content-visibility` on sections (risks anchor jumps and scroll-height shifts).
+
+
+## 2026-10-30 AI evals
+
+- Evals run on LangSmith (free Developer plan: 1 seat, 5k base traces/month, 14-day retention), since tracing already goes there and it covers datasets, experiments and feedback. Considered and rejected: lm-evaluation-harness (academic benchmarks for base models, not app evals), Harbor (containerized agent tasks), Braintrust and Opik (a second platform, splitting traces), Langfuse (same reason; it's the plan B if 5k traces/month gets tight, by switching fully).
+- Offline (`services/ai/evals`, pytest + the langsmith plugin): labelled extraction cases scored field by field, and a chat tool-routing check that runs only the first model step, so it needs no services/api or test data. Both are code-scored, no LLM judge.
+- Live (`evals/online.py`, every 6 hours from GitHub Actions): code checks on every extraction trace and every chat turn, plus an LLM judge (groundedness, relevance) on a 20% sample of chat turns, written back as LangSmith feedback.
+- Judge models must be free: Groq free tier (separate org from production, since limits are per org), NVIDIA build.nvidia.com or Ollama Cloud, all through one OpenAI-compatible client. The judge is a different model family (Qwen) from the agents (gpt-oss) to avoid self-preference. Gemini's free tier was ruled out because free-tier prompts may be used to improve Google products, and these prompts hold users' expense data.
+- Feedback is written with `extend_trace_retention=False`; by default feedback upgrades a trace to paid extended retention.
+- Root traces are named `chat_turn` and `expense_extraction` so the scorer can find them.
+- Not done yet: user feedback (thumbs, "edited the extracted draft") as LangSmith feedback, which needs run ids surfaced to the web app and the bot.
+
+## 2026-10-31 Eval gate and live alerts
+
+- Merging into `main` is gated by offline evals: the `Eval gate` GitHub check turns per-case pytest results into per-suite pass rates (`evals/gate.py`) and fails below `evals/thresholds.json`. Branch protection on `main`, set up by hand in GitHub, requires that check.
+- Thresholds start at 50% because there are no real users yet. Raise them before launch.
+- Force merge during development: the `skip-evals` PR label passes the gate with a warning (recorded on the PR), and the admin bypass on the `main` ruleset covers emergencies.
+- The workflow has no `paths` filter, because a required check that never starts blocks the merge. PRs that don't touch `services/ai` pass the job immediately.
+- Live monitoring stays on free GitHub Actions (every 6 hours) rather than LangSmith's built-in online evaluators, for the free judge model and control over trace retention. It now records errored runs too, and alerts when a batch crosses a threshold: a Telegram message from the Settle bot, and a failed scheduled run, which makes GitHub send an email.
 
 ## 2026-10-31 Group invites, join links and split hardening
 
@@ -83,3 +102,16 @@
 - Added `robots.ts`, `sitemap.ts`, `metadataBase`, per-page canonicals (`/` in page.tsx, `/privacy` in the privacy page; never in the root layout, children would inherit it), Open Graph/Twitter metadata and a generated OG image. `/dashboard` is `noindex` via its layout and disallowed in robots; `/api/` is disallowed.
 - Site origin comes from `NEXT_PUBLIC_SITE_URL`, then `VERCEL_PROJECT_PRODUCTION_URL`, then localhost (`lib/site.ts`). Set it on Vercel so canonicals do not point at preview hosts.
 - Still open from the audit: JSON-LD (SoftwareApplication + FAQPage), icon files, `/terms` page, title template.
+
+## 2026-11-15 Chat UI moved to shadcn AI Elements
+
+- AI Elements moved from the Vercel registry (`ai-sdk.dev/elements`) to shadcn (`ui.shadcn.com/docs/ai-elements`). The new version is a set of patterns built from ordinary shadcn primitives, not a component library. The 48 vendored files in `apps/web/src/components/ai-elements` (only 9 were used) are gone, along with the deps that only they needed.
+- The chat now uses `@settle/ui` primitives: MessageScroller (instead of use-stick-to-bottom), Message + Bubble, InputGroup for the composer, Button for suggestions, and the new Trace for reasoning and tool steps. Loading text uses the `shimmer` utility from `shadcn/tailwind.css`. Markdown still goes through Streamdown (`chat/markdown.tsx`).
+- Dropped: the "Thought for N seconds" duration, since the AI SDK doesn't time reasoning. If it is wanted back, measure it in the ai service and send it as message metadata.
+
+## 2026-11-15 Chat can add expenses, with approval and checkpoint rollback
+
+- The chat agent got its first write tool, `add_expense` (equal split, group or personal). It never writes on its own: the tool pauses the LangGraph run with `interrupt()` and the web shows a Confirmation card (shadcn AI Elements pattern). Approve resumes the run and creates the expense, Deny resumes it with a "declined" result. The resumed stream continues the same assistant message and history row.
+- Restoring a checkpoint now undoes data, not just conversation. Every expense the agent creates is recorded in `ai_chat_expenses` against the turn that added it. Restore (a server call, made the moment the user clicks) soft-deletes the expenses of every later turn through the api, then truncates the history. Retrying a reply forks from the previous checkpoint, so it rolls back the retried turn's expenses too.
+- Not covered: edits or settlements made outside the chat after the expense was added are left alone (the expense is just soft-deleted), and in-memory mode (no `DATABASE_URL`) records nothing, so nothing is rolled back.
+- The chat UI also lined up with the Chain of Thought, Checkpoint and Message patterns: "Done in N steps", a separator Marker with a Restore button, and Copy / Retry / Edit message actions. Good/Bad feedback was skipped because there is nowhere to store it.

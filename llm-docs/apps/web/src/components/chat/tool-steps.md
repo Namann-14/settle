@@ -2,7 +2,7 @@
 
 **Purpose:** Maps AI service tool names and raw tool I/O to human-friendly UI text.
 
-**Key contents:** `toolStep(name)` returns icon plus active/done labels for the known chat tools (balances, spending summary, categories, expenses, groups, members, settlements) with a title-cased fallback; `readableArgs` and `outputLines` turn args/outputs into short lines with UUIDs removed.
+**Key contents:** `toolStep(name)` returns icon plus active/done labels for the known chat tools (balances, spending summary, categories, expenses, groups, members, settlements, add_expense) with a title-cased fallback; `readableArgs` and `outputLines` turn args/outputs into short lines with UUIDs removed.
 
 **Depends on / used by:** Mirrors tools in `services/ai/app/tools`; used by `chat/assistant-message.tsx`.
 

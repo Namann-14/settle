@@ -37,6 +37,17 @@ CREATE TABLE IF NOT EXISTS ai_chat_messages (
     created_at     timestamptz NOT NULL DEFAULT now(),
     UNIQUE (thread_id, seq)
 );
+
+-- Expenses the chat agent created (tools/expense_actions.py). message_seq is
+-- the assistant message whose turn added it, filled in when that turn is
+-- saved; restoring a checkpoint deletes the expenses of every later turn.
+CREATE TABLE IF NOT EXISTS ai_chat_expenses (
+    expense_id   text PRIMARY KEY,
+    thread_id    text NOT NULL REFERENCES ai_chat_threads (id) ON DELETE CASCADE,
+    message_seq  integer,
+    created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ai_chat_expenses_thread_idx ON ai_chat_expenses (thread_id);
 """
 
 _pool: AsyncConnectionPool | None = None

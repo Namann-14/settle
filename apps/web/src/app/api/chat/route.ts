@@ -5,17 +5,25 @@ import {
   generateId,
 } from "ai";
 import { aiErrorStatus, aiFetch } from "@/lib/ai";
-import type { ChatMessage } from "@/lib/chat-types";
+import type { ChatMessage, ExpensePreview } from "@/lib/chat-types";
 
 // Events emitted by the ai service's POST /chat/stream (see
 // services/ai/app/routes/chat.py). Translated here into the AI SDK UI
-// message stream so the client can use useChat + ai-elements directly.
+// message stream so the client can use useChat and the chat UI directly.
 type AiServiceEvent =
   | { conversation_id: string }
   | { reasoning: string }
   | { delta: string }
   | { tool_call: { id: string; name: string; args: unknown } }
-  | { tool_result: { id: string; name: string; output: string; error?: boolean } }
+  | { tool_result: { id: string; name: string; output: string; error?: boolean; denied?: boolean } }
+  | {
+      approval_request: {
+        id: string;
+        kind: "expense_approval";
+        tool_call_id: string;
+        expense: ExpensePreview;
+      };
+    }
   | { checkpoint_id: string }
   | { suggestions: string[] };
 
@@ -51,14 +59,28 @@ function lastUserText(messages: ChatMessage[]): string {
     .trim();
 }
 
+// Answers to a paused turn: the last message is the assistant's, with tool
+// parts the user has just approved or denied (useChat's
+// addToolApprovalResponse, then sendAutomaticallyWhen sends them here).
+function approvalAnswers(messages: ChatMessage[]) {
+  const last = messages.at(-1);
+  if (last?.role !== "assistant") return [];
+  return last.parts.flatMap((part) =>
+    part.type === "dynamic-tool" && part.state === "approval-responded"
+      ? [{ id: part.approval.id, approved: part.approval.approved }]
+      : []
+  );
+}
+
 export async function POST(request: Request) {
   const { id, messages } = (await request.json()) as {
     id: string;
     messages: ChatMessage[];
   };
 
-  const message = lastUserText(messages);
-  if (!message) {
+  const approvals = approvalAnswers(messages);
+  const message = approvals.length > 0 ? null : lastUserText(messages);
+  if (approvals.length === 0 && !message) {
     return NextResponse.json({ message: "Empty message" }, { status: 400 });
   }
 
@@ -72,13 +94,14 @@ export async function POST(request: Request) {
   try {
     // The chat id doubles as the LangGraph thread id, so memory for the
     // conversation lives server-side and only the newest message is sent.
+    // Approval answers resume the paused turn instead of starting one.
     upstream = await aiFetch("/chat/stream", {
       method: "POST",
-      body: JSON.stringify({
-        message,
-        conversation_id: id,
-        checkpoint_id: checkpointId ?? null,
-      }),
+      body: JSON.stringify(
+        approvals.length > 0
+          ? { conversation_id: id, approvals }
+          : { message, conversation_id: id, checkpoint_id: checkpointId ?? null }
+      ),
       signal: request.signal,
     });
   } catch (error) {
@@ -88,6 +111,10 @@ export async function POST(request: Request) {
   }
 
   const stream = createUIMessageStream<ChatMessage>({
+    // With the conversation passed in, a resumed turn (approval answers, last
+    // message the assistant's) keeps that message's id, so the client
+    // continues it instead of starting a second assistant message.
+    originalMessages: messages,
     execute: async ({ writer }) => {
       // At most one text or reasoning part is open at a time; switching kind
       // (or a tool call) closes the open one, so parts keep stream order.
@@ -120,12 +147,25 @@ export async function POST(request: Request) {
             dynamic: true,
           });
         } else if ("tool_result" in event) {
-          const { id: toolCallId, output, error } = event.tool_result;
+          const { id: toolCallId, output, error, denied } = event.tool_result;
           writer.write(
-            error
-              ? { type: "tool-output-error", toolCallId, errorText: output, dynamic: true }
-              : { type: "tool-output-available", toolCallId, output, dynamic: true }
+            denied
+              ? { type: "tool-output-denied", toolCallId }
+              : error
+                ? { type: "tool-output-error", toolCallId, errorText: output, dynamic: true }
+                : { type: "tool-output-available", toolCallId, output, dynamic: true }
           );
+        } else if ("approval_request" in event) {
+          const { id: approvalId, tool_call_id: toolCallId, expense } = event.approval_request;
+          close();
+          // The preview goes first so the card has its details when the
+          // part flips to approval-requested.
+          writer.write({
+            type: "data-expense-approval",
+            id: toolCallId,
+            data: { toolCallId, expense },
+          });
+          writer.write({ type: "tool-approval-request", approvalId, toolCallId });
         } else if ("checkpoint_id" in event) {
           close();
           writer.write({

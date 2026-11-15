@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Used by agents/chat_agent/nodes.
 
-**Decisions & caveats:** Tool policy: never state a number not obtained from a tool; use get_spending_summary / get_budget_status (user's own share, per decisions.md); call list_my_groups before using any group_id; do not blindly retry failing tools.
+**Decisions & caveats:** Tool policy: never state a number not obtained from a tool; use get_spending_summary / get_budget_status (user's own share, per decisions.md); call list_my_groups before using any group_id; do not blindly retry failing tools; call `add_expense` directly when asked to log one (the user approves in the UI, so no text confirmation), and never claim an expense was added unless the tool result says so.
