@@ -77,3 +77,9 @@
 - The dashboard had drifted to ad hoc sizes (13px in 35 places, 11px, 9px, 10px, 15px, 28px, 32px). It now uses one role ramp: page title 24px, figure 28px serif, dialog title 18px, panel title and body 14px, meta 13px, caption 12px, micro 11px (initials and badges only), plus Overview's serif net sentence. `text-micro`, `text-meta` and `text-figure` are theme tokens in `apps/web/src/index.css`; no bracketed pixel sizes remain in the app.
 - Inter below 14px no longer inherits the body's -0.01em tracking, and descriptions wrap with `text-pretty`.
 - `cn` registers the custom size names with tailwind-merge; before that, `text-meta` was silently stripped whenever a text colour followed it.
+
+## 2026-11-15 SEO foundations for the public site
+
+- Added `robots.ts`, `sitemap.ts`, `metadataBase`, per-page canonicals (`/` in page.tsx, `/privacy` in the privacy page; never in the root layout, children would inherit it), Open Graph/Twitter metadata and a generated OG image. `/dashboard` is `noindex` via its layout and disallowed in robots; `/api/` is disallowed.
+- Site origin comes from `NEXT_PUBLIC_SITE_URL`, then `VERCEL_PROJECT_PRODUCTION_URL`, then localhost (`lib/site.ts`). Set it on Vercel so canonicals do not point at preview hosts.
+- Still open from the audit: JSON-LD (SoftwareApplication + FAQPage), icon files, `/terms` page, title template.

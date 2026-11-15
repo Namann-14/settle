@@ -7,3 +7,5 @@
 **Depends on / used by:** Route `/privacy`; mentions Clerk and the Telegram bot.
 
 **Decisions & caveats:** `UPDATED` and `CONTACT_EMAIL` are hard-coded; update them when data handling changes (e.g. new processors or integrations).
+
+Sets `alternates.canonical: "/privacy"` so it does not inherit the landing canonical.

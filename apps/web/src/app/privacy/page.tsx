@@ -4,6 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Privacy Policy - Settle",
   description: "What Settle collects, why, and how to have it deleted.",
+  alternates: { canonical: "/privacy" },
 };
 
 const CONTACT_EMAIL = "namannayak.16@gmail.com";
