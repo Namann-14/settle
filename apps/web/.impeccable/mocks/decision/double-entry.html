@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Overview: double entry</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7faf8;--card:#fff;--ink:#15201a;--moss:#4b6b5a;--line:#cedbd3;--pale:#e4ede7;--wash:#cfe0d6;--green:#2a5a44;--ox:#7f3d3d;--side:#f0f4f2}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--bg);color:var(--ink);font:400 13px/1.5 Inter,sans-serif;letter-spacing:-.01em;display:flex}
+.serif{font-family:'Instrument Serif',Georgia,serif;font-weight:400}
+.num{font-variant-numeric:tabular-nums}
+aside{width:232px;background:var(--side);border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+.brand{display:flex;gap:8px;align-items:center;font-weight:600;padding:4px 8px 16px}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--green)}
+.nav{padding:7px 10px;border-radius:8px;color:var(--moss)}
+.nav.on{background:var(--wash);color:var(--ink);font-weight:500}
+main{flex:1;display:flex;flex-direction:column}
+.top{height:52px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;color:var(--moss)}
+.search{width:320px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:0 12px;display:flex;align-items:center}
+.wrap{padding:28px 40px;display:flex;flex-direction:column;gap:24px}
+.head{display:flex;justify-content:space-between;align-items:flex-end}
+h1{font-size:40px;line-height:1}
+.sub{color:var(--moss);margin-top:6px;font-size:14px}
+.btn{height:32px;padding:0 14px;border-radius:999px;display:inline-flex;align-items:center;font-weight:500;font-size:12px;border:1px solid var(--line);background:var(--card)}
+.btn.p{background:var(--green);color:#f7faf8;border-color:transparent}
+.book{display:grid;grid-template-columns:1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.col{padding:20px 24px}
+.col+.col{border-left:1px solid var(--line)}
+.colh{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.colh b{font-weight:600;font-size:14px}
+.tot{font-size:28px}
+.row{display:grid;grid-template-columns:32px 1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--pale)}
+.av{width:32px;height:32px;border-radius:999px;background:var(--wash);display:grid;place-items:center;font-size:11px;font-weight:600;color:var(--green)}
+.meta{color:var(--moss);font-size:12px}
+.amt{font-weight:600;font-size:14px}
+.g{color:var(--green)}.o{color:var(--ox)}
+.small{height:28px;padding:0 12px;font-size:12px}
+.foot{grid-column:1/-1;border-top:1px solid var(--line);background:var(--side);padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+.lower{display:grid;grid-template-columns:1fr 1.4fr;gap:20px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 22px}
+.ph{display:flex;justify-content:space-between;margin-bottom:8px}
+.ph b{font-weight:600;font-size:14px}
+.li{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--pale)}
+.li:last-child{border:0}
+.strip{display:flex;align-items:center;gap:24px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 22px}
+.bar{flex:1;height:6px;border-radius:999px;background:var(--pale);position:relative}
+.bar i{position:absolute;inset:0 88% 0 0;background:var(--green);border-radius:999px}
+</style></head><body>
+<aside>
+<div class="brand"><span class="mark"></span>Settle</div>
+<div class="nav">New chat</div><div class="nav on">Overview</div><div class="nav">Spending</div><div class="nav">Groups</div><div class="nav">Expenses</div><div class="nav">Settlements</div><div class="nav">Settings</div>
+</aside>
+<main>
+<div class="top"><div class="search">Search expenses, groups, people</div><div>Bell · Avatar</div></div>
+<div class="wrap">
+<div class="head">
+<div><h1 class="serif">You’re <span class="g">₹4,820</span> ahead</h1><p class="sub">3 people owe you, you owe 2. Two payments would clear what you owe.</p></div>
+<div style="display:flex;gap:8px"><span class="btn">Record a payment</span><span class="btn p">Add expense</span></div>
+</div>
+<section class="book">
+<div class="col">
+<div class="colh"><b>Owed to you</b><span class="serif tot g num">₹7,760</span></div>
+<div class="row"><span class="av">RS</span><div>Riya Shah<div class="meta">Flat 4B · Goa trip</div></div><span class="amt g num">₹4,200</span><span class="btn small">Remind</span></div>
+<div class="row"><span class="av">AM</span><div>Aman Mehta<div class="meta">Goa trip</div></div><span class="amt g num">₹2,060</span><span class="btn small">Remind</span></div>
+<div class="row"><span class="av">MI</span><div>Meera Iyer<div class="meta">Goa trip</div></div><span class="amt g num">₹1,500</span><span class="btn small">Remind</span></div>
+</div>
+<div class="col">
+<div class="colh"><b>You owe</b><span class="serif tot o num">₹2,940</span></div>
+<div class="row"><span class="av">KR</span><div>Kabir Rao<div class="meta">Flat 4B · rent, Wi-Fi</div></div><span class="amt o num">₹1,840</span><span class="btn small p" style="background:var(--green);color:#f7faf8">Settle up</span></div>
+<div class="row"><span class="av">AN</span><div>Arjun Nair<div class="meta">Goa trip</div></div><span class="amt o num">₹1,100</span><span class="btn small p" style="background:var(--green);color:#f7faf8">Settle up</span></div>
+</div>
+<div class="foot"><span class="meta">Net across 3 groups, in INR</span><span class="serif num" style="font-size:24px">Balance <span class="g">+₹4,820</span></span></div>
+</section>
+<div class="lower">
+<div class="panel"><div class="ph"><b>Groups</b><span class="meta">See all</span></div>
+<div class="li"><span>Flat 4B</span><span class="o num">−₹40</span></div>
+<div class="li"><span>Goa trip</span><span class="g num">+₹4,860</span></div>
+<div class="li"><span>Date nights</span><span class="meta">Settled</span></div></div>
+<div class="panel"><div class="ph"><b>Recent activity</b><span class="meta">All expenses</span></div>
+<div class="li"><span>Kabir added Wi-Fi, Nov <span class="meta">· Flat 4B</span></span><span class="num">your share ₹393</span></div>
+<div class="li"><span>Aman paid you back <span class="meta">· Goa trip</span></span><span class="g num">₹1,000</span></div>
+<div class="li"><span>You added Dinner at Toit <span class="meta">· Date nights</span></span><span class="num">₹2,400</span></div></div>
+</div>
+<div class="strip"><b style="font-weight:600">November spending</b><span class="num">₹2,640 of ₹22,000</span><div class="bar"><i></i></div><span class="meta">Day 1 of 30 · Spending →</span></div>
+</div>
+</main>
+</body></html>

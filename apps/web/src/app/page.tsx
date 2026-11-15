@@ -6,6 +6,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import type { Metadata } from "next";
 
 import { AiSpotlight } from "@/components/landing/ai-spotlight";
 import { Faq } from "@/components/landing/faq";
@@ -27,6 +28,10 @@ import { ResizableNav } from "@/components/landing/resizable-nav";
 import { SplitYourWay } from "@/components/landing/split-your-way";
 import { WhatIsSettle } from "@/components/landing/what-is-settle";
 import { SettleLogo } from "@/components/settle-logo";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const NAV_LINKS = [
   { href: "#features", label: "Features" },

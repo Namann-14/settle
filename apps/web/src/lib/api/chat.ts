@@ -32,3 +32,17 @@ export async function deleteChatThread(id: string): Promise<void> {
   });
   return handleResponse<void>(response);
 }
+
+// Restore a chat to the reply that ended at `checkpointId`; the expenses the
+// assistant added after it are deleted.
+export async function restoreChatCheckpoint(
+  id: string,
+  checkpointId: string
+): Promise<{ removed_expenses: number }> {
+  const response = await fetch(`/api/chat/threads/${encodeURIComponent(id)}/restore`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ checkpointId }),
+  });
+  return handleResponse(response);
+}

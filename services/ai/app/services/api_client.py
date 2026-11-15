@@ -121,6 +121,12 @@ class ApiClient:
     async def get_expense(self, expense_id: str) -> dict:
         return await self._request("GET", f"/expenses/{expense_id}")
 
+    async def create_expense(self, payload: dict) -> dict:
+        return await self._request("POST", "/expenses", json=payload)
+
+    async def delete_expense(self, expense_id: str) -> None:
+        await self._request("DELETE", f"/expenses/{expense_id}")
+
     # ---- groups
 
     async def list_groups(self) -> list[dict]:

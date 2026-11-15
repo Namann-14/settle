@@ -67,6 +67,30 @@ Tracing is enabled via env vars in `.env` (see `.env.example`):
 name for the actual runtime check — if tracing silently stops working after a
 dependency bump, set both `LANGSMITH_*` and `LANGCHAIN_*` again.)
 
+## Evals
+
+`evals/` holds offline and live evals, both reporting to LangSmith.
+
+- **Offline** (`uv run --group eval pytest`): hand-labelled cases in
+  `evals/data/`. `test_extraction.py` checks extracted fields;
+  `test_tool_routing.py` checks the chat agent's first tool call (no
+  services/api needed). Each run is a LangSmith experiment on the
+  `settle-extraction` / `settle-tool-routing` datasets. Calls the real model,
+  so it needs `GROQ_API_KEY`.
+- **Merge gate** (`pytest --junitxml=r.xml; python -m evals.gate r.xml`):
+  turns per-case results into per-suite pass rates and fails below
+  `evals/thresholds.json`. Branch protection on `main` requires this check.
+  Force merge: add the `skip-evals` label to the PR.
+- **Live monitor** (`uv run --group eval python -m evals.online`): reads
+  recent `expense_extraction` and `chat_turn` traces and writes feedback:
+  errors and code checks on every trace, plus an LLM judge (groundedness,
+  relevance) on a sample when `JUDGE_API_KEY` is set. When a rate crosses its
+  threshold it sends a Telegram alert and exits 1. Use `--dry-run` to print
+  instead of write or send.
+
+`.github/workflows/ai-evals.yml` runs the gate on PRs to `main` and the
+monitor every 6 hours.
+
 ## Known gaps
 
 1. **Receipt OCR is unavailable.** The Groq account this service runs

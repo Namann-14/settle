@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { SidebarInset, SidebarProvider } from "@settle/ui/components/sidebar";
 
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
@@ -5,6 +6,11 @@ import { RecurringSync } from "@/components/dashboard/recurring-sync";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Prefetch, serverQueries } from "@/lib/server-prefetch";
 import { DashboardProviders } from "@/providers/dashboard-providers";
+
+// Signed-in surface: never index, never follow.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function DashboardLayout({
   children,

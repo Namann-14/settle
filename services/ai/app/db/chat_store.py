@@ -5,7 +5,9 @@ chat still works in in-memory mode — there's just no history to show.
 
 `parts` are stored in a small neutral shape, not the web's AI SDK types:
   {"type": "reasoning" | "text", "text": str}
-  {"type": "tool", "id", "name", "args", "output", "error": bool}
+  {"type": "tool", "id", "name", "args", "output", "error": bool,
+   "approval"?: {"id": str, "approved": bool | None, "expense": dict}}
+  (approved None = waiting for the user; expense = the preview they were shown)
   {"type": "suggestions", "items": [str, ...]}
 """
 
@@ -111,6 +113,93 @@ async def append_turn(
             ),
         )
         await conn.execute("UPDATE ai_chat_threads SET updated_at = now() WHERE id = %s", (thread_id,))
+        await _claim_expenses(conn, thread_id, seq + 1)
+
+
+async def get_last_assistant(thread_id: str) -> dict | None:
+    """The newest assistant message: a turn paused for approval resumes into it."""
+    pool = get_pool()
+    if pool is None:
+        return None
+    async with pool.connection() as conn:
+        cur = await conn.execute(
+            "SELECT id, seq, parts, checkpoint_id FROM ai_chat_messages "
+            "WHERE thread_id = %s AND role = 'assistant' ORDER BY seq DESC LIMIT 1",
+            (thread_id,),
+        )
+        return await cur.fetchone()
+
+
+async def update_assistant(
+    thread_id: str,
+    message_id: str,
+    *,
+    parts: list[dict[str, Any]],
+    checkpoint_id: str | None,
+) -> None:
+    """Rewrite a paused assistant turn once it has been resumed."""
+    pool = get_pool()
+    if pool is None:
+        return
+    async with pool.connection() as conn, conn.transaction():
+        cur = await conn.execute(
+            "UPDATE ai_chat_messages SET parts = %s, checkpoint_id = %s "
+            "WHERE id = %s AND thread_id = %s RETURNING seq",
+            (Jsonb(parts), checkpoint_id, message_id, thread_id),
+        )
+        row = await cur.fetchone()
+        await conn.execute("UPDATE ai_chat_threads SET updated_at = now() WHERE id = %s", (thread_id,))
+        if row is not None:
+            await _claim_expenses(conn, thread_id, row["seq"])
+
+
+async def record_expense(thread_id: str, expense_id: str) -> None:
+    """Note an expense the agent created in this thread. Its turn (message_seq)
+    is filled in when the turn is saved."""
+    pool = get_pool()
+    if pool is None:
+        return
+    async with pool.connection() as conn:
+        await conn.execute(
+            "INSERT INTO ai_chat_expenses (expense_id, thread_id) VALUES (%s, %s) "
+            "ON CONFLICT (expense_id) DO NOTHING",
+            (expense_id, thread_id),
+        )
+
+
+async def _claim_expenses(conn, thread_id: str, seq: int) -> None:
+    await conn.execute(
+        "UPDATE ai_chat_expenses SET message_seq = %s WHERE thread_id = %s AND message_seq IS NULL",
+        (seq, thread_id),
+    )
+
+
+async def expenses_after_checkpoint(thread_id: str, checkpoint_id: str) -> list[str]:
+    """Expenses added by turns after the assistant turn that ended at
+    `checkpoint_id` (plus any not yet tied to a turn). Restoring that
+    checkpoint deletes them."""
+    pool = get_pool()
+    if pool is None:
+        return []
+    async with pool.connection() as conn:
+        cur = await conn.execute(
+            "SELECT expense_id FROM ai_chat_expenses WHERE thread_id = %(t)s AND ("
+            "  message_seq IS NULL OR message_seq > ("
+            "    SELECT seq FROM ai_chat_messages WHERE thread_id = %(t)s AND checkpoint_id = %(c)s"
+            "    ORDER BY seq DESC LIMIT 1"
+            "  )"
+            ")",
+            {"t": thread_id, "c": checkpoint_id},
+        )
+        return [r["expense_id"] for r in await cur.fetchall()]
+
+
+async def forget_expenses(expense_ids: list[str]) -> None:
+    pool = get_pool()
+    if pool is None or not expense_ids:
+        return
+    async with pool.connection() as conn:
+        await conn.execute("DELETE FROM ai_chat_expenses WHERE expense_id = ANY(%s)", (expense_ids,))
 
 
 async def delete_thread(thread_id: str) -> None:

@@ -6,4 +6,4 @@
 
 **Depends on / used by:** Uses prompts/extraction, llm/client, schemas.common.SplitType. Participant name resolution to user_ids happens later in services.participants.
 
-**Decisions & caveats:** Retries once, then falls back to a zero-confidence manual-entry draft. `_ensure_speaker_present` guarantees the speaker is in the participant list when the model drops them from a split (the most common observed failure), regardless of the prompt.
+**Decisions & caveats:** Retries once, then falls back to a zero-confidence manual-entry draft. `_ensure_speaker_present` guarantees the speaker is in the participant list when the model drops them from a split (the most common observed failure), regardless of the prompt. Both chains carry `run_name="expense_extraction"` and tags `extraction` + `text`/`receipt`; the live eval scorer (`evals/online.py`) filters on that name, so keep it stable.

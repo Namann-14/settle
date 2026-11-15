@@ -1,0 +1,12 @@
+{
+  "offline": {
+    "test_extraction": 0.5,
+    "test_tool_routing": 0.5
+  },
+  "online": {
+    "min_samples": 5,
+    "max_error_rate": 0.5,
+    "min_check_pass_rate": 0.5,
+    "min_judge_pass_rate": 0.5
+  }
+}

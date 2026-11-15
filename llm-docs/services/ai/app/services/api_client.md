@@ -2,7 +2,7 @@
 
 **Purpose:** Async HTTP client for calling services/api on behalf of the current user.
 
-**Key contents:** A process-wide shared `httpx.AsyncClient` (init/close/get helpers), `_safe_detail` for error text, and `ApiClient`, a per-request wrapper with methods for users, expenses (including paginated `list_all_expenses`), groups, categories, settlements, balances and spending summaries.
+**Key contents:** A process-wide shared `httpx.AsyncClient` (init/close/get helpers), `_safe_detail` for error text, and `ApiClient`, a per-request wrapper with methods for users, expenses (including paginated `list_all_expenses`), groups, categories, settlements, balances and spending summaries, plus `create_expense` / `delete_expense` for the chat agent's approved writes and checkpoint rollback.
 
 **Depends on / used by:** `core/config` (URL, timeout), `core/errors.ApiError`. Used by `services/context.py`, every tool in `tools/`, and the routes. The pool is opened in the FastAPI lifespan.
 

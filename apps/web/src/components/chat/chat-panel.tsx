@@ -2,44 +2,40 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { DefaultChatTransport } from "ai";
-import { SquarePen } from "lucide-react";
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses } from "ai";
+import { ArrowUp, Bookmark, Pencil, RefreshCcw, Square, SquarePen } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { Bubble, BubbleContent } from "@settle/ui/components/bubble";
+import { Button } from "@settle/ui/components/button";
 import {
-  Checkpoint,
-  CheckpointIcon,
-  CheckpointTrigger,
-} from "@/components/ai-elements/checkpoint";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupTextarea,
+} from "@settle/ui/components/input-group";
+import { Marker, MarkerContent, MarkerIcon } from "@settle/ui/components/marker";
+import { Message, MessageContent, MessageFooter } from "@settle/ui/components/message";
 import {
-  Conversation,
-  ConversationContent,
-  ConversationEmptyState,
-  ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from "@/components/ai-elements/message";
-import {
-  PromptInput,
-  PromptInputBody,
-  PromptInputFooter,
-  PromptInputSubmit,
-  PromptInputTextarea,
-  PromptInputTools,
-  type PromptInputMessage,
-} from "@/components/ai-elements/prompt-input";
-import { Shimmer } from "@/components/ai-elements/shimmer";
-import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from "@settle/ui/components/message-scroller";
+import { Spinner } from "@settle/ui/components/spinner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@settle/ui/components/tooltip";
 import { AssistantMessage } from "@/components/chat/assistant-message";
+import { ChatMarkdown } from "@/components/chat/markdown";
+import { CopyAction, MessageAction } from "@/components/chat/message-actions";
 import { CHAT_SUGGESTIONS } from "@/components/chat/suggestions";
 import { useChatShortcuts } from "@/components/chat/use-chat-shortcuts";
 import { buttonClass } from "@/components/dashboard/panel";
-import { CHAT_THREADS_KEY, useChatThreads } from "@/hooks/useChatThreads";
+import { invalidateBalances } from "@/hooks/mutations/invalidate";
+import { CHAT_THREADS_KEY, useChatThreads, useRestoreChatCheckpoint } from "@/hooks/useChatThreads";
 import type { ChatMessage } from "@/lib/chat-types";
 import { cn } from "@settle/ui/lib/utils";
 
@@ -85,12 +81,31 @@ export function ChatPanel({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { data: threads } = useChatThreads();
   const title = threads?.find((t) => t.id === chatId)?.title ?? "New chat";
-  const { messages, setMessages, sendMessage, regenerate, status, stop, error } = useChat<ChatMessage>({
+  const restore = useRestoreChatCheckpoint(chatId);
+  const {
+    messages,
+    setMessages,
+    sendMessage,
+    regenerate,
+    addToolApprovalResponse,
+    status,
+    stop,
+    error,
+  } = useChat<ChatMessage>({
     id: chatId,
     messages: initialMessages,
     transport: new DefaultChatTransport({ api: "/api/chat" }),
-    // The turn is saved and the thread's title/recency changed.
-    onFinish: () => queryClient.invalidateQueries({ queryKey: CHAT_THREADS_KEY }),
+    // Once every approval in the paused turn is answered, send them; the
+    // route turns that into a resume of the same turn.
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
+    onFinish: ({ message }) => {
+      // The turn is saved and the thread's title/recency changed.
+      queryClient.invalidateQueries({ queryKey: CHAT_THREADS_KEY });
+      const addedExpense = message.parts.some(
+        (p) => p.type === "dynamic-tool" && p.toolName === "add_expense" && p.state === "output-available"
+      );
+      if (addedExpense) invalidateBalances(queryClient);
+    },
   });
 
   // Prompts handed over by ?q= (home composer, search palette).
@@ -118,16 +133,52 @@ export function ChatPanel({
     sendMessage({ text: trimmed });
   };
 
-  const handleSubmit = (message: PromptInputMessage) => {
-    send(message.text);
+  const formRef = useRef<HTMLFormElement>(null);
+  // The send button turns into stop while a reply is running.
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (busy) {
+      stop();
+      return;
+    }
+    if (!input.trim()) return;
+    send(input);
     setInput("");
   };
 
-  // Dropping later messages is enough on the client; the next request sends
-  // this turn's checkpointId, which makes the ai service fork from it too.
-  const restoreTo = (index: number) => {
+  // The ai service deletes the expenses later turns added and drops those
+  // turns from the history; the next request sends this turn's checkpointId,
+  // which makes the graph fork from it too.
+  const restoreTo = async (index: number) => {
+    const checkpointId = messages[index]?.metadata?.checkpointId;
+    if (busy || !checkpointId || restore.isPending) return;
+    try {
+      const { removed_expenses } = await restore.mutateAsync(checkpointId);
+      setMessages(messages.slice(0, index + 1));
+      if (removed_expenses > 0) {
+        toast.success(
+          `Restored. Removed ${removed_expenses} ${removed_expenses === 1 ? "expense" : "expenses"} added after this point.`
+        );
+      }
+    } catch {
+      toast.error("Couldn't restore that checkpoint. Please try again.");
+    }
+  };
+
+  const answerApproval = (id: string, approved: boolean) => {
     if (busy) return;
-    setMessages(messages.slice(0, index + 1));
+    addToolApprovalResponse({ id, approved });
+  };
+
+  // Retrying a reply re-runs it from the turn before, so the ai service
+  // forks from that turn's checkpoint (and rolls back any expense the
+  // retried reply added). The first reply has no earlier checkpoint.
+  const canRetry = (index: number) =>
+    Boolean(messages.slice(0, index).findLast((m) => m.role === "assistant")?.metadata?.checkpointId);
+
+  const editQuestion = (message: ChatMessage) => {
+    setInput(message.parts.flatMap((p) => (p.type === "text" ? [p.text] : [])).join(""));
+    focusInput();
   };
 
   const focusInput = () => textareaRef.current?.focus();
@@ -153,7 +204,13 @@ export function ChatPanel({
   useChatShortcuts({ busy, stop, focusInput, newChat, copyLastResponse });
 
   // ↑ in an empty box recalls the last question to edit and resend.
+  // Enter sends, Shift+Enter is a new line (not mid IME composition).
   const handleTextareaKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      if (!busy) formRef.current?.requestSubmit();
+      return;
+    }
     if (e.key !== "ArrowUp" || input !== "") return;
     const lastQuestion = messages
       .findLast((m) => m.role === "user")
@@ -189,110 +246,191 @@ export function ChatPanel({
         </button>
       </header>
 
-      <Conversation className="min-h-0 flex-1">
-        <ConversationContent className="mx-auto w-full max-w-3xl gap-6 px-1 py-6">
-          {messages.length === 0 ? (
-            <ConversationEmptyState
-              title="Ask Settle AI"
-              description="Questions about your balances, groups, expenses and settlements. Pick one below or type your own."
-              className="[&_h3]:text-sm [&_h3]:font-semibold [&_p]:max-w-sm [&_p]:text-meta"
-            />
-          ) : (
-            messages.map((message, index) => {
-              const isLast = index === messages.length - 1;
-              return (
-                <div key={message.id} className="flex flex-col gap-3">
-                  <Message from={message.role} className="max-w-full sm:max-w-[85%]">
-                    <MessageContent className="text-sm leading-6 group-[.is-user]:rounded-2xl group-[.is-user]:bg-muted group-[.is-user]:px-4 group-[.is-user]:py-2.5">
-                      {message.role === "assistant" ? (
-                        <AssistantMessage
-                          message={message}
-                          isStreaming={isLast && status === "streaming"}
-                        />
-                      ) : (
-                        message.parts.map((part, i) =>
-                          part.type === "text" ? (
-                            <MessageResponse key={i}>{part.text}</MessageResponse>
-                          ) : null
-                        )
-                      )}
-                    </MessageContent>
-                  </Message>
-                  {message.role === "assistant" && message.metadata?.checkpointId && !isLast && (
-                    <Checkpoint className="text-xs">
-                      <CheckpointIcon className="size-3.5" />
-                      <CheckpointTrigger
-                        tooltip="Remove everything after this reply and continue from here"
-                        onClick={() => restoreTo(index)}
-                        disabled={busy}
-                      >
-                        Restore checkpoint
-                      </CheckpointTrigger>
-                    </Checkpoint>
-                  )}
+      <MessageScrollerProvider autoScroll>
+        <MessageScroller className="min-h-0 flex-1">
+          <MessageScrollerViewport>
+            <MessageScrollerContent className="mx-auto w-full max-w-3xl gap-6 px-1 py-6">
+              {messages.length === 0 ? (
+                <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center">
+                  <h2 className="text-sm font-semibold">Ask Settle AI</h2>
+                  <p className="max-w-sm text-meta text-muted-foreground">
+                    Questions about your balances, groups, expenses and settlements. Pick one below
+                    or type your own.
+                  </p>
                 </div>
-              );
-            })
-          )}
-          {status === "submitted" && <Shimmer className="text-sm">Thinking…</Shimmer>}
-          {error && (
-            <div
-              role="alert"
-              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border px-4 py-3 text-sm"
-            >
-              <span className="text-destructive">That didn&apos;t go through. Please try again.</span>
-              <button
-                type="button"
-                onClick={() => regenerate()}
-                disabled={busy}
-                className={buttonClass({ variant: "secondary", size: "sm" })}
-              >
-                Try again
-              </button>
-            </div>
-          )}
-        </ConversationContent>
-        <ConversationScrollButton className="border-border bg-card shadow-none hover:bg-muted" />
-      </Conversation>
+              ) : (
+                messages.map((message, index) => {
+                  const isLast = index === messages.length - 1;
+                  const isUser = message.role === "user";
+                  const replyText = message.parts
+                    .flatMap((p) => (p.type === "text" ? [p.text] : []))
+                    .join("\n\n")
+                    .trim();
+                  const settled = !busy || !isLast;
+                  return (
+                    <MessageScrollerItem
+                      key={message.id}
+                      messageId={message.id}
+                      scrollAnchor={isUser}
+                      className="flex flex-col gap-3"
+                    >
+                      <Message align={isUser ? "end" : "start"}>
+                        <MessageContent className="text-sm leading-6">
+                          {isUser ? (
+                            <Bubble align="end" variant="muted" className="max-w-full sm:max-w-[85%]">
+                              <BubbleContent className="px-4 py-2.5 text-sm leading-6">
+                                {message.parts.map((part, i) =>
+                                  part.type === "text" ? (
+                                    <ChatMarkdown key={i}>{part.text}</ChatMarkdown>
+                                  ) : null
+                                )}
+                              </BubbleContent>
+                            </Bubble>
+                          ) : (
+                            <div className="w-full max-w-full sm:max-w-[85%]">
+                              <AssistantMessage
+                                message={message}
+                                isStreaming={isLast && status === "streaming"}
+                                canAnswer={isLast && !busy}
+                                onApproval={answerApproval}
+                              />
+                            </div>
+                          )}
+                          {settled && (isUser ? isLast || index === messages.length - 2 : replyText) && (
+                            <MessageFooter
+                              className={cn(
+                                "transition-opacity duration-150 [@media(hover:none)]:opacity-100",
+                                !isLast && "opacity-0 group-hover/message:opacity-100 focus-within:opacity-100"
+                              )}
+                            >
+                              {isUser ? (
+                                <MessageAction label="Edit" onClick={() => editQuestion(message)}>
+                                  <Pencil />
+                                </MessageAction>
+                              ) : (
+                                <>
+                                  <CopyAction text={replyText} />
+                                  {isLast && canRetry(index) && (
+                                    <MessageAction
+                                      label="Retry"
+                                      onClick={() => regenerate({ messageId: message.id })}
+                                    >
+                                      <RefreshCcw />
+                                    </MessageAction>
+                                  )}
+                                </>
+                              )}
+                            </MessageFooter>
+                          )}
+                        </MessageContent>
+                      </Message>
+                      {!isUser && message.metadata?.checkpointId && !isLast && (
+                        <Marker variant="separator">
+                          <MarkerContent className="inline-flex items-center gap-2">
+                            <MarkerIcon>
+                              <Bookmark />
+                            </MarkerIcon>
+                            Checkpoint
+                            <Tooltip>
+                              <TooltipTrigger
+                                render={
+                                  <Button
+                                    type="button"
+                                    size="xs"
+                                    variant="outline"
+                                    onClick={() => restoreTo(index)}
+                                    disabled={busy || restore.isPending}
+                                  />
+                                }
+                              >
+                                Restore
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                Remove everything after this reply, including expenses it added
+                                later, and continue from here
+                              </TooltipContent>
+                            </Tooltip>
+                          </MarkerContent>
+                        </Marker>
+                      )}
+                    </MessageScrollerItem>
+                  );
+                })
+              )}
+              {status === "submitted" && (
+                <p className="shimmer text-sm text-muted-foreground">Thinking…</p>
+              )}
+              {error && (
+                <div
+                  role="alert"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border px-4 py-3 text-sm"
+                >
+                  <span className="text-destructive">That didn&apos;t go through. Please try again.</span>
+                  <button
+                    type="button"
+                    onClick={() => regenerate()}
+                    disabled={busy}
+                    className={buttonClass({ variant: "secondary", size: "sm" })}
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton className="border-border bg-card shadow-none hover:bg-muted" />
+        </MessageScroller>
+      </MessageScrollerProvider>
 
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 pt-2">
         {(messages.length === 0 || followUps.length > 0) && (
-          <Suggestions className="px-0.5">
+          <div className="no-scrollbar flex scroll-fade-x gap-2 overflow-x-auto overscroll-x-contain px-0.5">
             {(messages.length === 0 ? CHAT_SUGGESTIONS : followUps).map((suggestion) => (
-              <Suggestion
+              <Button
                 key={suggestion}
-                suggestion={suggestion}
-                onClick={send}
-                className="h-11 border-border bg-card px-3.5 text-xs font-normal text-foreground shadow-none transition-colors duration-150 hover:bg-muted sm:h-8"
-              />
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => send(suggestion)}
+                className="h-11 shrink-0 border-border bg-card px-3.5 text-xs font-normal text-foreground shadow-none transition-colors duration-150 hover:bg-muted sm:h-8"
+              >
+                {suggestion}
+              </Button>
             ))}
-          </Suggestions>
+          </div>
         )}
-        <PromptInput
-          onSubmit={handleSubmit}
-          className="[&_[data-slot=input-group]]:rounded-2xl [&_[data-slot=input-group]]:border-border [&_[data-slot=input-group]]:bg-card [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:transition-colors [&_[data-slot=input-group]]:duration-150"
-        >
-          <PromptInputBody>
-            <PromptInputTextarea
+        <form ref={formRef} onSubmit={handleSubmit}>
+          <InputGroup className="rounded-2xl border-border bg-card shadow-none transition-colors duration-150">
+            <InputGroupTextarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.currentTarget.value)}
               onKeyDown={handleTextareaKeyDown}
               placeholder="Ask about your balances, spending, groups…"
-              className="min-h-14 text-sm leading-6"
+              aria-label="Message Settle AI"
+              className="max-h-48 min-h-14 p-3 text-sm leading-6"
               autoFocus
             />
-          </PromptInputBody>
-          <PromptInputFooter>
-            <PromptInputTools />
-            <PromptInputSubmit
-              status={status}
-              onStop={stop}
-              disabled={!busy && !input.trim()}
-              className="rounded-full shadow-none"
-            />
-          </PromptInputFooter>
-        </PromptInput>
+            <InputGroupAddon align="block-end">
+              <InputGroupButton
+                type="submit"
+                size="icon-sm"
+                variant="default"
+                disabled={!busy && !input.trim()}
+                aria-label={busy ? "Stop" : "Send"}
+                className="ml-auto rounded-full shadow-none"
+              >
+                {status === "submitted" ? (
+                  <Spinner />
+                ) : busy ? (
+                  <Square className="fill-current" />
+                ) : (
+                  <ArrowUp />
+                )}
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
+        </form>
         <p className="hidden text-center text-xs text-muted-foreground sm:block">
           {busy ? (
             <><Kbd>Esc</Kbd> to stop</>

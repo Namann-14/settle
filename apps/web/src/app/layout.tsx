@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
 
 import "../index.css";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 import Providers from "@/providers/providers";
 
 const instrumentSerif = Instrument_Serif({
@@ -19,8 +20,21 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Settle - Split bills, not friendships",
-  description: "Track shared expenses for trips, flats and dinners. Add expenses in plain words, see who owes whom, and settle up in the fewest payments.",
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

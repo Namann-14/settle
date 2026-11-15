@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Overview: group by group</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7faf8;--card:#fff;--ink:#15201a;--moss:#4b6b5a;--line:#cedbd3;--pale:#e4ede7;--wash:#cfe0d6;--green:#2a5a44;--ox:#7f3d3d;--side:#f0f4f2}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--bg);color:var(--ink);font:400 13px/1.5 Inter,sans-serif;letter-spacing:-.01em;display:flex}
+.serif{font-family:'Instrument Serif',Georgia,serif;font-weight:400}
+.num{font-variant-numeric:tabular-nums}
+aside{width:232px;background:var(--side);border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+.brand{display:flex;gap:8px;align-items:center;font-weight:600;padding:4px 8px 16px}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--green)}
+.nav{padding:7px 10px;border-radius:8px;color:var(--moss)}
+.nav.on{background:var(--wash);color:var(--ink);font-weight:500}
+main{flex:1;display:flex;flex-direction:column}
+.top{height:52px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;color:var(--moss)}
+.search{width:320px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:0 12px;display:flex;align-items:center}
+.band{display:flex;align-items:center;gap:40px;padding:22px 40px;border-bottom:1px solid var(--line);background:var(--card)}
+.k{color:var(--moss);font-size:12px}
+.v{font-size:34px;line-height:1}
+.g{color:var(--green)}.o{color:var(--ox)}
+.sep{width:1px;height:44px;background:var(--line)}
+.btn{height:32px;padding:0 14px;border-radius:999px;display:inline-flex;align-items:center;font-weight:500;font-size:12px;border:1px solid var(--line);background:var(--card)}
+.btn.p{background:var(--green);color:#f7faf8;border-color:transparent}
+.small{height:28px;padding:0 12px}
+.body{display:grid;grid-template-columns:1fr 320px;gap:24px;padding:24px 40px}
+.groups{display:flex;flex-direction:column;gap:16px}
+.grp{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.gh{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line)}
+.gh b{font-size:15px;font-weight:600}
+.gn{font-size:24px}
+.gb{display:grid;grid-template-columns:1fr 1fr}
+.mem{padding:10px 20px}
+.mem .li{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--pale)}
+.mem .li:last-child{border:0}
+.plan{padding:10px 20px;background:var(--side);border-left:1px solid var(--line)}
+.pt{color:var(--moss);font-size:12px;margin:4px 0 8px}
+.pay{display:flex;justify-content:space-between;align-items:center;padding:7px 0}
+.meta{color:var(--moss);font-size:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.ph{display:flex;justify-content:space-between;margin-bottom:6px}
+.ph b{font-weight:600;font-size:14px}
+.li2{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--pale)}
+.li2:last-child{border:0}
+.bar{width:160px;height:6px;border-radius:999px;background:var(--pale);position:relative}
+.bar i{position:absolute;inset:0 88% 0 0;background:var(--green);border-radius:999px}
+</style></head><body>
+<aside>
+<div class="brand"><span class="mark"></span>Settle</div>
+<div class="nav">New chat</div><div class="nav on">Overview</div><div class="nav">Spending</div><div class="nav">Groups</div><div class="nav">Expenses</div><div class="nav">Settlements</div><div class="nav">Settings</div>
+</aside>
+<main>
+<div class="top"><div class="search">Search expenses, groups, people</div><div>Bell · Avatar</div></div>
+<div class="band">
+<div><div class="k">Net balance</div><div class="serif v g num">+₹4,820</div></div><div class="sep"></div>
+<div><div class="k">Owed to you</div><div class="serif v num">₹7,760</div></div><div class="sep"></div>
+<div><div class="k">You owe</div><div class="serif v o num">₹2,940</div></div><div class="sep"></div>
+<div><div class="k">November spend</div><div style="display:flex;gap:10px;align-items:center"><span class="num" style="font-size:16px;font-weight:600">₹2,640</span><span class="bar"><i></i></span></div></div>
+<div style="margin-left:auto;display:flex;gap:8px"><span class="btn">Record a payment</span><span class="btn p">Add expense</span></div>
+</div>
+<div class="body">
+<div class="groups">
+<section class="grp"><div class="gh"><div><b>Goa trip</b> <span class="meta">· 5 members · last expense 2 days ago</span></div><span class="serif gn g num">you’re owed ₹4,860</span></div>
+<div class="gb"><div class="mem"><div class="li"><span>Riya Shah</span><span class="g num">owes you ₹2,400</span></div><div class="li"><span>Aman Mehta</span><span class="g num">owes you ₹2,060</span></div><div class="li"><span>Meera Iyer</span><span class="g num">owes you ₹1,500</span></div><div class="li"><span>Arjun Nair</span><span class="o num">you owe ₹1,100</span></div></div>
+<div class="plan"><div class="pt">Fewest payments to clear Goa trip · 4</div><div class="pay"><span>Riya → you</span><span class="num">₹2,400</span></div><div class="pay"><span>Aman → you</span><span class="num">₹2,060</span></div><div class="pay"><span>You → Arjun</span><span class="btn small p">Settle ₹1,100</span></div></div></div></section>
+<section class="grp"><div class="gh"><div><b>Flat 4B</b> <span class="meta">· 3 members · rent recurring on the 1st</span></div><span class="serif gn o num">you owe ₹40</span></div>
+<div class="gb"><div class="mem"><div class="li"><span>Kabir Rao</span><span class="o num">you owe ₹1,840</span></div><div class="li"><span>Riya Shah</span><span class="g num">owes you ₹1,800</span></div></div>
+<div class="plan"><div class="pt">Fewest payments to clear Flat 4B · 2</div><div class="pay"><span>Riya → Kabir</span><span class="num">₹1,800</span></div><div class="pay"><span>You → Kabir</span><span class="btn small p">Settle ₹40</span></div></div></div></section>
+<section class="grp"><div class="gh"><div><b>Date nights</b> <span class="meta">· 2 members</span></div><span class="meta">All settled up</span></div></section>
+</div>
+<div class="panel"><div class="ph"><b>Recent activity</b><span class="meta">All</span></div>
+<div class="li2"><span>Wi-Fi, Nov <span class="meta">· Flat 4B</span></span><span class="num">₹393</span></div><div class="li2"><span>Aman paid you <span class="meta">· Goa</span></span><span class="g num">₹1,000</span></div><div class="li2"><span>Dinner at Toit</span><span class="num">₹2,400</span></div><div class="li2"><span>Villa deposit <span class="meta">· Goa</span></span><span class="num">₹6,000</span></div><div class="li2"><span>Rent, Nov <span class="meta">· Flat 4B</span></span><span class="num">₹12,000</span></div></div>
+</div>
+</main>
+</body></html>

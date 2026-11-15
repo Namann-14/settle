@@ -36,6 +36,8 @@ uv --directory services/api run uvicorn app.main:app --reload --port 8000
 uv --directory services/ai run uvicorn app.main:app --reload --port 8001 --workers 1
 uv --directory services/api run pytest
 uv --directory services/api run alembic upgrade head
+uv --directory services/ai run --group eval pytest                      # offline evals (real Groq calls)
+uv --directory services/ai run --group eval python -m evals.online --dry-run   # live scorer
 ```
 
 Only `web` has real build scripts; `services/*/package.json` just wrap `dev`, so Turbo `build`/`lint`/`check-types` are no-ops for them. Python deps live in each `pyproject.toml`.
@@ -56,5 +58,6 @@ Only `web` has real build scripts; `services/*/package.json` just wrap `dev`, so
 - **Telegram:** the webhook refuses to run until bot token, secret and `INTERNAL_API_KEY` are set. `services/telegram.call` swallows failures on purpose so Telegram doesn't retry. Messages are HTML, so escape user text; callback data max 64 bytes.
 - **Product rules** (see `decisions.md`): spending is the user's share only, default currency only, recurring expenses sync idempotently with no cron, 12 seeded system categories.
 - **AI service:** never put a user token on the shared httpx client's default headers; set it per request. Run with `--workers 1` locally.
+- **Evals** (`services/ai/evals`, LangSmith): PRs to `main` must pass the `Eval gate` check (pass rate vs `evals/thresholds.json`; `skip-evals` label force-passes it). The live monitor finds traces by root run name (`chat_turn`, `expense_extraction`), so keep those names stable. The judge needs its own `JUDGE_API_KEY`, never the app's Groq key (limits are per org).
 - `services/api/main.py` is an unused `uv init` placeholder; the real app is `app/main.py`.
 - Perf work is tracked in decisions.md (no Redis). `TimingMiddleware` logs per-request time, DB time and query count.
