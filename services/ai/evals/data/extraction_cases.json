@@ -1,0 +1,123 @@
+{
+  "context": {
+    "me_name": "Asha",
+    "default_currency": "INR",
+    "today": "2026-10-20",
+    "categories": [
+      "Food & Dining", "Groceries", "Transport", "Rent", "Utilities", "Shopping",
+      "Entertainment", "Travel", "Health", "Subscriptions", "Education", "Other"
+    ]
+  },
+  "cases": [
+    {
+      "id": "solo-lunch",
+      "text": "paid 450 for lunch at Subway",
+      "expected": {"amount": 450, "currency": "INR", "category": ["Food & Dining"], "split_type": "EQUAL", "payer_is_me": true, "others": []}
+    },
+    {
+      "id": "equal-split-two-friends",
+      "text": "dinner 2400 split with Aman and Rahul",
+      "expected": {"amount": 2400, "currency": "INR", "category": ["Food & Dining"], "split_type": "EQUAL", "payer_is_me": true, "others": ["Aman", "Rahul"]}
+    },
+    {
+      "id": "relative-date-yesterday",
+      "text": "Uber to airport 780 yesterday",
+      "expected": {"amount": 780, "date": "2026-10-19", "category": ["Transport", "Travel"], "payer_is_me": true}
+    },
+    {
+      "id": "someone-else-paid",
+      "text": "Rahul paid 1500 for movie tickets for me and him",
+      "expected": {"amount": 1500, "category": ["Entertainment"], "payer_is_me": false, "others": ["Rahul"]}
+    },
+    {
+      "id": "foreign-currency-symbol",
+      "text": "$25 netflix subscription",
+      "expected": {"amount": 25, "currency": "USD", "category": ["Subscriptions", "Entertainment"]}
+    },
+    {
+      "id": "utility-bill",
+      "text": "electricity bill 3200",
+      "expected": {"amount": 3200, "currency": "INR", "category": ["Utilities"], "payer_is_me": true}
+    },
+    {
+      "id": "percentage-split",
+      "text": "rent 18000 split 60-40 with Kabir, I pay 60%",
+      "expected": {"amount": 18000, "category": ["Rent"], "split_type": "PERCENTAGE", "others": ["Kabir"]}
+    },
+    {
+      "id": "thousands-separator-merchant",
+      "text": "groceries from BigBasket 1,250",
+      "expected": {"amount": 1250, "category": ["Groceries"], "payer_is_me": true}
+    },
+    {
+      "id": "missing-amount",
+      "text": "bought a jacket",
+      "expected": {"amount": null, "category": ["Shopping"], "needs_note": true}
+    },
+    {
+      "id": "last-friday-with-friend",
+      "text": "flight tickets to Goa 8,400 last Friday with Neha",
+      "expected": {"amount": 8400, "date": "2026-10-16", "category": ["Travel"], "others": ["Neha"]}
+    },
+    {
+      "id": "health-pharmacy",
+      "text": "pharmacy 340",
+      "expected": {"amount": 340, "category": ["Health"]}
+    },
+    {
+      "id": "education-course",
+      "text": "udemy course 499",
+      "expected": {"amount": 499, "category": ["Education"]}
+    },
+    {
+      "id": "explicit-iso-date",
+      "text": "coffee 180 on 2026-10-05",
+      "expected": {"amount": 180, "date": "2026-10-05", "category": ["Food & Dining"]}
+    },
+    {
+      "id": "speaker-listed-explicitly",
+      "text": "petrol 2000 split equally between me, Arjun and Dev",
+      "expected": {"amount": 2000, "category": ["Transport"], "split_type": "EQUAL", "payer_is_me": true, "others": ["Arjun", "Dev"]}
+    },
+    {
+      "id": "unequal-split",
+      "text": "pizza 900: Aman had 500 worth, I had 400",
+      "expected": {"amount": 900, "category": ["Food & Dining"], "split_type": "UNEQUAL", "others": ["Aman"]}
+    },
+    {
+      "id": "euro-ambiguous-category",
+      "text": "€40 museum entry in Paris",
+      "expected": {"amount": 40, "currency": "EUR", "category": ["Entertainment", "Travel"]}
+    },
+    {
+      "id": "ambiguous-gym",
+      "text": "gym membership 1500 for this month",
+      "expected": {"amount": 1500, "category": ["Health", "Subscriptions"]}
+    },
+    {
+      "id": "hinglish-yesterday",
+      "text": "kal sabzi wale ko 320 diye",
+      "expected": {"amount": 320, "date": "2026-10-19", "category": ["Groceries"]}
+    },
+    {
+      "id": "shorthand-k",
+      "text": "spent 2k on drinks with the team",
+      "expected": {"amount": 2000, "category": ["Food & Dining", "Entertainment"]}
+    },
+    {
+      "id": "other-paid-hotel",
+      "text": "split 1200 hotel with Riya, she paid",
+      "expected": {"amount": 1200, "category": ["Travel"], "payer_is_me": false, "others": ["Riya"]}
+    },
+    {
+      "id": "voice-transcript-filler",
+      "text": "uh so I paid like four hundred fifty rupees for the uh auto",
+      "expected": {"amount": 450, "currency": "INR", "category": ["Transport"], "payer_is_me": true}
+    },
+    {
+      "id": "not-an-expense",
+      "text": "hi",
+      "expected": {"amount": null, "max_confidence": 0.5}
+    }
+  ]
+}

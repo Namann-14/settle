@@ -1,0 +1,24 @@
+{
+  "context": {
+    "user_name": "Asha",
+    "default_currency": "INR",
+    "today": "2026-10-20"
+  },
+  "cases": [
+    {"id": "owe-people", "question": "how much do I owe people?", "tools": ["get_my_balances"]},
+    {"id": "owed-to-me", "question": "who owes me money?", "tools": ["get_my_balances"]},
+    {"id": "spend-this-month", "question": "how much did I spend this month?", "tools": ["get_spending_summary"]},
+    {"id": "spend-last-month", "question": "what did I spend in September?", "tools": ["get_spending_summary"], "args": {"month": "2026-09"}},
+    {"id": "over-budget-food", "question": "am I over budget on food?", "tools": ["get_budget_status"]},
+    {"id": "budget-left", "question": "how much can I still spend on groceries this month?", "tools": ["get_budget_status"]},
+    {"id": "top-category", "question": "what's my biggest spending category this month?", "tools": ["get_spending_summary"]},
+    {"id": "recent-expenses", "question": "show my last 5 expenses", "tools": ["list_my_expenses"]},
+    {"id": "my-groups", "question": "what groups am I in?", "tools": ["list_my_groups"]},
+    {"id": "group-expenses-needs-id", "question": "show expenses in my Goa trip group", "tools": ["list_my_groups"]},
+    {"id": "group-members-needs-id", "question": "who's in the flatmates group?", "tools": ["list_my_groups"]},
+    {"id": "categories", "question": "what categories can I use?", "tools": ["list_my_categories"]},
+    {"id": "recent-settlements", "question": "have I paid anyone back recently?", "tools": ["list_my_settlements", "get_my_balances"]},
+    {"id": "greeting", "question": "hi!", "tools": []},
+    {"id": "thanks", "question": "thanks, that's all", "tools": []}
+  ]
+}

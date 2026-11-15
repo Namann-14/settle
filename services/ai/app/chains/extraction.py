@@ -41,10 +41,13 @@ class ExtractedExpense(BaseModel):
     )
 
 
-def _build_chain(system_prompt: str):
+def _build_chain(system_prompt: str, source: str):
     model = get_extraction_model()
     prompt = ChatPromptTemplate.from_messages([("system", system_prompt), ("human", "{text}")])
-    return prompt | model.with_structured_output(ExtractedExpense)
+    # Stable root trace name: the live eval scorer (evals/online.py) filters on it.
+    return (prompt | model.with_structured_output(ExtractedExpense)).with_config(
+        run_name="expense_extraction", tags=["extraction", source]
+    )
 
 
 _text_chain = None
@@ -54,14 +57,14 @@ _receipt_chain = None
 def _get_text_chain():
     global _text_chain
     if _text_chain is None:
-        _text_chain = _build_chain(EXTRACTION_SYSTEM)
+        _text_chain = _build_chain(EXTRACTION_SYSTEM, "text")
     return _text_chain
 
 
 def _get_receipt_chain():
     global _receipt_chain
     if _receipt_chain is None:
-        _receipt_chain = _build_chain(RECEIPT_EXTRACTION_SYSTEM)
+        _receipt_chain = _build_chain(RECEIPT_EXTRACTION_SYSTEM, "receipt")
     return _receipt_chain
 
 

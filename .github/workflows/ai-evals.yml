@@ -1,0 +1,95 @@
+name: AI evals
+
+on:
+  # merge gate: offline evals on every PR to main. No `paths` filter on
+  # purpose: a required check that never starts blocks the merge forever, so
+  # PRs without services/ai changes run the job and pass straight away.
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  # live monitor: grade the last 7h of production traces (overlaps the
+  # schedule on purpose; the monitor skips runs it already scored)
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-evals-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: services/ai
+
+jobs:
+  eval-gate:
+    name: Eval gate
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      # a separate Groq org from production, so eval runs can't eat its quota
+      GROQ_API_KEY: ${{ secrets.EVAL_GROQ_API_KEY }}
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      LANGSMITH_TRACING: "true"
+      LANGCHAIN_TRACING_V2: "true"
+      LANGSMITH_PROJECT: settle-ai-evals
+      SKIP_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'skip-evals') }}
+      BASE_REF: ${{ github.base_ref }}
+      EVENT: ${{ github.event_name }}
+    steps:
+      # checkout first: the default working-directory doesn't exist before it
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Decide whether to run
+        id: decide
+        run: |
+          if [ "$SKIP_LABEL" = "true" ]; then
+            echo "::warning::skip-evals label set: passing the gate without running evals"
+            echo "## Eval gate: skipped (skip-evals label)" >> "$GITHUB_STEP_SUMMARY"
+            echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$EVENT" = "pull_request" ] && ! git diff --name-only "origin/$BASE_REF...HEAD" | grep -q '^services/ai/'; then
+            echo "No services/ai changes in this PR; nothing to evaluate"
+            echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ -z "$GROQ_API_KEY" ] || [ -z "$LANGSMITH_API_KEY" ]; then
+            echo "::error::Set the EVAL_GROQ_API_KEY and LANGSMITH_API_KEY repo secrets, or add the skip-evals label"
+            exit 1
+          fi
+          echo "run=true" >> "$GITHUB_OUTPUT"
+      - uses: astral-sh/setup-uv@v6
+        if: steps.decide.outputs.run == 'true'
+      - name: Run offline evals
+        if: steps.decide.outputs.run == 'true'
+        # single-case failures are expected with LLMs; the next step decides
+        run: uv run --group eval pytest --junitxml=eval-results.xml || true
+      - name: Check scores against thresholds
+        if: steps.decide.outputs.run == 'true'
+        run: uv run --group eval python -m evals.gate eval-results.xml
+
+  live-monitor:
+    name: Live monitor
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      LANGSMITH_PROJECT: settle-ai
+      JUDGE_API_KEY: ${{ secrets.JUDGE_API_KEY }}
+      JUDGE_BASE_URL: ${{ vars.JUDGE_BASE_URL }}
+      JUDGE_MODEL: ${{ vars.JUDGE_MODEL }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      ALERT_TELEGRAM_CHAT_ID: ${{ secrets.ALERT_TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Skip without LangSmith key
+        if: env.LANGSMITH_API_KEY == ''
+        run: echo "::notice::LANGSMITH_API_KEY secret not set; skipping live monitor"
+      - uses: astral-sh/setup-uv@v6
+        if: env.LANGSMITH_API_KEY != ''
+      - name: Score recent traces and alert
+        if: env.LANGSMITH_API_KEY != ''
+        run: uv run --group eval python -m evals.online --hours 7
