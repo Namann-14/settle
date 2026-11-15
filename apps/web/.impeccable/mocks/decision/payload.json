@@ -1,0 +1,43 @@
+{
+  "title": "Overview: choose the structure",
+  "question": "Three ways to make Overview answer \"where do I stand?\". Same Calm Ledger look in all three; the difference is what leads and how the page divides. Lock one, steer, or re-roll.",
+  "options": [
+    {
+      "id": "double-entry",
+      "kind": "assigned",
+      "kicker": "THE ROLL",
+      "label": "Owed to you | You owe",
+      "thesis": "Two facing columns, money in and money out, with the net as the balance line underneath.",
+      "palette": ["#f7faf8", "#2a5a44", "#7f3d3d", "#15201a"],
+      "materials": ["two-column ledger", "hairline rules", "serif totals"],
+      "viewport": "Header with net sentence; left column people who owe you (green), right column people you owe (oxblood), each row with a Settle up action; a totals line; below, groups and recent activity side by side and a slim month-spend strip.",
+      "risk": "When one side is empty the page looks lopsided; needs a designed empty column.",
+      "html": ".impeccable/mocks/decision/double-entry.html"
+    },
+    {
+      "id": "person-ledger",
+      "kind": "dealt",
+      "label": "One list of people",
+      "thesis": "Every person you share money with in one list, sorted by size, each balance drawn as a bar either side of zero.",
+      "palette": ["#f7faf8", "#2a5a44", "#7f3d3d", "#cfe0d6"],
+      "materials": ["diverging bars", "tabular figures", "serif net"],
+      "viewport": "Net figure and a one-line summary on top; a single people table where each row is name, shared groups, a bar growing right (owes you) or left (you owe), the amount and a Settle up button; groups, activity and month spend in a right rail.",
+      "risk": "Bars can read as a chart to admire rather than a list to act on if the actions are quiet.",
+      "html": ".impeccable/mocks/decision/person-ledger.html"
+    },
+    {
+      "id": "group-first",
+      "kind": "dealt",
+      "label": "Group by group",
+      "thesis": "Each group is a section showing where you stand in it and the payments that would clear it.",
+      "palette": ["#f7faf8", "#2a5a44", "#7f3d3d", "#e4ede7"],
+      "materials": ["grouped sections", "payment chips", "serif group nets"],
+      "viewport": "Overall net and month spend in a header band; then one section per group (Flat 4B, Goa trip) with your net in that group, its member balances and its fewest-payments list; recent activity in a right rail.",
+      "risk": "The same person in two groups shows twice, so your overall position with a friend is never in one place.",
+      "html": ".impeccable/mocks/decision/group-first.html"
+    }
+  ],
+  "reroll": true,
+  "steer": true,
+  "buildPath": { "value": "code", "toggle": false }
+}
